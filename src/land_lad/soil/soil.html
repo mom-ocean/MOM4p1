@@ -1,0 +1,975 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module soil_mod</title>
+<link type="text/css" href="http://www.gfdl.noaa.gov/~fms/style/doc.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module soil_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Chris.Milly@noaa.gov">   Christopher Milly </a>
+<br>
+<b>Reviewers:&nbsp;</b><a href="mailto:Elena.Shevliakova@noaa.gov">   Elena Shevliakova </a>,&nbsp;
+    <a href="mailto:Sergey.Malyshev@noaa.gov">   Sergey Malyshev </a>
+<br>
+<b>Change History:&nbsp;</b><a href="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS/land/lad/soil">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   Module containing processes relating to the soil. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   Soil data type is defined and describes the characteristics of the soil.
+   The soil module and the state of soil is initialized. The soil data is
+   updated on the fast and slow time-scale. Contains updates to the "fast"
+   boundary data that the atmosphere sees and the "slow" part of boundary
+   data for the atmosphere. Sends tile-averaged data to the diagnostics
+   manager. </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>   time_manager_mod<br>    mpp_domains_mod<br>            fms_mod<br>         fms_io_mod<br>         rivers_mod<br>     land_types_mod<br>land_properties_mod<br>      constants_mod<br>   diag_manager_mod<br>  data_override_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#send_averaged_data">send_averaged_data</a>:</dt>
+<dd>   Interface to tile-averaged diagnostic routines </dd>
+<dt>
+<a href="#soil_init">soil_init</a>:</dt>
+<dd>   Initializes the state of the soil. </dd>
+<dt>
+<a href="#init_soil_diag">init_soil_diag</a>:</dt>
+<dd>   Initializes diagnostic for soil. </dd>
+<dt>
+<a href="#soil_end">soil_end</a>:</dt>
+<dd>   Deallocates soil data. </dd>
+<dt>
+<a href="#update_soil_fast">update_soil_fast</a>:</dt>
+<dd>   Fast time-scale soil updater. </dd>
+<dt>
+<a href="#update_soil_slow">update_soil_slow</a>:</dt>
+<dd>   Slow time-scale soil state updater: groundwater dynamics and routing of 
+   river flows (and calving). </dd>
+<dt>
+<a href="#update_soil_bnd_fast">update_soil_bnd_fast</a>:</dt>
+<dd>   Updates boundary data for the atmosphere on the fast time-scale. </dd>
+<dt>
+<a href="#update_soil_bnd_slow">update_soil_bnd_slow</a>:</dt>
+<dd>   Updates boundary data for the atmosphere on the slow time-scale. </dd>
+<dt>
+<a href="#diag_fast">diag_fast</a>:</dt>
+<dd>   Sends data for diagnostics on fast time-scale. </dd>
+<dt>
+<a href="#diag_slow">diag_slow</a>:</dt>
+<dd>   Diagnostics on slow time-scale. </dd>
+<dt>
+<a href="#diag_static">diag_static</a>:</dt>
+<dd>   Diagnostics of the static variables. </dd>
+<dt>
+<a href="#average_tiles">average_tiles</a>:</dt>
+<dd>   Average 2-dimensional field over tiles. </dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="send_averaged_data"></a>
+<h4>send_averaged_data</h4>
+<table cellspacing="0" CELLPADDING="2" BORDER="2">
+<tr>
+<td>
+<pre>function send_averaged_data ( id, field, area, time, mask )
+
+  integer, intent(in)          :: id             ! id of the diagnostic field 
+  real,    intent(in)          :: field(:,:,:)   ! field to average and send
+  real,    intent(in)          :: area (:,:,:)   ! area of tiles (== averaging 
+                                                 ! weights), arbitrary units
+  type(time_type), intent(in)  :: time           ! current time
+  logical, intent(in),optional :: mask (:,:,:)   ! land mask</pre>
+</td>
+</tr>
+<tr>
+<td>
+<pre>function send_averaged_data( id, field, area, time, mask )
+
+  integer, intent(in)          :: id              ! id of the diagnostic field
+  real,    intent(in)          :: field(:,:,:,:)  ! (lon, lat, tile, lev) field 
+                                                  ! to average and send
+  real,    intent(in)          :: area (:,:,:)    ! (lon, lat, tile) tile areas 
+                                                  ! ( == averaging weights), 
+                                                  ! arbitrary units
+  type(time_type), intent(in)  :: time            ! current time
+  logical, intent(in),optional :: mask (:,:,:)    ! (lon, lat, tile) land mask</pre>
+</td>
+</tr>
+</table>
+<br>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Interface to tile-averaged diagnostic routines </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="soil_init"></a>
+<h4>soil_init</h4>
+<pre>subroutine soil_init ( soil, gblon, gblat, garea, gfrac,  &amp;
+     time, dt_fast, dt_slow, domain, frac, mask, &amp;
+     id_lon, id_lat, dz1 )
+
+  type(soil_type), intent(inout) :: soil        ! soil data to initialize
+  real,            intent(in)  :: gblon(:)    ! lon boundaries of the grid cells
+  real,            intent(in)  :: gblat(:)    ! lat boundaries of the grid cells
+  real,            intent(in)  :: garea(:,:)  ! full area of the land grid cells
+  real,            intent(in)  :: gfrac(:,:)  ! fraction of grid cells covered by land
+  type(time_type), intent(in)  :: time        ! time origin
+  type(time_type), intent(in)  :: dt_fast     ! fast time step
+  type(time_type), intent(in)  :: dt_slow     ! slow time step
+  type(domain2d),  intent(in)  :: domain      ! domain assigned for us
+  ! may be the values below should be replaced with something more
+  ! general, like "grid_type" ?
+  real,            intent(in)  :: frac(:,:,:) ! fractional area of tiles
+  logical,         intent(in)  :: mask(:,:,:) ! true if land
+  integer,         intent(in)  :: id_lon      ! ID of longitude land diag axis
+  integer,         intent(in)  :: id_lat      ! ID of latitude land diag axis
+
+  real, optional,  intent(in)  :: dz1(:)      ! thickness of soil layers</pre>
+<pre>
+<b>call soil_init </b>( soil, gblon, gblat, garea, gfrac, &amp; time, dt_fast, dt_slow, domain, frac, mask, &amp; id_lon, id_lat, dz1 )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Reads the namelist, which is assumed to be named soil_nml and located
+   in the file input.nml. Sets the number of tiles in the soil and the
+   level number for the soil data. Allocate soil data.  Sets up
+   time-related values and vertical layering parameters. Sets up initial
+   land area, fractional area, and mask. Reconciles the fractional area with
+   mask: the sum of fractional areas has to be 1 everywhere, even where
+   there is no land. Initializes accumulated values, soil diagnostics and
+   rivers submodule. Assigns initial values to dynamic land properties
+   (albedo). Send static fields to diagnostic manager for output and copies
+   glacier mass conservation flag to the soil data stricture. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="init_soil_diag"></a>
+<h4>init_soil_diag</h4>
+<pre>subroutine init_soil_diag ( id_lon, id_lat, zfull, zhalf, Time )
+
+  integer,         intent(in) :: id_lon  ! ID of land longitude (X) axis  
+  integer,         intent(in) :: id_lat  ! ID of land longitude (X) axis
+  real,            intent(in) :: zfull(:)! Full levels, m
+  real,            intent(in) :: zhalf(:)! Half levels, m
+  type(time_type), intent(in) :: Time    ! Current time</pre>
+<pre>
+<b>call init_soil_diag </b>( id_lon, id_lat, zfull, zhalf, Time )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initializes diagnostics for soil. Defines vertical axis, array of
+   axis indices and diagnostic and static fields. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="soil_end"></a>
+<h4>soil_end</h4>
+<pre>subroutine soil_end ( soil )
+
+  type(soil_type), intent(inout)      :: soil    ! data to finish using</pre>
+<pre>
+<b>call soil_end </b>( soil )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Deallocates soil data. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_soil_fast"></a>
+<h4>update_soil_fast</h4>
+<pre>subroutine update_soil_fast ( soil, &amp;
+     fsw, flw, sens, evap, dhdt, dedt, drdt, lprec, fprec )
+
+  type(soil_type), intent(inout) :: soil ! soil state to update
+  real, intent(in) :: &amp;
+       fsw  (soil%is:soil%ie,soil%js:soil%je,soil%n_tiles), &amp; ! shortwave flux
+       flw  (soil%is:soil%ie,soil%js:soil%je,soil%n_tiles), &amp; ! longwave flux
+       sens (soil%is:soil%ie,soil%js:soil%je,soil%n_tiles), &amp; ! sensible heat
+                                                              ! flux
+       evap (soil%is:soil%ie,soil%js:soil%je,soil%n_tiles), &amp; ! evaporation
+       dhdt (:,:,:), &amp; ! derivative of sens over T
+       dedt (:,:,:), &amp; ! derivative of evap over T
+       drdt (:,:,:), &amp; ! derivative of LW radiation over T
+       lprec(:,:,:), &amp; ! liquid prec
+       fprec(:,:,:)    ! solid prec (snow)</pre>
+<pre>
+<b>call update_soil_fast </b>( soil, &amp; fsw, flw, sens, evap, dhdt, dedt, drdt, lprec, fprec )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Calculate surface temperature with implicit correction via upward part
+   of tridiagonal elimination for implicit correction. The surface
+   temperature is corrected for snow melt before proceeding to complete
+   downward part of tridiagonal elimination. If the temperature is above
+   freezing and snow or glacial ice is present, compute potential melt.
+   <br>
+<br>
+   In non-glaciated regions, if there is not enough snow, melt only what's
+   there and increase surface temperature above freezing. In glaciated
+   regions, if there is not enough snow, melt only what's there and then
+   melt the glacier. Otherwise go ahead and use all of the potential snow
+   melt, and leave the surface temperature at freezing.
+   <br>
+<br>
+   Accumulate snow melt water into bucket in non-glacier regions. Using
+   this snow melt-modified surface temperature, correct all fluxes and
+   compute temperature increment and new temperature for output. Complete
+   the tridiagonal solver.
+   <br>
+<br>
+   Bucket hydrology involves treating unglaciated cells first. Tentative
+   changes are based on time-step evaporation and precipitation. If snow
+   cover went negative during this step, take the necessary mass from the
+   soil (water) and re-zero snow. Then put excess soil water into soil
+   drainage. Then do the glaciated cells. soil water is not present, and
+   glacier mass is not tracked. For all land cells, put excess snow into
+   calving. Accumulate drainage for transfer to groundwater on the slow
+   time step. Similarly, accumulate calving. Compute the new albedos and 
+   update rivers. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_soil_slow"></a>
+<h4>update_soil_slow</h4>
+<pre>subroutine update_soil_slow(soil, blon, blat)
+
+  type(soil_type), intent(inout) :: soil  ! state to update
+  real, intent(inout) :: blon(:)
+  real, intent(inout) :: blat(:)</pre>
+<pre>
+<b>call update_soil_slow </b>(soil)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Slow time-scale soil state updater: groundwater dynamics and routing of 
+   river flows (and calving). Calculations include snow runoff, liquid water
+   runoff and surface runoff. Ground water is modified and the accumulated
+   values for the next interval are cleaned up. Calls to average_tiles and
+   update_rivers_slow. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_soil_bnd_fast"></a>
+<h4>update_soil_bnd_fast</h4>
+<pre>subroutine update_soil_bnd_fast ( soil, bnd )
+
+  type(soil_type),      intent(in)  :: soil ! current soil state
+  type(land_data_type), intent(inout) :: bnd  ! output boundary data</pre>
+<pre>
+<b>call update_soil_bnd_fast </b>( soil, bnd )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Updates boundary data for the atmosphere on the fast time-scale. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_soil_bnd_slow"></a>
+<h4>update_soil_bnd_slow</h4>
+<pre>subroutine update_soil_bnd_slow ( soil, bnd )
+
+  type(soil_type),      intent(in)  :: soil ! current soil state
+  type(land_data_type), intent(inout) :: bnd  ! output boundary data</pre>
+<pre>
+<b>call update_soil_bnd_slow </b>( soil, bnd )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Updates boundary data for the atmosphere on the slow time-scale. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="diag_fast"></a>
+<h4>diag_fast</h4>
+<pre>subroutine diag_fast &amp;
+     ( soil, prec, fprec, evap, sublim, smelt, gmelt, watsno, sens, lhf, flw, fsw )
+
+  type(soil_type), intent(in) :: soil      ! soil state
+  real,            intent(in), dimension(:,:,:) :: &amp;
+       prec,  &amp;   ! total precipitation, 
+       fprec, &amp;   ! frozen precipitation (snow)
+       evap,  &amp;   ! evaporation
+       sublim,&amp;   ! sublimation
+       smelt, &amp;   ! snow melt
+       gmelt, &amp;   ! glacier melt
+       watsno,&amp;   ! water stolen by snow to satisfy sublimation
+       sens,  &amp;   ! sensible heat flux, W/m2
+       lhf,   &amp;   ! latent heat flux, W/m2
+       flw,   &amp;   ! net longwave flux, W/m2
+       fsw        ! shortwave flux, W/m2</pre>
+<pre>
+<b>call diag_fast </b>&amp; ( soil, prec, fprec, evap, sublim, smelt, gmelt, sens, lhf, flw, fsw )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Sends data for diagnostics on fast time-scale. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="diag_slow"></a>
+<h4>diag_slow</h4>
+<pre>subroutine diag_slow (soil, runoff_w, runoff_s )
+
+  type(soil_type), intent(in)  :: soil           ! current soil state
+  real,            intent(in)  :: runoff_w(:,:)  ! liquid runoff
+  real,            intent(in)  :: runoff_s(:,:)  ! snow runoff</pre>
+<pre>
+<b>call diag_slow </b>(soil, runoff_w, runoff_s )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Diagnostics on slow time-scale. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="diag_static"></a>
+<h4>diag_static</h4>
+<pre>subroutine diag_static(soil, frac)
+
+  type(soil_type), intent(in) :: soil            ! soil state to diagnose
+  real,            intent(in) :: frac(:,:)       ! fraction of land in each cell</pre>
+<pre>
+<b>call diag_static </b>(soil, frac)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Diagnostics of the static variables. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="average_tiles"></a>
+<h4>average_tiles</h4>
+<pre>subroutine average_tiles ( x, area, mask, out )
+
+  real,    intent(in)  :: x   (:,:,:) ! (lon, lat, tile) field to average
+  real,    intent(in)  :: area(:,:,:) ! (lon, lat, tile) fractional area
+  logical, intent(in)  :: mask(:,:,:) ! (lon, lat, tile) land mask
+  real,    intent(out) :: out (:,:)   ! (lon, lat)       result of averaging</pre>
+<pre>
+<b>call average_tiles </b>( x, area, mask, out )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Average 2-dimensional field over tiles. </dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<hr>
+<h4>PUBLIC TYPES</h4>
+<div>
+<b>soil_type</b>
+<br>
+<br>
+<div>
+<dl>   Public data type describing soil characteristics. <br>
+<br>
+<dt>
+<tt>domain</tt>
+</dt>
+<dl>   Domain of computation <br>
+<span class="type">[domain2d, dimension2]</span>
+</dl>
+<dt>
+<tt>is</tt>
+</dt>
+<dl>   Computational domain bounds <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>ie</tt>
+</dt>
+<dl>   Computational domain bounds <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>js</tt>
+</dt>
+<dl>   Computational domain bounds <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>je</tt>
+</dt>
+<dl>   Computational domain bounds <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>n_levels</tt>
+</dt>
+<dl>   Number of levels in the soil <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>n_tiles</tt>
+</dt>
+<dl>   Maximum number of tiles in the soil <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>area</tt>
+</dt>
+<dl>   Land area for each cell <br>
+<span class="type">[real, pointer, dimension2, units: m2]</span>
+</dl>
+<dt>
+<tt>frac</tt>
+</dt>
+<dl>   Tile area fraction for each tile <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>mask</tt>
+</dt>
+<dl>   Land mask: true where data are present <br>
+<span class="type">[logical, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>dz</tt>
+</dt>
+<dl>   Thickness of layers <br>
+<span class="type">[real, pointer, dimension1, units: m]</span>
+</dl>
+<dt>
+<tt>z</tt>
+</dt>
+<dl>   Full level <br>
+<span class="type">[real, pointer, dimension1, units: m]</span>
+</dl>
+<dt>
+<tt>zz</tt>
+</dt>
+<dl>   Half level <br>
+<span class="type">[real, pointer, dimension1, units: m]</span>
+</dl>
+<dt>
+<tt>max_fusion</tt>
+</dt>
+<dl>   Max amount of energy stored in frozen water, J/m3 <br>
+<span class="type">[real, pointer, dimension1, units: J/m3]</span>
+</dl>
+<dt>
+<tt>time</tt>
+</dt>
+<dl>   Current time <br>
+<span class="type">[time_type]</span>
+</dl>
+<dt>
+<tt>dt</tt>
+</dt>
+<dl>   Fast time step <br>
+<span class="type">[real, units: s]</span>
+</dl>
+<dt>
+<tt>dt_slow</tt>
+</dt>
+<dl>   Slow time step <br>
+<span class="type">[real, units: s]</span>
+</dl>
+<dt>
+<tt>temp</tt>
+</dt>
+<dl>   Temperature (i,j,tile,level) <br>
+<span class="type">[real, pointer, dimension4, units: K]</span>
+</dl>
+<dt>
+<tt>fusion</tt>
+</dt>
+<dl>   Energy needed to melt frozen freezable water (i,j,tile,level) <br>
+<span class="type">[real, pointer, dimension4, units: J/m3]</span>
+</dl>
+<dt>
+<tt>snow</tt>
+</dt>
+<dl>   Snow water mass (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3, units: kg/m2]</span>
+</dl>
+<dt>
+<tt>water</tt>
+</dt>
+<dl>   Root-zone water (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3, units: kg/m2]</span>
+</dl>
+<dt>
+<tt>groundwater</tt>
+</dt>
+<dl>   Groundwater (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3, units: kg/m2]</span>
+</dl>
+<dt>
+<tt>drainage</tt>
+</dt>
+<dl>   Flux from water to groundwater (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3, units: kg/(m2 s)]</span>
+</dl>
+<dt>
+<tt>drainage_accum</tt>
+</dt>
+<dl>   Drainage, accumulated for slow time steps (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3, units: kg/m2]</span>
+</dl>
+<dt>
+<tt>calving</tt>
+</dt>
+<dl>   Horizontal snow flux divergence (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3, units: kg/(m2 s)]</span>
+</dl>
+<dt>
+<tt>calving_accum</tt>
+</dt>
+<dl>   Calving, accumulated for slow time steps (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3, units: kg/m2]</span>
+</dl>
+<dt>
+<tt>albedo</tt>
+</dt>
+<dl>   Snow-adjusted land (soil?) albedo (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>albedo_vis_dir</tt>
+</dt>
+<dl>   Direct visible surface albedo (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>albedo_nir_dir</tt>
+</dt>
+<dl>   Direct near-infrared surface albedo (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>albedo_vis_dif</tt>
+</dt>
+<dl>   Diffuse visible surface albedo (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>albedo_nir_dif</tt>
+</dt>
+<dl>   Diffuse near-infrared albedo (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>rough_mom</tt>
+</dt>
+<dl>   Momentum roughness length (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3, units: m]</span>
+</dl>
+<dt>
+<tt>rough_heat</tt>
+</dt>
+<dl>   Heat roughness length (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3, units: m]</span>
+</dl>
+<dt>
+<tt>rough_scale</tt>
+</dt>
+<dl>   Scale momentum drag coefficient (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3, units: m]</span>
+</dl>
+<dt>
+<tt>stomatal</tt>
+</dt>
+<dl>   Non-water-stressed bulk stomatal resistance (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3, units: s/m]</span>
+</dl>
+<dt>
+<tt>max_water</tt>
+</dt>
+<dl>   Water capacity of root zone (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3, units: kg/m2]</span>
+</dl>
+<dt>
+<tt>tcon</tt>
+</dt>
+<dl>   Thermal conductivity of the ground (i,j,tile,level) <br>
+<span class="type">[real, pointer, dimension4, units: W/(m K s)]</span>
+</dl>
+<dt>
+<tt>rho_cap</tt>
+</dt>
+<dl>   Volumetric heat capacity of the ground (i,j,tile,level) <br>
+<span class="type">[real, pointer, dimension4, units: J/(m3 K)]</span>
+</dl>
+<dt>
+<tt>tau_groundwater</tt>
+</dt>
+<dl>   Groundwater residence time (i,j,tile) <br>
+<span class="type">[real, pointer, dimension3, units: s]</span>
+</dl>
+<dt>
+<tt>glacier</tt>
+</dt>
+<dl>   Glacier mask, true if land is a glacier (lon, lat, tile) <br>
+<span class="type">[logical, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>lake</tt>
+</dt>
+<dl>   Lake mask, true where lake on land (lon, lat, tile) <br>
+<span class="type">[logical, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>cover_type</tt>
+</dt>
+<dl>   Land surface cover type (lon, lat, tile) <br>
+<span class="type">[integer, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>ground</tt>
+</dt>
+<dl>   Ground type (lon, lat, tile) <br>
+<span class="type">[integer, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>max_snow</tt>
+</dt>
+<dl>   Maximum snow capacity <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>conserve_glacier_mass</tt>
+</dt>
+<dl>   When true, prevent glacier sublimation and do not allow glacier melt
+   to run off <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>aa</tt>
+</dt>
+<dl>   Coefficients for diffusion <br>
+<span class="type">[real, pointer, dimension1]</span>
+</dl>
+<dt>
+<tt>cc</tt>
+</dt>
+<dl>   Coefficients for diffusion <br>
+<span class="type">[real, pointer, dimension1]</span>
+</dl>
+<dt>
+<tt>Rivers</tt>
+</dt>
+<dl>   State of rivers and runoff <br>
+<span class="type">[rivers_type]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END PUBLIC TYPES -->
+<a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<hr>
+<h4>NAMELIST</h4>
+<div>
+<b>&amp;soil_nml</b>
+<br>
+<br>
+<div>
+<dl>
+<dt>
+<tt>n_levels</tt>
+</dt>
+<dl>   Default number of soil levels <br>
+<span class="type">[integer, default: 5]</span>
+</dl>
+<dt>
+<tt>dz(max_lev)</tt>
+</dt>
+<dl>   Default thickness of layers, from top down <br>
+<span class="type">[real, dimension1, units: m, default: (/ 0.005, 0.045, 0.10, 0.35, 1.0, 45*0. /)]</span>
+</dl>
+<dt>
+<tt>init_temp_no_ice</tt>
+</dt>
+<dl>   Initial no-ice T if no restart <br>
+<span class="type">[real, units: K, default: 288]</span>
+</dl>
+<dt>
+<tt>init_temp_ice</tt>
+</dt>
+<dl>   Initial ice T if no restart, used where snow or glacier <br>
+<span class="type">[real, units: K, default: 260]</span>
+</dl>
+<dt>
+<tt>init_water</tt>
+</dt>
+<dl>   Initial soil water is set to min(init_water, max_water) if no restart <br>
+<span class="type">[real, default: 0]</span>
+</dl>
+<dt>
+<tt>init_snow</tt>
+</dt>
+<dl>   Initial snow pack is set to min(init_snow, max_snow) if no restart <br>
+<span class="type">[real, default: 0]</span>
+</dl>
+<dt>
+<tt>init_groundwater</tt>
+</dt>
+<dl>   Initial groundwater storage if no restart <br>
+<span class="type">[real, default: 0]</span>
+</dl>
+<dt>
+<tt>conserve_glacier_mass</tt>
+</dt>
+<dl>   When true, prevent glacier sublimation and don't allow glacier melt to
+   run off <br>
+<span class="type">[logical, default: .false.]</span>
+</dl>
+<dt>
+<tt>freezable_water(max_lev)</tt>
+</dt>
+<dl>   Amount of freezable water in soil, from top down <br>
+<span class="type">[real, dimension1, units: kg/m3, default: (/0,index=1,max_lev/)]</span>
+</dl>
+<dt>
+<tt>init_frozen_water</tt>
+</dt>
+<dl>   Initial amount of frozen water in soil if no restart <br>
+<span class="type">[real, units: kg/m3, default: 0]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END NAMELIST -->
+<a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<hr>
+<h4>DIAGNOSTIC FIELDS</h4>
+<div>Diagnostic fields may be output to a netcdf file by
+              specifying the module name identifier <b></b> and the desired field names (given below) in
+               file <b>diag_table</b>. See the documentation for diag_manager.<pre>Diagnostic fields for module name identifier: <b></b>
+</pre>
+<div>
+<table cellpadding="0" border="0">
+<tr>
+<td>
+<pre>field name   <br>----------   <br>zhalf   
+zfull   
+water   
+snow   
+temp   
+albedo   
+albedo_vis_dir   
+albedo_nir_dir   
+albedo_vis_dif   
+albedo_nir_dif   
+drainage   
+calving   
+precip   
+snowfall   
+evap   
+sublim   
+smelt   
+gmelt   
+sens   
+latent   
+flw   
+fsw   
+wroff   
+sroff   
+groundwater   
+area   
+lfrac   
+glacier   
+cover_type   
+tcon   
+rho_cap   
+stomatal   
+max_water   
+rough_mom   
+rough_heat   
+tau_gw   
+frozen   
+hlf   
+hlv   
+</pre>
+</td><td>
+<pre>field description (units)<br>-------------------------<br>Half level (m)
+Full level (m)
+Mass of water in the bucket (kg/m2)
+Mass of snow on the ground (kg/m2)
+Temperature (degK)
+Albedo (dimensionless)
+Direct visible surface albedo (dimensionless)
+Direct near-infrared surface albedo  (dimensionless)
+Diffuse visible surface albedo (dimensionless)
+Diffuse near-infrared surface albedo (dimensionless)
+Drainage rate (kg/(m2 s))
+Snow sweep rate (kg/(m2 s))
+Total precipitation rate (kg/(m2 s))
+Snowfall rate (kg/(m2 s))
+Evaporation rate (kg/(m2 s))
+Sublimation rate (kg/(m2 s))
+Snow melt rate (kg/(m2 s))
+Glacier melt rate (kg/(m2 s))
+Sensible heat flux  (W/m2)
+Latent heat flux (W/m2)
+Net longwave radiative flux (W/m2)
+Net shortwave radiative flux (W/m2)
+Surface runoff of water (kg/(m2 s))
+Surface runoff of snow (kg/(m2 s))
+Mass of water below bucket (kg/m2)
+Land area (m2)
+Fraction of land in cell (dimensionless)
+Glacier logical mask (dimensionless)
+Land surface cover type (dimensionless)
+Ground thermal conductivity (W/(m K s))
+Ground volumetric heat capacity (J/(m3 K))
+Non-water-stressed stomatal resistance (s/m)
+Root-zone water capacity (kg/m2)
+Momentum roughness length (m)
+Scalar roughness length (m)
+Groundwater residence time  (s)
+Amount of frozen water in soil (kg/m3)
+Latent heat of fusion (J/kg)
+Latent heat of evaporation (J/kg)
+</pre>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<!-- END DIAGNOSTIC FIELDS -->
+<a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>
+<dl>
+<dt>
+<b>FATAL in soil_init</b>
+</dt>
+<dd>
+<span class="errmsg">Cannot allocate memory for soil</span>
+</dd>
+<dd> 
+</dd>
+<dt>
+<b>FATAL in update_soil_fast</b>
+</dt>
+<dd>
+<span class="errmsg">update_land_fast:: input arguments have incorrect horizontal dimensions</span>
+</dd>
+<dd> 
+</dd>
+</dl>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

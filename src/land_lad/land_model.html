@@ -1,0 +1,475 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module land_model_mod</title>
+<link type="text/css" href="http://www.gfdl.noaa.gov/~fms/style/doc.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module land_model_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Chris.Milly@noaa.gov">   Christopher Milly </a>
+<br>
+<b>Reviewers:&nbsp;</b><a href="mailto:Elena.Shevliakova@noaa.gov">   Elena Shevliakova </a>,&nbsp;
+    <a href="mailto:Sergey.Malyshev@noaa.gov">   Sergey Malyshev </a>
+<br>
+<b>Change History:&nbsp;</b><a href="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS/land/lad">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   This module contains calls to the sub-models to calculate quantities
+   on the fast and slow time scales and update the boundary conditions and
+   tiling structure where necessary. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   The sub-models (soil and vegetation) are first called in top-bottom order
+   to evaluate the derivatives. Then they are called in bottom-top order to
+   finish the implicit calculations. On the upward pass, they have a chance
+   to update boundary values returned to the atmosphere. These calls are done
+   on the fast time scale to calculate the fluxes.
+   <br>
+<br>
+   On the slow time scale, the land is updated and the boundary conditions
+   may be updated. The land boundary data is updated on the fast time scale 
+   without updating the tiling structure. The land boundary data for the
+   atmosphere is updated on the slow time scale and changes the tiling
+   structure, if necessary, as well as the albedo, drag coefficient and such.
+   <br>
+<br>
+   The diagnostic horizontal axes for the land grid is initialized. All 
+   sub-models use them instead of creating their own. Also, NetCDF library 
+   messages are printed out, including file names and line numbers. </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>  time_manager_mod<br>   mpp_domains_mod<br>           fms_mod<br>    vegetation_mod<br>          soil_mod<br>    land_types_mod<br>     constants_mod<br>  diag_manager_mod<br> field_manager_mod<br>tracer_manager_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#land_model_init">land_model_init</a>:</dt>
+<dd>   Initializes the state of the land model. </dd>
+<dt>
+<a href="#land_model_end">land_model_end</a>:</dt>
+<dd>   Destructs the land model. </dd>
+<dt>
+<a href="#update_land_model_fast">update_land_model_fast</a>:</dt>
+<dd>   Updates the state of the land model on the fast time scale. </dd>
+<dt>
+<a href="#update_land_model_slow">update_land_model_slow</a>:</dt>
+<dd>   Updates the state of the land model on the slow time scale. </dd>
+<dt>
+<a href="#update_land_bnd_fast">update_land_bnd_fast</a>:</dt>
+<dd>   Updates land boundary data. </dd>
+<dt>
+<a href="#update_land_bnd_slow">update_land_bnd_slow</a>:</dt>
+<dd>   Updates the land boundary data for the atmosphere on the slow time scale. </dd>
+<dt>
+<a href="#init_land_diag">init_land_diag</a>:</dt>
+<dd>   Initializes the horizontal axes for the land grid. </dd>
+<dt>
+<a href="#err">err</a>:</dt>
+<dd>   Prints out error messages. </dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="land_model_init"></a>
+<h4>land_model_init</h4>
+<table cellspacing="0" CELLPADDING="2" BORDER="2">
+<tr>
+<td>
+<pre>subroutine init_land_with_xgrid &amp;
+     (atmos2land, bnd, time_init, time, dt_fast, dt_slow, atmos_domain)
+
+  type(atmos_land_boundary_type), intent(inout) :: atmos2land ! land boundary data
+  type(land_data_type), intent(inout) :: bnd ! land boundary data
+  type(time_type), intent(in)    :: time_init ! initial time of simulation (?)
+  type(time_type), intent(in)    :: time      ! current time
+  type(time_type), intent(in)    :: dt_fast   ! fast time step
+  type(time_type), intent(in)    :: dt_slow   ! slow time step
+  type(domain2d),  intent(in), optional :: atmos_domain ! domain of computations</pre>
+</td>
+</tr>
+<tr>
+<td>
+<pre>subroutine init_land_with_area &amp;
+     ( atmos2land, bnd, gblon, gblat, gcellarea, gfrac, time, dt_fast, dt_slow, domain, &amp;
+     glon, glat )
+
+  type(atmos_land_boundary_type), intent(inout) :: atmos2land ! land boundary data
+  type(land_data_type), intent(inout) :: bnd        ! state to update
+  real,              intent(in) :: gblon(:)! lon boundaries of the grid cells
+  real,              intent(in) :: gblat(:)! lat boundaries of the grid cells
+  real,              intent(in) :: gcellarea(:,:) ! full area of the grid cells
+  real,              intent(in) :: gfrac(:,:)     ! fraction of land in the grid cell
+  type(time_type),   intent(in) :: time    ! current time
+  type(time_type),   intent(in) :: dt_fast ! fast time step
+  type(time_type),   intent(in) :: dt_slow ! slow time step
+  type(domain2d),    intent(in), optional :: domain  ! domain of computations
+  real,              intent(in), optional :: glon(:), glat(:) ! centers
+                          ! of the grid cells</pre>
+</td>
+</tr>
+</table>
+<br>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initializes the land state in three ways. 1) The grid description file may
+   be used as an input. The land grid boundaries and area of land are read from
+   a grid description file. 2) A logical land mask may be used to calculate the
+   area of the grid cells where the mask is true and calls init_land_with_area.
+   Naturally, in this case there are no partly covered land cells -- every cell
+   is either land or ocean. 3) The land state may be initialized from the land area
+   for each of the grid points. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="land_model_end"></a>
+<h4>land_model_end</h4>
+<pre>subroutine land_model_end ( atmos2land, bnd )
+  type(atmos_land_boundary_type), intent(inout) :: atmos2land
+  type(land_data_type), intent(inout) :: bnd        ! state to update</pre>
+<pre>
+<b>call land_model_end </b>( bnd )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Destructs the land model and its sub-models. Deallocates the arrays
+   and the boundary exchange data </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_land_model_fast"></a>
+<h4>update_land_model_fast</h4>
+<pre>subroutine update_land_model_fast ( atmos2land, bnd )
+
+  type(atmos_land_boundary_type), intent(inout)    :: atmos2land ! quantities exchanged between
+                                                              ! the atmosphere and the land
+  type(land_data_type),  intent(inout) :: bnd ! state to update</pre>
+<pre>
+<b>call update_land_model_fast </b>( atmos2land, bnd )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Updates the state of the land model on the fast time scale. To implement
+   implicit calculation scheme, first the land sub-models are called in
+   top-bottom general order to evaluate the derivatives; then they are
+   called in bottom-top order to finish implicit calculations. On the
+   upward pass they have a chance to update boundary values returned to
+   the atmosphere. After calculations, update the boundary conditions
+   visible to the atmosphere. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_land_model_slow"></a>
+<h4>update_land_model_slow</h4>
+<pre>subroutine update_land_model_slow ( atmos2land, bnd )
+  type(atmos_land_boundary_type), intent(inout) :: atmos2land
+  type(land_data_type), intent(inout) :: bnd        ! state to update</pre>
+<pre>
+<b>call update_land_model_slow </b>( bnd )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Updates land, and boundary conditions if
+   necessary, on the slow time scale. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_land_bnd_fast"></a>
+<h4>update_land_bnd_fast</h4>
+<pre>subroutine update_land_bnd_fast ( bnd )
+
+  type(land_data_type), intent(inout) :: bnd        ! state to update</pre>
+<pre>
+<b>call update_land_bnd_fast </b>( bnd )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Updates land boundary data (the ones that atmosphere sees) on the
+   fast time scale. This routine does not update the tiling structure
+   because it is assumed that the tiling does not change on fast time
+   scale. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_land_bnd_slow"></a>
+<h4>update_land_bnd_slow</h4>
+<pre>subroutine update_land_bnd_slow ( bnd )
+
+  type(land_data_type), intent(inout) :: bnd        ! state to update</pre>
+<pre>
+<b>call update_land_bnd_slow </b>( bnd )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Updates the land boundary data for the atmosphere on the slow time scale.
+   This subroutine is responsible for changing of the tiling structure, if
+   necessary, as well as for changing albedo, drag coefficients and such. </dd>
+<br>
+<br>
+<dt>
+<b>NOTE</b>
+</dt>
+<dd>   If the tiling structure has been modified, then probably the
+   distribution of other boundary values, such as temperature and
+   surface humidity, should be modified too, not yet clear how. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="init_land_diag"></a>
+<h4>init_land_diag</h4>
+<pre>subroutine init_land_diag(glonb, glatb, domain, id_lon, id_lat, glon, glat)
+
+  real, intent(in)           :: glonb(:), glatb(:) ! longitude and latitude boundaries of grid
+                                                   ! cells, specified for the global grid
+                                                   ! (not only domain)
+  type(domain2d), intent(in) :: domain ! the domain of operations
+  integer, intent(out)       :: id_lon, id_lat     ! IDs of respective diag. manager axes
+  real, intent(in),optional  :: glon(:), glat(:)   ! coordinates of grid cell centers</pre>
+<pre>
+<b>call init_land_diag </b>(glonb, glatb, domain, id_lon, id_lat)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initialize the horizontal axes for the land grid so that all
+   submodules use them, instead of creating their own. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="err"></a>
+<h4>err</h4>
+<pre>subroutine err(ierr, file, line)
+
+  integer,          intent(in) :: ierr ! error code
+  character(len=*), intent(in) :: file ! name of the file
+  integer,          intent(in) :: line ! number of line in the file</pre>
+<pre>
+<b>call err </b>(ierr, file, line)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Prints out NetCDF library error message, including file name and
+   line number. </dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<hr>
+<h4>PUBLIC TYPES</h4>
+<div>
+<b>land_type</b>
+<br>
+<br>
+<div>
+<dl>   The type describing the state of the land model. It is private to this
+   module and is basically a remnant of the previous design. There is only one
+   variable of this type, called "theLand", which is used in the model to
+   hold the data.
+   Strictly speaking, this type is not necessary, but there is no harm in
+   having it and it is possible to image a situation where a single entity
+   describing the land-surface model state would be useful. <br>
+<br>
+<dt>
+<tt>domain</tt>
+</dt>
+<dl>   Domain of calculations <br>
+<span class="type">[domain2d, dimension2]</span>
+</dl>
+<dt>
+<tt>is</tt>
+</dt>
+<dl>   Domain bound <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>ie</tt>
+</dt>
+<dl>   Domain bound <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>js</tt>
+</dt>
+<dl>   Domain bound <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>je</tt>
+</dt>
+<dl>   Domain bound <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>n_tiles</tt>
+</dt>
+<dl>   Domain bound <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>soil</tt>
+</dt>
+<dl>   Soil component data <br>
+<span class="type">[soil_type]</span>
+</dl>
+<dt>
+<tt>vegetation</tt>
+</dt>
+<dl>   Vegetation component data <br>
+<span class="type">[vegetation_type]</span>
+</dl>
+<dt>
+<tt>blon</tt>
+</dt>
+<dl>   Longitude domain boundaries <br>
+<span class="type">[real, pointer, dimension1]</span>
+</dl>
+<dt>
+<tt>blat</tt>
+</dt>
+<dl>   Latitude domain boundaries <br>
+<span class="type">[real, pointer, dimension1]</span>
+</dl>
+<dt>
+<tt>mask</tt>
+</dt>
+<dl>   Land mask, true where there is land <br>
+<span class="type">[logical, pointer, dimension2]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END PUBLIC TYPES -->
+<a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<!-- END NAMELIST --><a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<hr>
+<h4>DIAGNOSTIC FIELDS</h4>
+<div>Diagnostic fields may be output to a netcdf file by
+              specifying the module name identifier <b></b> and the desired field names (given below) in
+               file <b>diag_table</b>. See the documentation for diag_manager.<pre>Diagnostic fields for module name identifier: <b></b>
+</pre>
+<div>
+<table cellpadding="0" border="0">
+<tr>
+<td>
+<pre>field name   <br>----------   <br>lonb   
+lon   
+latb   
+lat   
+</pre>
+</td><td>
+<pre>field description (units)<br>-------------------------<br>Longitude cell boundaries (degrees_E)
+Diagnostic manager longitude axis (degrees_E)
+Latitude cell boundaries (degrees_N)
+Diagnostic manager latitude axis (degrees_N)
+</pre>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<!-- END DIAGNOSTIC FIELDS -->
+<a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

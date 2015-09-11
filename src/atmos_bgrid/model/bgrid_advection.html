@@ -1,0 +1,356 @@
+<HTML>
+<TITLE>module bgrid_advection_mod</TITLE>
+<BODY BGCOLOR="#AABBCC" TEXT="#332211" >
+
+<DIV ALIGN="CENTER"> <FONT SIZE=-2>
+<A HREF="#INTERFACE">PUBLIC INTERFACE</A> / 
+<A HREF="#ROUTINES">ROUTINES</A> / 
+<A HREF="#NAMELIST">NAMELIST</A> / 
+<A HREF="#ERRORS">ERRORS</A> / 
+<A HREF="#NOTES">NOTES</A> 
+</FONT>
+<BR><BR></DIV><HR>
+
+<H2>module bgrid_advection_mod</H2>
+<A NAME="HEADER">
+<PRE>
+     <B>Contact:</B>   B. Wyman
+     <B>Reviewers:</B>
+     <B>Change history:</B> <A HREF="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS
+/atmos/bgrid/model/bgrid_advection.f90">WebCVS Log for bgrid_advection.f90</A>
+
+</PRE>
+</A><!-- END HEADER -->
+<!--------------------------------------------------------------------->
+<A NAME="OVERVIEW">
+<HR>
+<H4>OVERVIEW</H4>
+<!-- BEGIN OVERVIEW -->
+<PRE>
+
+    B-grid dynamical core module that performs vertical and horizontal
+    advection for temperature, prognostic tracers, and momentum.
+    Tracer advection may be followed by borrowing scheme to reduce
+    negative tracer values.
+
+</PRE>
+</A><!-- END OVERVIEW -->
+<!--------------------------------------------------------------------->
+<A NAME="DESCRIPTION">
+<!-- BEGIN DESCRIPTION -->
+<PRE>
+    This module performs the following:
+      - sets advection control parameters by reading namelist input
+        and querying the tracer manager (field table)
+      - vertical advection options include finite volume or
+        centered differencing schemes
+      - horizontal advection options only include centered 
+        differencing schemes
+      - negative tracer removal through local borrowing
+        (separate vertical and horizontal routines)
+
+</PRE>
+</A><!-- END DESCRIPTION -->
+<!--------------------------------------------------------------------->
+<A NAME="MODULES_USED">
+<HR>
+<H4>OTHER MODULES USED</H4>
+<!-- BEGIN MODULES_USED -->
+<PRE>
+
+   bgrid_horiz_mod
+   bgrid_vert_mod
+   bgrid_masks_mod
+   bgrid_prog_var_mod
+   bgrid_polar_filter_mod
+   bgrid_halo_mod
+   bgrid_change_grid_mod
+   vert_advection_mod
+   fms_mod
+   mpp_mod
+   field_manager_mod
+   tracer_manager_mod
+
+</PRE>
+</A><!-- END MODULES_USED -->
+<!--------------------------------------------------------------------->
+<A NAME="INTERFACE">
+<HR>
+<H4>PUBLIC INTERFACE</H4>
+<!-- BEGIN INTERFACE -->
+<PRE>
+
+   <b>use bgrid_advection_mod</b> [ ,only: advection_init,
+                                    advection,
+                                    advection_end  ]
+
+   <a href="#advection_init">advection_init</a>
+        Initialization routine for bgrid_advection_mod.
+        It is mandatory that this routine be called.
+        Read namelist parameters and initializes advection control parameters.
+
+   <a href="#advection">advection</a>
+        Computes vertical and horizontal advective tendencies and
+        performs tracer borrowing to remove negative tracer.
+
+   <a href="#advection_end">advection_end</a>
+        Optional termination routine for bgrid_advection_mod.
+        It is not mandatory that this routine be called.
+
+   NOTES
+
+     1) A namelist interface called <a href="#NAMELIST">bgrid_advection_nml</a> is read
+        from file <b>input.nml</b>.
+     2) Advection parameters for individual tracers may set in the
+        tracer_manager's field_table.
+
+</PRE>
+</A><!-- END INTERFACE -->
+<!--------------------------------------------------------------------->
+<A NAME="ROUTINES">
+<HR>
+<H4>PUBLIC ROUTINES</H4>
+<!-- BEGIN ROUTINES -->
+<PRE>
+<a name="advection_init">
+
+<b>call advection_init</b> ( Hgrid )
+
+DESCRIPTION
+  This routine reads the bgrid_advection_nml namelist, queries the tracer manager
+  for advection and filling scheme options, and then defines advection control 
+  parameters (stored internally in advec_control_type).
+  This routine must be called before calling subroutine advection.
+
+INPUT
+   Hgrid    horizontal grid constants  <FONT SIZE=-1 COLOR="#000099">[horiz_grid_type]</FONT>
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+<a name="advection">
+
+<b>call advection</b> (  Pfilt, Hgrid, Vgrid, Masks,
+                    pfilt_opt, dt, dpde_old, dpde,
+                    few, fns, etadot, u, v, t, Var, Var_dt )
+
+DESCRIPTION
+   Updates the prognostic variable tendencies with vertical and horizontal
+   advective tendencies for the given mass fluxes. The vertical and horizontal
+   scheme used is controlled by namelist and field_table (tracers only).
+   Prognostic tracer tendencies are updated to reduce negative tracer values.
+
+INPUT
+   Pfilt      polar filter constants  <FONT SIZE=-1 COLOR="#000099">[pfilt_control_type]</FONT>
+   Vgrid      vertical grid constants <FONT SIZE=-1 COLOR="#000099">[vert_grid_type]</FONT>
+   Masks      grid masking constants  <FONT SIZE=-1 COLOR="#000099">[grid_mask_type]</FONT>
+   pf_opt     polar filter option flag <FONT SIZE=-1 COLOR="#000099">[integer]</FONT>
+   dt         adjustment time step <FONT SIZE=-1 COLOR="#000099">[real]</FONT>
+   dpde_old   Pressure thickness of model layers at the start of the advective time step.
+                 <FONT SIZE=-1 COLOR="#000099">[real, dimension(Hgrid%ilb:,Hgrid%jlb:,:)]</FONT>
+   dpde       The current pressure thickness of model layers (updated for the current time step).
+                 <FONT SIZE=-1 COLOR="#000099">[real, dimension(Hgrid%ilb:,Hgrid%jlb:,:)]</FONT>
+   u, v, t    Prognostic variables at the end of the start of the current advective time step.
+              Note that tracers have not been updated since the last advective time step,
+              therefore, r = Var%r + dt*Var_dt%r
+                 <FONT SIZE=-1 COLOR="#000099">[real, dimension(Hgrid%ilb:,Hgrid%jlb:,:)]</FONT>
+   Var        Prognostic variables at the start of the current atmospheric/dynamics time step,
+              Values updated for the current time step are computed as:
+              uc = Var%u + dt*Var_dt%u. See note for tracers above.
+                 <FONT SIZE=-1 COLOR="#000099">[prog_var_type]</FONT>
+
+INPUT/OUTPUT
+   Hgrid      horizontal grid constants <FONT SIZE=-1 COLOR="#000099">[horiz_grid_type]</FONT>
+   few, fns   zonal, meridional mass fluxes (Pa-m2/s) (summation for the current advection time step)
+                 <FONT SIZE=-1 COLOR="#000099">[real, dimension(Hgrid%ilb:,Hgrid%jlb:,:)]</FONT>
+   etadot     vertical mass flux (Pa/s) (summation for the current advection time step)
+                 <FONT SIZE=-1 COLOR="#000099">[real, dimension(Hgrid%ilb:,Hgrid%jlb:,:)]</FONT>
+   Var_dt     prognostic variable tendencies, accumulated since the variables were updated in Var
+                 <FONT SIZE=-1 COLOR="#000099">[prog_var_type]</FONT>
+              
+<!------------------------>
+<a name="advection_end">
+
+<b>call advection_end</b>
+
+DESCRIPTION
+  This routine terminates the bgrid_advection module.
+  It is not mandatory that this routine be called.
+  It releases a minimal amount of global storage used
+  and calls other termination routines.
+  There are no arguments to this routine.
+
+</PRE>
+</A><!-- END ROUTINES -->
+<!--------------------------------------------------------------------->
+<A NAME="NAMELIST">
+<HR>
+<H4>NAMELIST</H4>
+<!-- BEGIN NAMELIST -->
+<PRE>
+
+ <b>&bgrid_advection_nml</b>
+
+  vert_advec_scheme_wind      The vertical advection scheme.
+  vert_advec_scheme_temp      Possible values are: 'NONE', 'SECOND_CENTERED', 'FOURTH_CENTERED',
+  vert_advec_scheme_tracer    'NONE' - turns off vertical advection
+                              'SECOND_CENTERED' - second order centered differencing 
+                                                  assuming equally-spaced model levels
+                              'FOURTH_CENTERED' - fourth order centered differencing
+                                                  assuming equally-spaced model levels
+                              'SECOND_CENTERED_WTS' - second order centered differencing 
+                                                      assuming unequally-spaced model levels
+                              'FOURTH_CENTERED_WTS' - fourth order centered differencing
+                                                      assuming unequally-spaced model levels
+                                                      (more costly than assuming equal spacing)
+                              'FINITE_VOLUME_LINEAR'    - finite volume scheme using piecewise linear scheme (van Leer)
+                              'FINITE_VOLUME_PARABOLIC' - finite volume scheme using piecewise parabolic scheme (PPM)
+                              Using finite volume schemes for momentum has not been tested and may produce poor results.
+                                <FONT SIZE=-1 COLOR="#000099">[character, default: 'SECOND_CENTERED']</FONT>
+
+  horiz_advec_scheme_wind     The horizontal advection scheme.
+  horiz_advec_scheme_temp     Possible values are 'NONE', 'SECOND_CENTERED', 'FOURTH_CENTERED'.
+  horiz_advec_scheme_tracer     <FONT SIZE=-1 COLOR="#000099">[character, default: 'SECOND_CENTERED']</FONT>
+
+  advec_weight_wind         Weights used for modified Euler-backward time differencing
+  advec_weight_temp         (i.e., when the scheme is SECOND_CENTERED or FOURTH_CENTERED).
+  advec_weight_tracer            0.0 = full Euler-forward (not recommended)
+                                 1.0 = full Euler-backward
+                              <FONT SIZE=-1 COLOR="#000099">[real, default: advec_weight__=0.70]</FONT>
+
+  num_fill_pass             The number of successive repetitions of the tracer borrowing scheme.
+                            This value applies to both the horizontal and vertical schemes.
+                            Use the field_table to independently modify the number of horizontal
+                            and vertical passes.
+                              <FONT SIZE=-1 COLOR="#000099">[integer, default: num_fill_pass = 1]</FONT>
+
+  compute_vert_wind_flux    If TRUE then the vertical flux ("sigma-dot") for momentum 
+                            is recomputed using the horizontal momentum fluxes.
+                            If FALSE then the vertical flux is determined by averaging
+                            the vertical flux from the temperature grid.
+                              <FONT SIZE=-1 COLOR="#000099">[logical, default: .FALSE.]</FONT>
+
+</PRE>
+</A><!-- END NAMELIST -->
+<!------------------------------------------------------------------ -->
+<A NAME="FIELD_TABLE">
+<HR>
+<H4>FIELD_TABLE OPTIONS</H4>
+<!-- BEGIN FIELD_TABLE -->
+
+<p>Advection Methods:
+<ul><li><i>advec_horiz</i>
+    <li><i>advec_vert</i>
+</ul>
+
+<p>Advection Schemes:
+<ul><li><i>second_centered</i> -- second-order centered differencing
+    <li><i>fourth_centered</i> -- fourth-order centered differencing
+    <li><i>second_centered_wts</i> -- second-order centered differencing with weighting for unequal
+                                      grid spacing (advec_vert only)
+    <li><i>fourth_centered_wts</i> -- fourth-order centered differencing with weighting for unequal
+                                      grid spacing (advec_vert only)
+    <li><i>finite_volume_linear</i> -- finite volume piecewise linear (advec_vert only)
+    <li><i>finite_volume_parabolic</i> -- finite volume piecewise parabolic (advec_vert only)
+    <li><i>none</i> -- turns off advection
+</ul>
+
+<p>Advection Parameters:
+<ul><li><i>wt</i> [real] -- same as advec_weight_tracer
+</ul>
+
+<p>Examples:
+<PRE>
+      'advec_horiz', 'fourth_centered', 'wt=.80'
+      'advec_vert',  'finite_volume_parabolic'
+</PRE>
+
+<p>Filling Methods:
+<ul><li><i>filling</i>
+</ul>
+
+<p>Filling Schemes:
+<ul><li><i>local</i> -- turns on local filling/borrowing
+    <li><i>none</i> -- turns off filling/borrowing
+</ul>
+
+<p>Filling Parameters:
+<ul><li><i>hp</i> [integer] -- number of horizontal filling passes
+    <li><i>vp</i> [integer] -- number of vertical filling passes
+</ul>
+
+<p>Examples:
+<PRE>
+      'filling', 'linear', 'hp=2,vp=1'
+      'filling', 'none'
+</PRE>
+
+</A><!-- END FIELD_TABLE -->
+<!--------------------------------------------------------------------->
+<A NAME="ERRORS">
+<HR>
+<H4>ERROR MESSAGES</H4>
+<!-- BEGIN ERRORS -->
+<PRE>
+
+FATAL errors in bgrid_advection_mod
+
+   horizontal finite volume schemes are not implemented with this release
+      Sorry, but the horizontal finite volume schemes are still in development.
+      Currently only vertical finite volume scheme have been implemented.
+
+   E-B weight out of range [0,1]
+      You have specified a weight for the modified Euler-backward scheme
+      that is not in the range 0.0 to 1.0.  Your incorrect value may have
+      been input either through the namelist or the field_table.
+
+   invalid filling scheme, .....
+      You have specified an invalid tracer filling scheme. 
+      This value is input as the filling method in the field_table.
+      Possible values are: "LOCAL" or "NONE".
+
+   advection scheme not supported
+      You have specified an invalid horizontal advection scheme.
+
+   invalid advection scheme, .....
+      You have specified an invalid horizontal or vertical advection scheme.
+      Check your input values in the namelist and field_table.
+
+   invalid advection scheme number
+      An invalid advection scheme was detected.
+      Check your input values in the namelist and field_table.
+
+   etadot cannot be recomputed for the eta coordinate
+      The namelist option "compute_vert_wind_flux=.TRUE." cannot be used
+      with the eta coordinate.
+
+</PRE>
+</A><!-- END ERRORS -->
+<!--------------------------------------------------------------------->
+<A NAME="NOTES">
+<HR>
+<H4>NOTES</H4>
+<!-- BEGIN NOTES -->
+<PRE>
+
+     None.
+
+</PRE>
+</A><!-- END NOTES -->
+<!--------------------------------------------------------------------->
+<A NAME="PLANS">
+<HR>
+<H4>FUTURE PLANS</H4>
+<!-- BEGIN PLANS -->
+<PRE>
+
+1) Horizontal finite volume schemes for tracers (and possibly temperature).
+2) Longer advective time steps for tracers using finite volume schemes.
+3) Move tracer borrowing code to separate module.
+
+</PRE>
+</A><!-- END PLANS -->
+<!--------------------------------------------------------------------->
+
+<HR>
+</BODY>
+</HTML>

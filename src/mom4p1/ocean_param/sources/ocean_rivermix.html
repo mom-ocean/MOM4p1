@@ -1,0 +1,438 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module ocean_rivermix_mod</title>
+<link type="text/css" href="http://data1.gfdl.noaa.gov/~fms/style/docbook.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module ocean_rivermix_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Stephen.Griffies@noaa.gov">   S.M. Griffies </a>,&nbsp;
+    <a href="mailto:Matthew.Harrison@noaa.gov">   M.J. Harrison </a>,&nbsp;
+    <a href="mailto:Keith.Dixon@noaa.gov">   K.W. Dixon </a>
+<br>
+<b>Reviewers:&nbsp;</b>
+<br>
+<b>Change History:&nbsp;</b><a href="http://cobweb.gfdl.noaa.gov/fms-cgi-bin/viewcvs/FMS/ocean/mom4p1/ocean_param/sources">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   Tracer source from discharging river with depth or 
+   mixing rivers with depth. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   Compute thickness weighted tendency [tracer*rho*meter/sec]
+   associated with discharge of river tracer content 
+   over a user defined column of ocean points. Points are
+   selected based on whether river flow into a point is nonzero.
+   Contribution added to tracer source array. </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>      axis_utils_mod<br>       constants_mod<br>    diag_manager_mod<br>             fms_mod<br>     mpp_domains_mod<br>             mpp_mod<br>   ocean_domains_mod<br>ocean_parameters_mod<br>     ocean_types_mod<br> ocean_workspace_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#ocean_rivermix_init">ocean_rivermix_init</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#rivermix">rivermix</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#river_discharge_tracer">river_discharge_tracer</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#runoff_calving_discharge_tracer">runoff_calving_discharge_tracer</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#river_kappa">river_kappa</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#river_diagnostics">river_diagnostics</a>:</dt>
+<dd></dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="ocean_rivermix_init"></a>
+<h4>ocean_rivermix_init</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initial set up for mixing of tracers at runoff points. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="rivermix"></a>
+<h4>rivermix</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   This subroutine computes one or all of the following: 
+   <br>
+<br>
+   (1) Thickness weighted and rho weighted tracer source associated 
+   with river tracer content discharged into a vertical column of ocean 
+   tracer cells. This is done if river_discharge=.true.
+   <br>
+<br>
+   (2) Enhance vertical diffusivity at river mouths. 
+   This is done if river_diffuse_temp=.true. or 
+   river_diffuse_salt=.true. 
+   <br>
+<br>
+   Doing one or both are useful for models with fine vertical  
+   resolution, where discharging river content to top cell 
+   is often not numerically suitable nor physically relevant.
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="river_discharge_tracer"></a>
+<h4>river_discharge_tracer</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute thickness weighted tracer source [tracer*m/s]
+   associated with the discharge of tracer from a river over 
+   a vertical column whose thickness is set by River_insertion_thickness 
+   and whose horizontal location is given by the river array. 
+   <br>
+<br>
+   Jan 2005: converted to mass weighting for use with non-Boussinesq
+   pressure-like coodinates. 
+   <br>
+<br>
+   This subroutine is maintained for legacy purposes.
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="runoff_calving_discharge_tracer"></a>
+<h4>runoff_calving_discharge_tracer</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute thickness weighted tracer source [tracer*m/s]
+   associated with the discharge of tracer from runoff or calving over 
+   a vertical column whose thickness is set by either runoff_insertion_thickness 
+   or calving_insertion_thickness, and whose horizontal location is given 
+   by the runoff or calving array. 
+   <br>
+<br>
+   Jan 2005: converted to mass weighting for use with non-Boussinesq
+   pressure-like coodinates. 
+   <br>
+<br>
+   Feb 2009: now use calving_tracer_flux and runoff_tracer_flux, as the 
+   land model carries information about the tracer content in the 
+   liquid and solid runoff.  
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="river_kappa"></a>
+<h4>river_kappa</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   This subroutine enhances the vertical diffusivity kappa over 
+   a vertical column whose thickness is set by river_diffusion_thickness 
+   and whose horizontal location is given by the rmask array.
+   Note that rmask can be &gt; 0 even if river=0 in the case when 
+   use virtual salt flux.   
+   The enhanced diffusivity is maximum at the top cell and is linearly 
+   interpolated to the normal diffusivity at the depth set by 
+   river_diffusion_thickness </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="river_diagnostics"></a>
+<h4>river_diagnostics</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   For sending some diagnostics. </dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<!-- END PUBLIC TYPES --><a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<hr>
+<h4>NAMELIST</h4>
+<div>
+<b>&amp;ocean_rivermix_nml</b>
+<br>
+<br>
+<div>
+<dl>
+<dt>
+<tt>use_this_module</tt>
+</dt>
+<dl>   Must be true to enable this module.  Default=.true., since
+   this is the only way that tracer in river water enters the ocean. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>discharge_combine_runoff_calve</tt>
+</dt>
+<dl>   Set discharge_combine_runoff_calve=.true. to discharge combined tracer carried
+   by liquid and solid runoff. This approach is sensible when ocean 
+   assigns a tracer content to the liquid and solid runoff fields.  
+   The alternative is to have a land model that provides information about
+   the tracer coming into the ocean from land water, in which case it is 
+   preferable to set discharge_combine_runoff_calve=.false., so to do the runoff 
+   and calving separately.  
+   Default discharge_combine_runoff_calve=.true. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>river_insertion_thickness</tt>
+</dt>
+<dl>   Thickness of the column over which to insert tracers from 
+   rivers. Default river_insertion_thickness=0.0 (all in top). <br>
+<span class="type">[real, units: meter]</span>
+</dl>
+<dt>
+<tt>runoff_insertion_thickness</tt>
+</dt>
+<dl>   Thickness of the column over which to insert tracers carried by 
+   liquid runoff. Default runoff_insertion_thickness=0.0 (all in top). <br>
+<span class="type">[real, units: meter]</span>
+</dl>
+<dt>
+<tt>calving_insertion_thickness</tt>
+</dt>
+<dl>   Thickness of the column over which to insert tracers carried by 
+   solid runoff. Default calving_insertion_thickness=0.0 (all in top). <br>
+<span class="type">[real, units: meter]</span>
+</dl>
+<dt>
+<tt>river_diffusion_thickness</tt>
+</dt>
+<dl>   Thickness of the column over which to diffuse tracers from 
+   rivers. <br>
+<span class="type">[real, units: meter]</span>
+</dl>
+<dt>
+<tt>river_diffusivity</tt>
+</dt>
+<dl>   Vertical diffusivity enhancement at river mouths which is applied 
+   to a depth of river_diffusion_thickness, with linear tapering to zero
+   enhancement from the ocean surface to river_diffusion_thickness. <br>
+<span class="type">[real, units: m^2/s]</span>
+</dl>
+<dt>
+<tt>river_diffuse_temp</tt>
+</dt>
+<dl>   Logical to determine if enhance vertical diffusion of temp at river mouths <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>river_diffuse_salt</tt>
+</dt>
+<dl>   Logical to determine if enhance vertical diffusion of salt and all other 
+   passive tracers at river mouths <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>debug_this_module</tt>
+</dt>
+<dl>   For debugging <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>debug_all_in_top_cell</tt>
+</dt>
+<dl>   For debugging, by placing all in top cell, regardless value of 
+   river_insertion_thickness. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>debug_this_module_heat</tt>
+</dt>
+<dl>   For debugging, print global sum of heating rate by river water. <br>
+<span class="type">[logical]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END NAMELIST -->
+<a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<a name="REFERENCES"></a>
+<hr>
+<h4>REFERENCES</h4>
+<!-- BEGIN REFERENCES -->
+<div>
+<ol>
+<li>   S.M. Griffies, M.J. Harrison, R. C. Pacanowski, and A. Rosati
+   A Guide to MOM4 (2003)
+   NOAA/Geophysical Fluid Dynamics Laboratory </li>
+</ol>
+</div>
+<br>
+<!-- END REFERENCES -->
+<a name="COMPILER SPECIFICS"></a>
+<hr>
+<h4>COMPILER SPECIFICS</h4>
+<!-- BEGIN COMPILER SPECIFICS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END COMPILER SPECIFICS -->
+<a name="PRECOMPILER OPTIONS"></a>
+<hr>
+<h4>PRECOMPILER OPTIONS</h4>
+<!-- BEGIN PRECOMPILER OPTIONS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END PRECOMPILER OPTIONS -->
+<a name="LOADER OPTIONS"></a>
+<hr>
+<h4>LOADER OPTIONS</h4>
+<!-- BEGIN LOADER -->
+<div>None.<br>
+<br>
+</div>
+<!-- END LOADER OPTIONS -->
+<a name="TEST PROGRAM"></a>
+<hr>
+<h4>TEST PROGRAM</h4>
+<!-- BEGIN TEST PROGRAM -->
+<div>None.<br>
+</div>
+<br>
+<!-- END TEST PROGRAM -->
+<a name="KNOWN BUGS"></a>
+<hr>
+<h4>KNOWN BUGS</h4>
+<!-- BEGIN KNOWN BUGS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END KNOWN BUGS -->
+<a name="NOTES"></a>
+<hr>
+<h4>NOTES</h4>
+<!-- BEGIN NOTES -->
+<div>   Algorithm ensures total tracer is conserved.  Note that volume/mass is 
+   modified by river water within the eta-equation using the big leap-frog. </div>
+<br>
+<!-- END NOTES -->
+<a name="FUTURE PLANS"></a>
+<hr>
+<h4>FUTURE PLANS</h4>
+<!-- BEGIN FUTURE PLANS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END FUTURE PLANS -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

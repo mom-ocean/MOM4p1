@@ -1,0 +1,278 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module ocean_polar_filter_mod</title>
+<link type="text/css" href="http://data1.gfdl.noaa.gov/~fms/style/docbook.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module ocean_polar_filter_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Mike.Spelman@noaa.gov">   Mike Spelman </a>,&nbsp;
+    <a href="mailto:Stephen.Griffies@noaa.gov">   Stephen M. Griffies </a>
+<br>
+<b>Reviewers:&nbsp;</b>
+<br>
+<b>Change History:&nbsp;</b><a href="http://cobweb.gfdl.noaa.gov/fms-cgi-bin/viewcvs/FMS/ocean/mom4p1/ocean_param/sources">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   Provide polar filtering of fields for use with spherical grid. 
+   Set up only for filtering tracers with 1D domain decomposition. 
+   This code is no longer supported by GFDL scientists. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   This module provides polar filtering of tracers for use 
+   with spherical coordinate grids.  Should not be used with 
+   non-spherical grids. This code is provided for legacy purposes
+   to allow modelers the opportunity to test their older
+   spherical models in mom4 prior to moving to a generalized 
+   horizontal grid, such as the tripolar. 
+   <br>
+<br>
+   Polar filtering has many well known problems, especially 
+   when filtering the velocity and/or free surface fields. 
+   Hence, this module only provides for filtering the tracer
+   field.  Even so, its use is discouraged for those building 
+   new ocean model configurations.  Most notably, this scheme
+   DOES NOT conserve total tracer.
+   <br>
+<br>
+   This scheme has been implemented ONLY for cases with 1D domain
+   decomposition (constant latitude rows).  Paralellization in 
+   2D is not available with this implementation. 
+   <br>
+<br>
+   There are two methods for polar filtering: (1) polar filter 
+   the time tendencies (as in mom3) and (2) polar filtering the 
+   fields themselves (as in mom1).  The mom1 method is preferred
+   at GFDL when running with an ice model.  
+   <br>
+<br> 
+</div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>      axis_utils_mod<br>       constants_mod<br>    diag_manager_mod<br>             fms_mod<br>     mpp_domains_mod<br>             mpp_mod<br>   ocean_domains_mod<br>ocean_parameters_mod<br>     ocean_types_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#ocean_polar_filter_init">ocean_polar_filter_init</a>:</dt>
+<dd>   Initialize polar filtering module. </dd>
+<dt>
+<a href="#polar_filter_tracers">polar_filter_tracers</a>:</dt>
+<dd>   set up input needed for symmetric finite impulse response 
+   filtering at the specified high latitude row. </dd>
+<dt>
+<a href="#fast_fir">fast_fir</a>:</dt>
+<dd>   Finite impulse response filter with [.25, .5, .25] weights
+   using built in symmetric boundary conditions at land </dd>
+<dt>
+<a href="#set_polar_filtering_indices">set_polar_filtering_indices</a>:</dt>
+<dd>   Set up model indices for filtering polar latitudes </dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="ocean_polar_filter_init"></a>
+<h4>ocean_polar_filter_init</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd></dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="polar_filter_tracers"></a>
+<h4>polar_filter_tracers</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd></dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="fast_fir"></a>
+<h4>fast_fir</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   input:
+   <br>
+<br>
+   f     = functions to be filtered
+   <br>
+<br>
+   rmask = mask. must be (1.0,0.0) on (ocean,land) points
+   <br>
+<br>
+   num   = number of filter applications
+   <br>
+<br>
+   output:
+   <br>
+<br>
+   f    = filtered quantities
+   <br>
+<br>
+   author:  r.c.pacanowski   e-mail  Ronald.Pacanowski@noaa.gov
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="set_polar_filtering_indices"></a>
+<h4>set_polar_filtering_indices</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd></dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<!-- END PUBLIC TYPES --><a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<hr>
+<h4>NAMELIST</h4>
+<div>
+<b>&amp;ocean_polar_filter_nml</b>
+<br>
+<br>
+<div>
+<dl>
+<dt>
+<tt>use_this_module</tt>
+</dt>
+<dl>   Must be true to use this module. Default is false.
+   <br>
+<br> 
+<br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>polar_filter_field</tt>
+</dt>
+<dl>   Polar filter the tracer field (default method) <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>polar_filter_tendency</tt>
+</dt>
+<dl>   Polar filter the time tendency of tracers <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>rjfrst</tt>
+</dt>
+<dl>   Southern latitude below which apply no filtering <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>filter_reflat_s</tt>
+</dt>
+<dl>   Southern latitude to which we reference filtering <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>filter_reflat_n</tt>
+</dt>
+<dl>   Northern latitude to which we reference filtering <br>
+<span class="type">[real]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END NAMELIST -->
+<a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

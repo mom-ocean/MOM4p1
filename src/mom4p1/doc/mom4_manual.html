@@ -1,0 +1,2978 @@
+<html>
+<head>
+  <meta name="generator" content=
+  "HTML Tidy for Linux/x86 (vers 1 September 2005), see www.w3.org">
+  <meta http-equiv="Content-Type" content=
+  "text/html; charset=us-ascii">
+
+  <title>The FMS MOM4 User Guide</title>
+  <link rel="stylesheet" href=
+  "http://data1.gfdl.noaa.gov/~fms/style/docbook_jason.css" type=
+  "text/css">
+  <meta name="generator" content="DocBook XSL Stylesheets V1.64.1">
+</head>
+
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084"
+alink="#0000FF">
+  <div class="article" lang="en">
+    <div class="titlepage">
+      <div>
+        <div>
+          <h1 class="title"><a name="id2440055"></a>The FMS MOM4
+          User Guide</h1>
+        </div>
+
+        <div>
+          <div class="author">
+            <h3 class="author"><span class=
+            "firstname">Stephen</span> <span class=
+            "surname">Griffies</span></h3><a href="" onclick=
+            "javascript:window.location='mai'+'lt'+'o:'+'Stephen.Griffies'+'%40'+'noaa.gov'"
+            onmouseover=
+            "javascript:window.status='send ema'+'il';return true;"
+            onmouseout=
+            "javascript:window.status='';return true;">Stephen.Griffies<img border="0"
+            src=
+            "http://data1.gfdl.noaa.gov/~fms/images/atgreen.png"
+            alt="&amp;#64;" style=
+            "display:inline; height:.8em;">noaa.gov</a>
+          </div>
+        </div>
+
+        <div>
+          <div class="author">
+            <h3 class="author"><span class="firstname">Niki</span>
+            <span class="surname">Zadeh</span></h3><a href=""
+            onclick=
+            "javascript:window.location='mai'+'lt'+'o:'+'Niki.Zadeh'+'%40'+'noaa.gov'"
+            onmouseover=
+            "javascript:window.status='send ema'+'il';return true;"
+            onmouseout=
+            "javascript:window.status='';return true;">Niki.Zadeh<img border="0"
+            src=
+            "http://data1.gfdl.noaa.gov/~fms/images/atgreen.png"
+            alt="&amp;#64;" style=
+            "display:inline; height:.8em;">noaa.gov</a>
+          </div>
+        </div>
+      </div>
+      <hr>
+    </div>
+
+    <div xmlns="http://www.w3.org/TR/xhtml1/transitional" class=
+    "toc">
+      <p class="subtitle"><b>Table of Contents</b></p>
+
+      <dl>
+        <dt xmlns=""><span class="section"><a href=
+        "#Introduction">1. Introduction</a></span></dt>
+
+        <dd xmlns="">
+          <dl>
+            <dt><span class="section"><a href=
+            "#What%20is%20MOM">1.1. What is MOM?</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#MOM4%20Releases">1.2. MOM4 Releases</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#MOM4%20registration">1.3. MOM4
+            registration</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#MOM4%20email%20list">1.4. MOM4 email
+            list</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#The%20MOM4%20community">1.5. The MOM4
+            community</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#Efficiency%20and%20Portability">1.6. Efficiency and
+            Portability</a></span></dt>
+          </dl>
+        </dd>
+
+        <dt xmlns=""><span class="section"><a href=
+        "#An%20Outline%20of%20MOM4">2. An Outline of
+        MOM4</a></span></dt>
+
+        <dd xmlns="">
+          <dl>
+            <dt><span class="section"><a href="#MOM4%20docs">2.1.
+            Documentation</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#Embedded%20Documentation">2.2. Embedded
+            Documentation</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#MOM4%20Characteristics">2.3. MOM4
+            Characteristics</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#mom4%20within%20fms">2.4. MOM4 and
+            FMS</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#MOM4%20test%20cases">2.5. MOM4 test
+            cases</a></span></dt>
+          </dl>
+        </dd>
+
+        <dt xmlns=""><span class="section"><a href=
+        "#Contributing%20to%20MOM4">3. Contributing to
+        MOM4</a></span></dt>
+
+        <dt xmlns=""><span class="section"><a href=
+        "#obtaining%20source%20code%20and%20data%20sets">4. Source
+        code and data sets</a></span></dt>
+
+        <dd xmlns="">
+          <dl>
+            <dt><span class="section"><a href=
+            "#source%20code%20and%20data%20sets">4.1. Obtaining
+            source code and data sets</a></span></dt>
+
+            <dt><span class="section"><a href="#data%20sets">4.2.
+            Description of the data sets</a></span></dt>
+          </dl>
+        </dd>
+
+        <dt xmlns=""><span class="section"><a href=
+        "#Setting%20up%20an%20experiment%20with%20MOM4">5. Setting
+        up an experiment with MOM4</a></span></dt>
+
+        <dd xmlns="">
+          <dl>
+            <dt><span class="section"><a href=
+            "#General%20comments">5.1. General
+            comments</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#Creation%20of%20the%20ocean/ice%20grid%20(mosaics)">5.2.
+            Creation of the ocean/ice grid
+            (mosaics)</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#Creation%20of%20the%20ocean/ice%20grid%20(pre-mosaics)">
+            5.3. Creation of the ocean/ice grid
+            (pre-mosaics)</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#The%20exchange%20grid%20for%20coupled%20models">5.4.
+            The exchange grid for coupled models</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#Initial%20and%20Boundary%20Conditions">5.5. Initial
+            and Boundary Conditions</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#Time-related%20issues%20in%20forcing%20files">5.6.
+            Time-related issues in forcing files</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#Scalability%20of%20MOM4%20code">5.7. Scalability of
+            MOM4 code</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#Minimizing%20idle%20processors">5.8. Minimizing idle
+            processors</a></span></dt>
+          </dl>
+        </dd>
+
+        <dt xmlns=""><span class="section"><a href=
+        "#Postprocessing%20regrid%20tool">6. Postprocessing regrid
+        tool</a></span></dt>
+
+        <dd xmlns="">
+          <dl>
+            <dt><span class="section"><a href=
+            "#Introduction%20to%20Postprocessing">6.1. Introduction
+            to Postprocessing</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#How%20to%20use%20the%20regridding%20tool">6.2. How to
+            use the regridding tool</a></span></dt>
+          </dl>
+        </dd>
+
+        <dt xmlns=""><span class="section"><a href=
+        "#preparing%20the%20runscript">7. Preparing the
+        runscript</a></span></dt>
+
+        <dd xmlns="">
+          <dl>
+            <dt><span class="section"><a href="#runscript">7.1. The
+            runscript</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#the%20diagnostics%20table">7.2. The diagnostics
+            table</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#the%20field%20table">7.3. The field
+            table</a></span></dt>
+
+            <dt><span class="section"><a href="#mppnccombine">7.4.
+            mppnccombine</a></span></dt>
+          </dl>
+        </dd>
+
+        <dt xmlns=""><span class="section"><a href=
+        "#examining%20the%20output">8. Examining the
+        output</a></span></dt>
+
+        <dd xmlns="">
+          <dl>
+            <dt><span class="section"><a href=
+            "#sample%20model%20output">8.1. Sample model
+            output</a></span></dt>
+
+            <dt><span class="section"><a href=
+            "#analysis%20tools">8.2. Analysis tools</a></span></dt>
+          </dl>
+        </dd>
+      </dl>
+    </div>
+
+    <div class="literallayout">
+      <p><br>
+      <br>
+      <br></p>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "Introduction"></a>1.&nbsp;Introduction</h2>
+          </div>
+        </div>
+      </div>
+
+      <p>The purpose of this section is to provide an overview of
+      MOM and the contents of this web page.</p>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "What is MOM"></a>1.1.&nbsp;What is MOM?</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>The Modular Ocean Model (MOM) is a numerical
+        representation of the ocean's hydrostatic primitive
+        equations. It is designed primarily as a tool for studying
+        the global ocean climate system, as well as capabilities
+        for regional and coastal applications. MOM4 is the latest
+        version of the GFDL ocean model whose origins date back to
+        the pioneering work of Kirk Bryan and Mike Cox in the
+        1960s-1980s. It is developed and supported by researchers
+        at NOAA's Geophysical Fluid Dynamics Laboratory (<a href=
+        "http://www.gfdl.noaa.gov" target="_top">GFDL</a>), with
+        critical contributions also provided by researchers
+        worldwide. The purpose of this web guide is to provide
+        general information about MOM4, and particular information
+        for how to download and run the code. <a href=
+        "./MOM_history.pdf" target="_top">Here is a table</a>
+        summarizing the algorithmic history of MOM.</p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "MOM4 Releases"></a>1.2.&nbsp;MOM4 Releases</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>MOM4 has had the following releases (note that MOM4p1
+        releases are distinguished by release dates).</p>
+
+        <div class="itemizedlist">
+          <ul type="disc">
+            <li>MOM4p0a: January 2004</li>
+
+            <li>MOM4p0b: March 2004</li>
+
+            <li>MOM4p0c: August 2004</li>
+
+            <li>MOM4p0d: May 2005</li>
+
+            <li>MOM4p1: 28 September 2007</li>
+
+            <li>MOM4p1: 28 December 2007</li>
+
+            <li>MOM4p1: Dec 2009</li>
+          </ul>
+        </div>For each release, we aim to update MOM4 by enhancing
+        features and documentation, and correcting bugs. Each
+        version is generally compatible with the previous versions.
+        However, as updates are made, we cannot guarantee that all
+        features will bitwise agree across releases. Nonetheless,
+        we do maintain a small selection of ``bitwise-legacy'' code
+        to allow for certain modules to bitwise agreement across
+        versions. As the maintenance of bitwise-legacy features
+        represents an onerous task (e.g., bits change when A+B is
+        altered to B+A), we recommend that researchers beginning
+        new projects start with the most recent version, and that
+        researchers with mature projects carefully test the new
+        code prior to moving forward. Note that each of the MOM4
+        releases is documented on this web page.
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "MOM4 registration"></a>1.3.&nbsp;MOM4
+              registration</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>We maintain the MOM4 source code and associated datasets
+        at <a href="http://fms.gfdl.noaa.gov/" target=
+        "_top">GForge</a>. MOM4 users are required to <a href=
+        "https://fms.gfdl.noaa.gov/gf/account/?action=UserAdd"
+        target="_top">register</a> at the <a href=
+        "http://fms.gfdl.noaa.gov/" target="_top">GFDL GForge
+        location</a>. Users need to register only once to get both
+        the source code and datasets of MOM4. Registered users then
+        need to <a href=
+        "https://fms.gfdl.noaa.gov/extra/request-project-access.cgi"
+        target="_top">request access</a> to the relevant project
+        (MOM4p1 is the most recent MOM4 project).</p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "MOM4 email list"></a>1.4.&nbsp;MOM4 email list</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>Email concerning MOM4 should be directed to the
+        MOM4-email list located at <a href="" onclick=
+        "javascript:window.location='mai'+'lt'+'o:'+'oar.gfdl.MOM4p1'+'%40'+'noaa.gov'"
+        onmouseover=
+        "javascript:window.status='send ema'+'il';return true;"
+        onmouseout=
+        "javascript:window.status='';return true;">oar.gfdl.MOM4p1<img border="0"
+        src="http://data1.gfdl.noaa.gov/~fms/images/atgreen.png"
+        alt="&amp;#64;" style=
+        "display:inline; height:.8em;">noaa.gov</a>. All questions,
+        comments, and suggestions are to be referred to this list.
+        An archive of all emails is maintained at the MOM4 <a href=
+        "https://fms.gfdl.noaa.gov/gf/project/mom4p1/mailman/?action=index"
+        target="_top">email archive</a>. Note that by registering
+        at GForge to access the code, you are automatically
+        subscribed to the email list.</p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "The MOM4 community"></a>1.5.&nbsp; The MOM4
+              community</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>Since its release in January 2004, there have been
+        hundreds of registrations with the MOM4 distribution, with
+        each registration generally representing more than one
+        user. This is a sizable user community. This community has
+        proven to be a great resource, especially for users new to
+        MOM4, and those with portability questions, some of which
+        are beyond the abilities of GFDL scientists to answer.</p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "Efficiency and Portability"></a>1.6.&nbsp;Efficiency
+              and Portability</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>The MOM4 team aims to provide code that is efficient,
+        flexible, and transparent for use across a broad range of
+        computer platforms. Balancing these aims is not always
+        simple. For example, some of the most efficient code is
+        also the least transparent. The MOM4 developers are
+        scientists whose main concern is to support MOM4 as a tool
+        for science research. This focus then leads us to weight
+        transparency and portability over efficiency. However, we
+        readily make efficiency modifications that are of a general
+        nature, so please do feel free to volunteer any such
+        changes.</p>
+
+        <p>Given the above aims, we have continued to support one
+        avenue for code efficiency involving the allocation of
+        arrays. MOM4 can be compiled in two ways: with static
+        allocation of arrays or dynamic allocation. Static
+        allocation is enabled at compile time via the
+        cpp-preprocessor option MOM4_STATIC_ARRAYS. At GFDL, we
+        have generally found that static allocation executables are
+        faster than dynamic, since compilers like to know
+        before-hand the size of the model arrays. Work on the SGI
+        machines at GFDL has reduced the difference in efficiency
+        between these two compilations. However, details of the
+        model configuration strongly impact the differences in
+        model speed. Additionally, we understand that on some
+        platforms, the dynamic allocation results in faster code
+        than static. Consequently, we have decided to maintain both
+        the static and dynamic options, given the ambiguous results
+        across platforms, compilers, model configurations, ect.</p>
+      </div>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "An Outline of MOM4"></a>2.&nbsp;An Outline of
+            MOM4</h2>
+          </div>
+        </div>
+      </div>
+
+      <p>The purpose of this section is to outline certain features
+      of MOM4.</p>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "MOM4 docs"></a>2.1.&nbsp;Documentation</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>In addition to this online user guide, documentation for
+        MOM4 is provided by the following LaTeX generated
+        postscript documents:</p>
+
+        <div class="orderedlist">
+          <ol type="1">
+            <li>
+              <a href="./guide4p0.pdf" target="_top">A Technical
+              Guide to MOM4</a> by <a href="" onclick=
+              "javascript:window.location='mai'+'lt'+'o:'+'Stephen.Griffies'+'%40'+'noaa.gov'"
+              onmouseover=
+              "javascript:window.status='send ema'+'il';return true;"
+              onmouseout=
+              "javascript:window.status='';return true;">Stephen.Griffies<img border="0"
+              src=
+              "http://data1.gfdl.noaa.gov/~fms/images/atgreen.png"
+              alt="&amp;#64;" style=
+              "display:inline; height:.8em;">noaa.gov</a>, <a href=
+              "" onclick=
+              "javascript:window.location='mai'+'lt'+'o:'+'Matthew.Harrison'+'%40'+'noaa.gov'"
+              onmouseover=
+              "javascript:window.status='send ema'+'il';return true;"
+              onmouseout=
+              "javascript:window.status='';return true;">Matthew.Harrison<img border="0"
+              src=
+              "http://data1.gfdl.noaa.gov/~fms/images/atgreen.png"
+              alt="&amp;#64;" style=
+              "display:inline; height:.8em;">noaa.gov</a>, <a href=
+              "" onclick=
+              "javascript:window.location='mai'+'lt'+'o:'+'Ronald.Pacanowski'+'%40'+'noaa.gov'"
+              onmouseover=
+              "javascript:window.status='send ema'+'il';return true;"
+              onmouseout=
+              "javascript:window.status='';return true;">Ronald.Pacanowski<img border="0"
+              src=
+              "http://data1.gfdl.noaa.gov/~fms/images/atgreen.png"
+              alt="&amp;#64;" style=
+              "display:inline; height:.8em;">noaa.gov</a>, and
+              <a href="" onclick=
+              "javascript:window.location='mai'+'lt'+'o:'+'Tony.Rosati'+'%40'+'noaa.gov'"
+              onmouseover=
+              "javascript:window.status='send ema'+'il';return true;"
+              onmouseout=
+              "javascript:window.status='';return true;">Tony.Rosati<img border="0"
+              src=
+              "http://data1.gfdl.noaa.gov/~fms/images/atgreen.png"
+              alt="&amp;#64;" style=
+              "display:inline; height:.8em;">noaa.gov</a>. This is
+              the primary reference for MOM4p0. It contains details
+              about some of the numerical algorithms and
+              diagnostics. Reference to MOM4p0 in the literature
+              should refer to this document:
+
+              <div class="literallayout">
+                <p><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A&nbsp;Technical&nbsp;Guide&nbsp;to&nbsp;MOM4<br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GFDL&nbsp;Ocean&nbsp;Group&nbsp;Technical&nbsp;Report&nbsp;No.&nbsp;5<br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S.M.&nbsp;Griffies,&nbsp;M.J.&nbsp;Harrison,&nbsp;R.C.&nbsp;Pacanowski,&nbsp;and&nbsp;A.&nbsp;Rosati<br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NOAA/Geophysical&nbsp;Fluid&nbsp;Dynamics&nbsp;Laboratory<br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;August&nbsp;2004<br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Available&nbsp;on-line&nbsp;at&nbsp;<a href="http://www.gfdl.noaa.gov/fms"
+                target="_top">http://www.gfdl.noaa.gov/fms</a>.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+              </div>
+            </li>
+
+            <li>
+              <a href="./guide4p1.pdf" target="_top">Elements of
+              MOM4p1</a> by <a href="" onclick=
+              "javascript:window.location='mai'+'lt'+'o:'+'Stephen.Griffies'+'%40'+'noaa.gov'"
+              onmouseover=
+              "javascript:window.status='send ema'+'il';return true;"
+              onmouseout=
+              "javascript:window.status='';return true;">Stephen.Griffies<img border="0"
+              src=
+              "http://data1.gfdl.noaa.gov/~fms/images/atgreen.png"
+              alt="&amp;#64;" style=
+              "display:inline; height:.8em;">noaa.gov</a> is the
+              primary reference for MOM4p1. It contains details
+              about some of the numerical algorithms and
+              diagnostics. Reference to MOM4p1 in the literature
+              should refer to this document:
+
+              <div class="literallayout">
+                <p><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Elements&nbsp;of&nbsp;MOM4p1<br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GFDL&nbsp;Ocean&nbsp;Group&nbsp;Technical&nbsp;Report&nbsp;No.&nbsp;6<br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Stephen&nbsp;M.&nbsp;Griffies<br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NOAA/Geophysical&nbsp;Fluid&nbsp;Dynamics&nbsp;Laboratory<br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dec&nbsp;2009<br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;444&nbsp;pages&nbsp;<br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Available&nbsp;on-line&nbsp;at&nbsp;<a href="http://www.gfdl.noaa.gov/fms"
+                target="_top">http://www.gfdl.noaa.gov/fms</a>.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+              </div>
+            </li>
+
+            <li>A theoretical rationalization of ocean climate
+            models is provided by <a href=
+            "http://pup.princeton.edu/titles/7797.html" target=
+            "_top">Fundamentals of Ocean Climate Models</a>. This
+            book by <a href="" onclick=
+            "javascript:window.location='mai'+'lt'+'o:'+'Stephen.Griffies'+'%40'+'noaa.gov'"
+            onmouseover=
+            "javascript:window.status='send ema'+'il';return true;"
+            onmouseout=
+            "javascript:window.status='';return true;">Stephen.Griffies<img border="0"
+            src=
+            "http://data1.gfdl.noaa.gov/~fms/images/atgreen.png"
+            alt="&amp;#64;" style=
+            "display:inline; height:.8em;">noaa.gov</a> was
+            published by Princeton University Press in August
+            2004.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "Embedded Documentation"></a>2.2.&nbsp;Embedded
+              Documentation</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>The documentation of most Fortran modules in FMS is
+        inserted right in the source code to enable consistency
+        between the code and documentation. A Perl software tool is
+        used to extract documentation from the source code to
+        create a corresponding html module. For example,
+        documentation for shared/diag_manager/diag_manager.F90
+        module is shared/diag_manager/diag_manager.html. In
+        general, the embedded documentation is a good starting
+        point to understand the Fortran module, though ultimately
+        the Fortran code is the final source for information.</p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "MOM4 Characteristics"></a>2.3.&nbsp;MOM4
+              Characteristics</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>Although MOM4 shares much in common with earlier
+        versions of MOM, it possesses a number of computational,
+        numerical, and physical characteristics that are
+        noteworthy. The following provides an overview of the main
+        characteristics of MOM4 (please refer to <a href=
+        "./guide4p0.pdf" target="_top">A Technical Guide to
+        MOM4</a> and <a href="./guide4p1.pdf" target=
+        "_top">Elements of MOM4p1</a> for references).</p>
+
+        <p>Computational characteristics of MOM4 include the
+        following.</p>
+
+        <div class="itemizedlist">
+          <ul type="disc">
+            <li>MOM4 is coded in Fortran 90 and physical units are
+            MKS.</li>
+
+            <li>MOM4 meets the code standards set by the GFDL
+            Flexible Modeling System (<a href=
+            "http://www.gfdl.noaa.gov/fms" target="_top">FMS</a>).
+            It also utilizes a substantial number of software
+            infrastructure modules shared by other FMS-based
+            models. In particular, all I/O (e.g., restarts, forcing
+            fields, initial fields) is handled via <a href=
+            "http://www.unidata.ucar.edu/packages/netcdf/" target=
+            "_top">NetCDF</a>.</li>
+
+            <li>There are very few cpp-preprocessor option (i.e.,
+            <tt class="option">ifdefs</tt>). One is associated with
+            the handling of memory in the model (denoted
+            MOM4_STATIC_ARRAYS in MOM4p1). Another option enables
+            the suite of tracers associated with the MOM4p1
+            implementation of the GFDL ocean biogeochemistry model.
+            The reason for including this second ifdef is to
+            minimize the compile time required for the many cases
+            when one chooses NOT to use the biogeochemistry (adding
+            the biogeochemistry greatly lengthens the compile
+            time). Other options for vertical coordinates, physical
+            parameterizations, and dynamical choices are handled
+            via namelists and/or settings within tables. Removing
+            <tt class="option">ifdefs</tt> allows for more readable
+            code that possesses a higher level of error checker
+            handling. It also facilitates testing various
+            algorithms using the same executable.</li>
+
+            <li>2D (latitudinal/longitudinal) horizontal domain
+            decomposition is used for single or multiple parallel
+            processors. Correspondingly, 3D arrays are dimensioned
+            (i,j,k) instead of the (i,k,j) structure used in MOM3
+            and earlier. Notably, MOM4 has no memory window or
+            slabs.</li>
+          </ul>
+        </div>
+
+        <p>Numerical and kinematic/dynamic characteristics of
+        MOM4p0 and MOM4p1 include the following. For a more
+        complete discussion of the differences between MOM4p0 and
+        MOM4p1, please refer to <a href="./mom4p1_synopsis.pdf"
+        target="_top">this link for a synopsis</a>.</p>
+
+        <div class="itemizedlist">
+          <ul type="disc">
+            <li>Generalized orthogonal horizontal coordinates are
+            used. GFDL is supporting both the standard spherical
+            coordinates as well as the ''tripolar'' grid of Murray
+            (1996). Details are provided in <a href=
+            "./guide4p0.pdf" target="_top">A Technical Guide to
+            MOM4</a>.</li>
+
+            <li>Bottom topography is generally represented using
+            the partial cells of Pacanowski and Gnanadesikan
+            (1998). The older full cell approach is available as a
+            namelist in the preprocessing code used to generate the
+            grid specification file.</li>
+
+            <li>The dynamics/kinematics for MOM4p0a and MOM4p0b are
+            based on the non-Boussinesq method of Greatbatch et al.
+            (2002). The Boussinesq option is available via a
+            namelist. This option was jettisoned in MOM4p0c and
+            MOM4p0d for purposes of code brevity, anticipating the
+            move to pressure vertical coordinates. In MOM4p1, the
+            non-Boussinesq dynamics and kinematics is available via
+            pressure-based vertical coordinates. Formulational and
+            algorithmic details are provided in <a href=
+            "./guide4p1.pdf" target="_top">Elements of
+            MOM4p1</a>.</li>
+
+            <li>In MOM4p0, the sole vertical coordinate is the
+            geopotential coordinate. In MOM4p1, the six following
+            vertical coordinates are available: geopotential,
+            zstar, terrain following, pressure, pstar, and terrain
+            following pressure. Formulational and algorithmic
+            details are provided in <a href="./guide4p1.pdf"
+            target="_top">Elements of MOM4p1</a>. Refer to <a href=
+            "./mom4p1_synopsis.pdf" target="_top">this document</a>
+            for a synopsis of the new vertical coordinates
+            available in MOM4p1.</li>
+
+            <li>The time tendency for tracer and baroclinic
+            velocity can be discretized two ways. (1) The first
+            approach uses the traditional leap-frog method along
+            with a Robert-Asselin time filter. This method is
+            available in MOM4p0a, MOM4p0b and MOM4p0c. Note that
+            the Euler forward or Euler backward mixing time step
+            used in earlier MOMs has been eliminated. (2) MOM4p0c
+            and later releases provide an additional time stepping
+            method, which is strongly recommended and now
+            universally used at GFDL. Here, the time tendency is
+            discretized with a two-level forward step, which
+            eliminates the need to time filter. Tracer and velocity
+            are staggered in time. For certain model
+            configurations, this scheme is roughly twice as stable
+            as the leap-frog, thus allowing for a factor of two in
+            computational savings. Without the time filtering
+            needed with the leap-frog, the new scheme conserves
+            total tracer to within numerical roundoff. This scheme
+            shares much in common with time stepping used in the
+            GFDL General Ocean Layer Dynamics (GOLD) and the MIT
+            GCM. It is the default in MOM4p0c and more recent
+            releases. Details of both the leap-frog and two-level
+            schemes are provided in <a href=
+            "http://pup.princeton.edu/titles/7797.html" target=
+            "_top">Fundamentals of Ocean Climate Models</a>.</li>
+
+            <li>The sole external mode solver is a variant of the
+            Griffies et al. (2001) explicit free surface. There are
+            two time stepping schemes supported: (1) leap-frog and
+            (2) predictor-corrector. The predictor-corrector is
+            more stable and is thus the default method. All model
+            grid cells have time dependent volume (Boussinesq) or
+            mass (nonBoussinesq), thus allowing for total tracer to
+            be conserved to within numerical roundoff. The
+            linearized free surface method used in MOM3 (and many
+            other implementations of the free surface in z-models)
+            has been jettisoned since it precludes precise tracer
+            conservation. Details are provided in <a href=
+            "http://pup.princeton.edu/titles/7797.html" target=
+            "_top">Fundamentals of Ocean Climate Models</a> as well
+            as <a href="./guide4p1.pdf" target="_top">Elements of
+            MOM4p1</a>.</li>
+
+            <li>McDougall et al. (2003) equation of state has been
+            implemented in MOM4p0, with in situ density a function
+            of the local potential temperature, salinity, and
+            hydrostatic pressure (baroclinic pressure plus free
+            surface pressure plus applied pressure from the
+            atmosphere and sea ice). Details are provided in
+            <a href="http://pup.princeton.edu/titles/7797.html"
+            target="_top">Fundamentals of Ocean Climate Models</a>.
+            The Jackett etal. (2006) equation of state is
+            implemented in MOM4p1, with the Conservative
+            Temperature variable from McDougall (2005) also
+            available. Details are provided in <a href=
+            "./guide4p1.pdf" target="_top">Elements of
+            MOM4p1</a>.</li>
+
+            <li>Tracer advection is available using various
+            schemes. The centered 2nd, 4th, 6th order schemes are
+            available, as documented in <a href=
+            "http://www.gfdl.gov/~smg/MOM/web/guide_parent/guide_parent.html"
+            target="_top">The MOM3 Manual of Pacanowski and
+            Griffies (1999)</a>. The 4th and 6th order schemes
+            assume constant grid spacing, which simplifies the code
+            though compromises accuracy on the more commonly used
+            non-uniform grids. The Quicker scheme documented by
+            Holland et al. (1998) and <a href=
+            "http://www.gfdl.gov/~smg/MOM/web/guide_parent/guide_parent.html"
+            target="_top">The MOM3 Manual</a> is available. Two
+            multi-dimensional flux limited schemes have been ported
+            from the MIT GCM. These schemes are monotonic and have
+            been found to be roughly the same cost as the Quicker
+            scheme. GFDL researchers have found the Sweby scheme to
+            be satisfying for many applications, such as
+            biogeochemistry. Hence, effort has been made to enhance
+            this scheme's efficiency in MOM4p0c. In MOM4p1, the
+            flux limited as well as unlimited scheme from Prather
+            (1986) is available. This scheme has been found to be
+            quite accurate, though requires the addition of many
+            three-dimensional arrays per tracer. Finally, a
+            multi-dimensional piecewise parabolic scheme (MDPPM)
+            has been ported to MOM4p1 from the MITgcm.</li>
+
+            <li>Tidal forcing from the various lunar and solar
+            components are available to force the free ocean
+            surface. Details are provided in <a href=
+            "./guide4p1.pdf" target="_top">Elements of
+            MOM4p1</a>.</li>
+
+            <li>Open boundary conditions are available to allow
+            open boundaries in either of the north, south, east, or
+            west directions. This module has been extensively
+            rewritten for purposes of code generality, with
+            numerous new options for radiating conditions. This
+            scheme was developed with critical input from modelers
+            using MOM4p1 for regional simulations.</li>
+          </ul>
+        </div>
+
+        <p>Physical parameterizations available in MOM4 include the
+        following.</p>
+
+        <div class="itemizedlist">
+          <ul type="disc">
+            <li>Neutral tracer physics includes Redi neutral
+            diffusion according to Griffies et al. (1998), and
+            Gent-McWilliams stirring according to the Griffies
+            (1998) skew-flux method. Two-dimensional flow dependent
+            diffusivities are available and can be determined in
+            many different ways, such as the depth integrated Eady
+            growth rate and Rossby radius of deformation, as
+            motivated by the ideas of Held and Larichev (1996) and
+            Visbeck et al. (1997). Details are provided in <a href=
+            "http://pup.princeton.edu/titles/7797.html" target=
+            "_top">Fundamentals of Ocean Climate Models</a>. In
+            MOM4p1, the treatment of neutral physics near the
+            domain boundaries is available as per Ferrari and
+            McWilliams. Details are provided in <a href=
+            "./guide4p1.pdf" target="_top">Elements of
+            MOM4p1</a>.</li>
+
+            <li>In addition to the implementation of
+            Gent-McWilliams as a skew tracer diffusion, MOM4p1
+            provides options which transforms these effects into
+            the momentum equation. The standard method for this
+            transformation is via the approach of Greatbatch and
+            Lamb (1990) and Greatbatch (1998), in which the
+            vertical viscosity is modified. Another approach is due
+            to Aiki, Jacobson, and Yamagata (2004), in which
+            momentum is dissipative with a Rayleigh-like drag term.
+            This latter approach from Aiki etal is experimental and
+            not recommended for general usage.</li>
+
+            <li>Vertical mixing schemes include the
+            time-independent depth profile of Bryan and Lewis
+            (1979), the Richardson number dependent scheme of
+            Pacanowski and Philander (1981), the KPP scheme of
+            Large et al. (1994), and in MOM4p1 the <a href=
+            "http://www.gotm.net/" target="_top">Generalized Ocean
+            Turbulence Model (GOTM)</a> is also available.</li>
+
+            <li>Horizontal friction schemes include uniform and
+            grid dependent viscosity schemes, as well as the
+            shear-dependent Smagorinsky viscosity according to
+            Griffies and Hallberg (2000). The anisotropic scheme of
+            Large et al. (2001) and Smith and McWilliams (2002) has
+            been implemented. Details are provided in <a href=
+            "http://pup.princeton.edu/titles/7797.html" target=
+            "_top">Fundamentals of Ocean Climate Models</a>.</li>
+
+            <li>Topographically oriented tracer diffusion
+            introduces enhanced diffusion when heavy parcels are
+            above lighter parcels. It is implemented according to
+            the ideas of Beckmann and D&#246;scher (1997) and
+            D&#246;scher and Beckmann(1999). Details are provided
+            in <a href="./guide4p0.pdf" target="_top">A Technical
+            Guide to MOM4</a> as well as <a href="./guide4p1.pdf"
+            target="_top">Elements of MOM4p1</a>.</li>
+
+            <li>The "overflow" scheme of Campin and Goosse (1999)
+            has been implemented, whereby gravitationally unstable
+            fluid parcels are allowed to move downslope via an
+            upwind advection scheme. Details are provided in
+            <a href="./guide4p0.pdf" target="_top">A Technical
+            Guide to MOM4</a> as well as <a href="./guide4p1.pdf"
+            target="_top">Elements of MOM4p1</a>.</li>
+
+            <li>Modifications to the Campin and Goosse (1999)
+            scheme have been implemented in MOM4p1 that allow for
+            the transport of tracers to horizontally distant
+            columns, so long as such is density favored. Details
+            are provided in <a href="./guide4p1.pdf" target=
+            "_top">Elements of MOM4p1</a>.</li>
+
+            <li>Penetration of shortwave radiative heating into the
+            upper ocean is generally attenuated by the inclusion of
+            chlorophyll data (MOM4p0), or via chlorophyll data or
+            an active biogeochemistry model (MOM4p1). Details are
+            provided in <a href="./guide4p0.pdf" target="_top">A
+            Technical Guide to MOM4</a>.</li>
+          </ul>
+        </div>
+
+        <p>Miscellaneous features of the code released with MOM4
+        include the following.</p>
+
+        <div class="itemizedlist">
+          <ul type="disc">
+            <li>MOM4 comes with the following tracer packages: (1)
+            ideal age tracer (2) tracers for the OCMIP biotic
+            protocol (3) CFC tracers, (4) an ideal residency time
+            tracer which tags parcels according to physical
+            processes, (5) ideal passive tracer package with online
+            generation of the idealized profile, and (6) the GFDL
+            prognostic ecosystem model TOPAZ.</li>
+
+            <li>MOM4 has numerous diagnostics for checking
+            algorithm and solution integrity. These diagnostics
+            include budgets for energetic consistency, tracer
+            conservation, solution stability, etc. Additional
+            diagnostics are available for numerous fields of
+            relevance to the different physics schemes, as well as
+            term balances.</li>
+
+            <li>MOM4 is distributed with a prognostic sea ice model
+            (SIS), as well as the land model and finite volume
+            atmospheric model used for GFDL's CM2.1 coupled climate
+            model.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "mom4 within fms"></a>2.4.&nbsp;MOM4 and FMS</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>MOM4 has been coded within GFDL's Flexible Modeling
+        System (<a href="http://www.gfdl.noaa.gov/fms" target=
+        "_top">FMS</a>). Doing so allows for MOM4 developers to use
+        numerous FMS infrastructure and superstructure modules that
+        are shared amongst various atmospheric, ocean, sea ice,
+        land, vegetative, etc. models. Common standards and shared
+        software tools facilitate the development of high-end earth
+        system models, which necessarily involves a wide variety of
+        researchers working on different computational platforms.
+        Such standards also foster efficient input from
+        computational scientists and engineers as they can more
+        readily focus on common computational issues.</p>
+
+        <p>The following list represents a sample of the FMS
+        <tt class="filename">shared</tt> modules used by MOM4.</p>
+
+        <div class="itemizedlist">
+          <ul type="disc">
+            <li><a href=
+            "../../shared/time_manager/time_manager.html" target=
+            "_top"><tt class="filename">time manager</tt></a>:
+            keeps model time and sets time dependent flags</li>
+
+            <li><a href="../../coupler/coupler_main.html" target=
+            "_top"><tt class="filename">coupler</tt></a>: used to
+            couple MOM4 to other component models</li>
+
+            <li><a href="../../shared/mpp/mpp_io.html" target=
+            "_top"><tt class="filename">I/O</tt></a> : to read and
+            write data in either NetCDF, ASCII, or native
+            formats</li>
+
+            <li><a href="../../shared/mpp/mpp.html" target=
+            "_top"><tt class="filename">parallelization
+            tools</tt></a>: for passing messages across parallel
+            processors</li>
+
+            <li><a href=
+            "../../shared/diag_manager/diag_manager.html" target=
+            "_top"><tt class="filename">diagnostic
+            manager</tt></a>: to register and send fields to be
+            written to a file for later analysis</li>
+
+            <li><a href=
+            "../../shared/field_manager/field_manager.html" target=
+            "_top"><tt class="filename">field manager</tt></a>: for
+            integrating multiple tracers and organizing their
+            names, boundary conditions, and advection schemes</li>
+          </ul>
+        </div>
+
+        <p>The FMS infrastructure (the "Riga version") forms the
+        basis for the December 2009 release of MOM4p1.</p>
+
+        <p>The Flexible Modeling System ( <a href=
+        "http://www.gfdl.noaa.gov/fms" target="_top">FMS</a>),
+        including MOM4, is free software; you can redistribute it
+        and/or modify it and are expected to follow the terms of
+        the GNU General Public License as published by the Free
+        Software Foundation; either version 2 of the License, or
+        (at your option) any later version.</p>
+
+        <p>FMS is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty
+        of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
+        the GNU General Public License for more details.</p>
+
+        <p>You should have received a copy of the GNU General
+        Public License along with MOM4; if not, write to:</p>
+
+        <div class="literallayout">
+          <p><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Free&nbsp;Software&nbsp;Foundation,&nbsp;Inc.<br>
+
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;59&nbsp;Temple&nbsp;Place,&nbsp;Suite&nbsp;330<br>
+
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Boston,&nbsp;MA&nbsp;02111-1307&nbsp;&nbsp;<br>
+
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;USA<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;see:&nbsp;<a href=
+          "http://www.gnu.org/licenses/gpl.html" target=
+          "_top">http://www.gnu.org/licenses/gpl.html</a><br>
+          &nbsp;&nbsp;&nbsp;</p>
+        </div>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "MOM4 test cases"></a>2.5.&nbsp;MOM4 test cases</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>MOM4 is distributed with a suite of test cases. Below is
+        an outline of the main test cases available with MOM4p1.
+        Full details are discussed in <a href="./guide4p1.pdf"
+        target="_top">Elements of MOM4p1</a>.</p>
+
+        <div xmlns="http://www.w3.org/TR/xhtml1/transitional"
+        class="warning" style=
+        "margin-left: 0.5in; margin-right: 0.5in;">
+          <table border="0" summary="Warning">
+            <tr>
+              <td rowspan="2" align="center" valign="top" width=
+              "25"><img alt="[Warning]" src=
+              "http://data1.gfdl.noaa.gov/~fms/images/warning.gif"></td>
+
+              <th class="admontitle">Warning</th>
+            </tr>
+
+            <tr>
+              <td colspan="2" align="left" valign="top">Many of the
+              test cases are <span xmlns="" class=
+              "emphasis"><em>NOT</em></span> sanctioned for their
+              physical relevance. They are instead provided for the
+              user to learn how to run MOM4, and to verify the
+              numerical and/or computational integrity of the code.
+              <span xmlns="" class=
+              "emphasis"><em>PLEASE</em></span> do not assume that
+              the experiments will run for more than the short time
+              selected in the sample runscripts.</td>
+            </tr>
+          </table>
+        </div>
+
+        <p><tt class="filename">mom4_atlantic</tt>: This regional
+        model tests the open boundary condition option in
+        MOM4p1.</p>
+
+        <p><tt class="filename">mom4_bowl</tt>: This experiment has
+        a sector model with a bowl topography.</p>
+
+        <p><tt class="filename">mom4_box</tt>: This experiment has
+        a sector model with a flat bottom topography. This is the
+        simplest test case.</p>
+
+        <p><tt class="filename">mom4_box_channel</tt>: This
+        idealized experiment has a channel at the southern portion
+        of the domain.</p>
+
+        <p><tt class="filename">mom4_core</tt>: This experiment is
+        global with a tripolar grid with roughly "1-degree"
+        resolution and 50 vertical levels. The ocean is coupled to
+        the GFDL sea ice model. The configuration is forced with
+        the Normal Year forcing from the Coordinated Ocean
+        Reference Experiment (data developed by Bill Large and
+        Stephen Yeager at NCAR). This is a large model, and it is
+        similar (though not the same) to the ocean and ice
+        configuration used for the GFDL IPCC simulations.</p>
+
+        <p><tt class="filename">mom4_dome</tt>: This is an
+        idealized overflow configuration useful for testing
+        overflow schemes.</p>
+
+        <p><tt class="filename">mom4_ebm</tt>: This is a global
+        model configuration coupled to the GFDL energy balance
+        atmosphere plus the GFDL ice model.</p>
+
+        <p><tt class="filename">mom4_iom</tt>: This experiment is a
+        regional Indian Ocean model setup during a modeling school
+        in Bangalore, India during October 2004.</p>
+
+        <p><tt class="filename">mom4_mk3p5</tt>: This is a global
+        spherical coordinate model which is based on the
+        configuration used by CSIRO Marine and Atmospheric Research
+        in Aspendale, AUS.</p>
+
+        <p><tt class="filename">mom4_symmetric_box</tt>: This is an
+        idealized configuration that is symmetric about the equator
+        and uses symmetric forcing. The simulation should thus
+        remain symmetric about the equator.</p>
+
+        <p><tt class="filename">mom4_torus</tt>: This is an
+        idealized simulation that is periodic in the x and y
+        directions. It is useful for testing tracer advection
+        schemes.</p>
+
+        <p><tt class="filename">CM2p1</tt>: This test case
+        represents a release of the CM2.1 coupled climate model
+        used by GFDL scientists for the IPCC AR4 assessment of
+        climate. This test includes the ocean configuration, land
+        model, atmospheric model, and sea ice model setup as in
+        CM2.1. Note that the original CM2.1 used the MOM4.0 code,
+        whereas the CM2p1 test instead uses MOM4p1. However, GFDL
+        scientists have verified that the climate simulations are
+        compatible.</p>
+      </div>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "Contributing to MOM4"></a>3.&nbsp;Contributing to
+            MOM4</h2>
+          </div>
+        </div>
+      </div>
+
+      <p>As with previous versions of MOM, the GFDL-MOM4 developers
+      aim to provide the international climate research community
+      with a repository for robust and well documented methods to
+      simulate the ocean climate system. Consequently, we encourage
+      interested researchers to contribute to MOM4 by commenting on
+      code features, and providing new modules that enhance
+      simulation integrity (e.g., a new physical parameterization
+      or new advection scheme) or increase the model's
+      functionality.</p>
+
+      <p>To be included in the GFDL-distributed version of MOM4,
+      code must meet the following criteria:</p>
+
+      <div class="orderedlist">
+        <ol type="1">
+          <li>The module must be written in Fortran 90 and
+          minimally touches other parts of the model (i.e.,
+          modular).</li>
+
+          <li>Satisfaction of the <a href=
+          "http://www.gfdl.noaa.gov/fms" target="_top">FMS</a> code
+          specifications outlined in the <a href=
+          "http://www.gfdl.noaa.gov/~vb/FMSManual/FMSManual.html"
+          target="_top">FMS Developers' Manual</a></li>
+
+          <li>Compatibility with the MOM4 <a href=
+          "#MOM4%20test%20cases" target="_top">test cases</a></li>
+
+          <li>Thorough and pedagogical documentation of the module
+          for inclusion in <a href="./guide4p1.pdf" target=
+          "_top">Elements of MOM4p1</a> (a Latex document)</li>
+
+          <li>Comments within the code emulating other parts of the
+          model so that HTML documentation files can be generated
+          by our converter</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "obtaining source code and data sets"></a>4.&nbsp;Source
+            code and data sets</h2>
+          </div>
+        </div>
+      </div>
+
+      <p>The purpose of this section is to outline methods required
+      to obtain the source code and associated datasets.</p>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "source code and data sets"></a>4.1.&nbsp;Obtaining
+              source code and data sets</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>The <a href="http://www.gfdl.noaa.gov/fms" target=
+        "_top">FMS</a> development team uses a local implementation
+        of <a href="http://fms.gfdl.noaa.gov" target=
+        "_top">GForge</a> to serve FMS software, located at
+        <a href="http://fms.gfdl.noaa.gov" target=
+        "_top">http://fms.gfdl.noaa.gov</a>. In order to obtain the
+        source code and data sets, you must <a href=
+        "https://fms.gfdl.noaa.gov/gf/account/?action=UserAdd"
+        target="_top">register</a> as an FMS user on our software
+        server. After submitting the registration form on the
+        software server, you should receive an automatically
+        generated confirmation email within a few minutes. Clicking
+        on the link in the email confirms the creation of your
+        account.</p>
+
+        <p>After your account has been created, you should <a href=
+        "https://fms.gfdl.noaa.gov/gf/account/?action=Login"
+        target="_top">log in</a> and request access to the <a href=
+        "https://fms.gfdl.noaa.gov/extra/request-project-access.cgi"
+        target="_top">MOM4P1</a> project. Once the project
+        administrator grants you access, you will receive a second
+        email notification. This email requires action on the part
+        of the project administrator and thus may take longer to
+        arrive. The email will contain a software access password
+        along with instructions for obtaining the release package
+        (a tar file).</p>
+
+        <p>You may download the MOM4 tar file from <a href=
+        "https://fms.gfdl.noaa.gov/gf/project/mom4p1/frs/?action=index"
+        target=
+        "_top">https://fms.gfdl.noaa.gov/gf/project/mom4p1/frs/?action=index</a>.</p>
+
+        <p>The data set and outputs for selected MOM4p1 test
+        experiments are available via <a href=
+        "ftp://ftp.gfdl.noaa.gov/perm/MOM4/mom4p1_pubrel/exp"
+        target="_top">ftp</a> More details can be found in the
+        <a href="quickstart_guide.html" target=
+        "_top">quickstart_guide.html</a>.</p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "data sets"></a>4.2.&nbsp;Description of the data
+              sets</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>There are many datasets provided with the various MOM4
+        test cases. Most documentation of the datasets can be found
+        in the NetCDF files themselves. We here provide a summary
+        of some of the datasets.</p>
+
+        <div class="orderedlist">
+          <ol type="1">
+            <li>The topography data set for the global 1-degree
+            ocean model configuration in <tt class=
+            "filename">mom4_core</tt> is based on a coarsened
+            version of that kindly provided by Andrew Coward and
+            David Webb at the <a href=
+            "http://www.soc.soton.ac.uk/JRD/OCCAM/welcome.html"
+            target="_top">Southampton Oceanography Centre</a>.
+            Their topography is a montage of that developed by
+            <a href=
+            "http://topex.ucsd.edu/marine_topo/mar_topo.html"
+            target="_top">Smith and Sandwell</a> (1997) by
+            satellite data in the region of 72&#176;S to 72&#176;N,
+            the NOAA (1988) 5-minute global topography <a href=
+            "http://www.ngdc.noaa.gov/mgg/global/etopo5.HTML"
+            target="_top">ETOPO5</a>, and the International
+            Bathymetric Chart of the Arctic Ocean (<a href=
+            "http://www.ngdc.noaa.gov/mgg/bathymetry/arctic/arctic.html"
+            target="_top">IBCAO</a>).</li>
+
+            <li>The chlorophyll-a density data set was compiled by
+            <a href="mailto:Colm.Sweeney@noaa.gov" target=
+            "_top">Colm Sweeney</a>, using data from <a href=
+            "http://www.gso.uri.edu/faculty/yoder.html" target=
+            "_top">James A. Yoder</a> and Maureen A. Kennelly at
+            the <a href="http://www.gso.uri.edu/" target=
+            "_top">Graduate School of Oceanography</a>, <a href=
+            "http://www.uri.edu/" target="_top">University of Rhode
+            Island</a>. This data set contains monthly chlorophyll
+            concentrations from the <a href=
+            "http://seawifs.gsfc.nasa.gov/SEAWIFS.html" target=
+            "_top">SeaWiFS</a> satellite for the period
+            1999-2001.</li>
+
+            <li>Temperature and salinity initial and boundary
+            conditions are provided by the <a href=
+            "http://www.noaa.gov" target="_top">NOAA</a> National
+            Oceanographic Data Center (<a href=
+            "http://www.nodc.noaa.gov/" target="_top">NODC</a>)
+            World Ocean Atlas (<a href=
+            "http://www.nodc.noaa.gov/OC5/indprod.html" target=
+            "_top">WOA</a>).</li>
+
+            <li>The <a href=
+            "http://data1.gfdl.noaa.gov/nomads/forms/mom4/CORE.html"
+            target="_top">Large and Yeager (2004)</a> dataset for
+            use in the Coordinated Ocean-ice Reference Experiment
+            (CORE) simulation is available at this link.</li>
+          </ol>
+        </div>
+
+        <p>All datasets released with MOM4 are in <a href=
+        "http://www.unidata.ucar.edu/packages/netcdf/" target=
+        "_top">NetCDF</a> format, since this format is widely used
+        in the community. A number of useful tools are available
+        <a href="http://nco.sourceforge.net/" target=
+        "_top">here</a> that allow the user to perform some
+        necessary operations (editting attributes, merging, etc.)
+        on a NetCDF file.</p>
+      </div>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "Setting up an experiment with MOM4"></a>5.&nbsp;Setting
+            up an experiment with MOM4</h2>
+          </div>
+        </div>
+      </div>
+
+      <p>MOM4 is distributed with code used to generate model
+      grids, initial conditions, and boundary conditions. Each step
+      must be performed prior to running the ocean model. The steps
+      used during this experimental setup stage are generally
+      termed "preprocessing", and the code used for these purposes
+      is under the /preprocessing directory in the MOM4
+      distribution. The purpose of this section of the User Guide
+      is to outline this code and its usage. Further details of
+      usage and algorithms can be found in the internal
+      documentation within the various preprocessing code
+      modules.</p>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "General comments"></a>5.1.&nbsp;General
+              comments</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>We start this section with some general comments
+        regarding the setup of a model experiment.</p>
+
+        <p>--Setting up an experiment is critical part to the
+        success of a research or development project with MOM4. It
+        is important that the user take some time to understand
+        each of the many steps, and scrutinize the output from this
+        code.</p>
+
+        <p>We have endeavored over the years to provide tools
+        facilitating the ready setup of a new experiment. However,
+        we remain unable to provide code that does everything
+        possible under the sun. Additionally, all features that are
+        provided here may not be fully tested. For these reasons,
+        the preprocessing code continues to evolve as use and
+        functionality evolve. We sincerely appreciate ALL comments
+        about code and documentation, especially comments regarding
+        clarity, completeness, and correctness. Your input is
+        essential for the improvement of the code and
+        documentation.</p>
+
+        <p>--Many steps in idealized experiments that were formerly
+        performed while running earlier MOM versions have been
+        extracted from MOM4 and placed into preprocessing. Hence,
+        even if you are running an idealized experiment, it is
+        likely that you will need to perform some if not all of the
+        preprocessing steps discussed here.</p>
+
+        <p>--If you have a problem that is not addressed here, then
+        please feel free to query the MOM4 email list. No question
+        is too silly, so please ask!</p>
+
+        <p>--All code used to setup an experiment with MOM4 is
+        written in Fortran 90/95 except make_xgrids, which is
+        written in C. Most code is dependent on FMS shared code for
+        the purpose of parallization and interpolation. In addition
+        to the documentation provided here, there are comments
+        within the code to help users debug and to make
+        modifications to suit their purpose.</p>
+
+        <p>--Some users make nontrivial changes of general use.
+        With your support, assistance, and maintenance, we will
+        endeavour to include your changes in future releases.</p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "Creation of the ocean/ice grid (mosaics)"></a>5.2.&nbsp;Creation
+              of the ocean/ice grid (mosaics)</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>Mosaics is the name given to a general framework to
+        define structured grids at GFDL. The details of this scheme
+        are being incorporated by others outside of GFDL as well.
+        Most of the recent global models developed at GFDL employ
+        the conventions of Mosaic. However, MOM4p1 is backwards
+        compatible, so that it still supports grids generated with
+        older software (discussed <a href=
+        "#Creation%20of%20the%20ocean/ice%20grid%20(mosaics)"
+        target="_top">here</a>) For a description of how to create
+        grids using the newer Mosaic tools, which are more general
+        than the older approaches, then please access <a href=
+        "mosaic_tool.html" target="_top">this link</a></p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "Creation of the ocean/ice grid (pre-mosaics)"></a>5.3.&nbsp;Creation
+              of the ocean/ice grid (pre-mosaics)</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>Within GFDL FMS, ocean and ice are assumed to share the
+        same grid. This means that the two models read in the same
+        grid specification file. Even so, the domain decomposition
+        on parallel systems may be different, and indeed they
+        generally are due to different load balance issues between
+        the two models.</p>
+
+        <p>Even though the ocean and ice models read the same grid
+        specification file, they use the information from the grid
+        file in a slightly different manner when setting up the
+        respective model's tracer grid. In particular, the ocean
+        model reads the tracer location directly from the arrays
+        (x_T/geolon_t, y_T/geolat_t) written in the grid
+        specification file. In contrast, the GFDL ice model reads
+        (x_vert_T/geolon_vert_t, y_vert_T/geolat_vert_t) from the
+        grid specification file and then averages these four vertex
+        locations to get the tracer location used in the ice model.
+        The result is that diagnostics output from the two models
+        have ocean and ice fields at slightly different locations
+        for cases such as the tripolar grid when the grid is not
+        spherical.</p>
+
+        <p>The ocean/ice grid specification file is generated by
+        executing the ocean_grid_generator utility. The
+        ocean_grid_generator utility generates the horizontal grid,
+        vertical grid, and topography. A C-shell script is provided
+        to compile relevant code to generate and run the executable
+        to produce the grid file. To create the desired grid and
+        topography, setting namelist options within the runscript
+        is needed.</p>
+
+        <p>The horizontal grid can be conventional lon-lat
+        spherical grid or a reprojected rotated tripolar grid (R.
+        Murray, "Explicit generation of orthogonal grids for ocean
+        models", 1996, J.Comp.Phys., v. 126, p. 251-273.). The
+        choice is controlled by the namelist option "tripolar grid"
+        (true for tripolar grid and false for lon-lat spherical
+        grid). Note that Cartesian beta-plane and f-plane
+        geometries are set up within MOM4, not within the grid
+        generation preprocessing steps discussed here (see
+        mom4/ocean_core/ocean_grids.F90 for beta-plane and f-plane
+        namelist options).</p>
+
+        <p>The grid_spec file contains the following horizontal
+        grid information: geographic location of T,E,C and N-cell
+        (Tracer, East, Corner, and North cells), half and full cell
+        lengths (in meters), rotation information between logical
+        (i.e., grid oriented) and geographic east of cell. The
+        complete description of the horizontal grid and namelist
+        option is available in <a href=
+        "../../preprocessing/generate_grids/ocean/hgrid.html"
+        target="_top">hgrid</a></p>
+
+        <p>The vertical grid information includes depth of tracer
+        points and tracer_boundaries. The complete description of
+        namelist option is available in <a href=
+        "../../preprocessing/generate_grids/ocean/vgrid.html"
+        target="_top">vgrid</a></p>
+
+        <p>The topography can be idealized (various examples are
+        provided and others can be easily added through emulating
+        those provided) or remapped from a source topography
+        dataset. The type of topography is specified by the
+        namelist variable "topography". Namelist
+        "topog_depend_on_vgrid" specifies if the topography will
+        depend on the vertical grid or not. To generate a grid for
+        MOM4, "topog_depend_on_vgrid" should always be true. A
+        useful option for those upgrading older models to MOM4 is
+        "adjust_topo". If this option is set to false, there will
+        be no adjustments made to the topography. See <a href=
+        "../../preprocessing/generate_grids/ocean/topog.html"
+        target="_top">topog</a> for further details about
+        topography namelist options.</p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "The exchange grid for coupled models"></a>5.4.&nbsp;The
+              exchange grid for coupled models</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>"Exchange grid" information is required for coupled
+        models (i.e., ocean/ice coupled to land and/or atmosphere)
+        that employ the GFDL coupler technology. The exchange grid
+        is defined by taking the union of the ocean/ice grid with
+        the atmosphere and land grids. This union is then used to
+        compute area integrals to allow for conservative mapping of
+        fluxes between the component models.</p>
+
+        <p><span class="inlinemediaobject"><img src=
+        "./land_surgery.gif" align="right" width="140" alt=
+        "The Sutherland-Hodgeman polygon clipping algorithm for model cell interaction calculation"></span>
+        The exchange grid information is generated by executing the
+        make_xgrids utility. The execution of the make_xgrids
+        utility will generate a netcdf file with the name
+        grid_spec.nc. The grid_spec.nc contains the component model
+        grids as well as the exchange grid information. In
+        particular, the utility make_xgrids generates two exchange
+        grids used by the FMS coupler: one grid for surface fluxes
+        and another for runoff. <span><b class=
+        "command">make_xgrids</b></span> is created by compiling
+        its C source:</p>
+        <pre class="programlisting">
+cc -O -o make_xgrids make_xgrids.c -I/usr/local/include -L/usr/local/lib 
+-lnetcdf -lm
+</pre>
+
+        <p>creates the make_xgrids executable from C-source and the
+        netCDF and standard math libraries. It is executed with the
+        command</p>
+        <pre class="programlisting">
+make_xgrids -o ocean_grid.nc -a atmos_grid.nc -l land_grid.nc
+</pre>
+
+        <p>This execution produces a grid_spec.nc file (input files
+        containing grid information for the ocean/sea-ice,
+        atmosphere and land component models are indicated by the
+        -o, -a and -l flags, respectively). The grid files
+        ocean_grid.nc, atmosphere_grid.nc, and land_grid.nc all can
+        be generated separately through the ocean_grid_generator
+        utility. Normally at GFDL we select the same atmosphere and
+        land model grid, but such is not necessary. When the land
+        and atmosphere grids are the same, then we can reduce the
+        execute command to</p>
+        <pre class="programlisting">
+make_xgrids -o ocean_grid.nc -a atmos_grid.nc
+</pre>
+
+        <p>If you further decide to choose same ocean, atmosphere
+        and land grid, the execute command will be</p>
+        <pre class="programlisting">
+make_xgrids -o ocean_grid.nc -a ocean_grid.nc
+</pre>
+
+        <p>make_xgrids expects a netCDF format input specification
+        for each of the component model grid files. For the
+        ice/ocean grid (ocean_grid.nc), the following three fields
+        are required:</p>
+
+        <p>1. wet - a 2D array of double precision numbers set to
+        1.0 where the ice and ocean models are active and 0.0
+        elsewhere. wet has im indices in the i-direction (pseudo
+        east-west) and jm indices in the j-direction (pseudo
+        north-south). These correspond to the size of the global
+        arrays of temperature, salinity and ice thickness in the
+        coupled climate model.</p>
+
+        <p>2. x_vert_T and y_vert_T - 3D double precision arrays
+        (dimensioned im * jm * 4) that contain the longitudes and
+        latitudes (respectively) of the four corners of T- cells.
+        The numbers are in degrees.</p>
+
+        <p>For the netCDF format input specification for the
+        atmosphere and land grid (atmos_grid.nc and/or
+        land_grid.nc), x_vert_T and y_vert_t are required.</p>
+
+        <p><span><b class="command">make_xgrids</b></span> copies
+        all fields of the ice/ocean grid specification file to its
+        output file, grid_spec.nc, and then appends fields that
+        specify the atmosphere and land model grids and then the
+        surface and runoff exchange grids.</p>
+
+        <p>Using the Sutherland-Hodgeman polygon clipping algorithm
+        (reference in next paragraph) for model cell interaction
+        calculation, make_xgrids takes care that the land and ocean
+        grids perfectly tile the sphere. The land model's domain is
+        defined as that part of the sphere not covered by ocean
+        (where wet=0 on the ocean grid). To accomplish this, the
+        land cells must be modified to remove the ocean parts. This
+        is done in make_xgrids by first taking the intersections of
+        atmosphere and land cells. The overlap area between these
+        cells and active ocean cells are then subtracted. Finally,
+        the modified atmosphere/land intersections are aggregated
+        into land cell areas and atmosphere/land exchange cell
+        areas.</p>
+
+        <p>Model cell intersections are calculated using the
+        Sutherland-Hodgeman polygon clipping algorithm (Sutherland,
+        I. E. and G. W. Hodgeman, 1974: Reentrant polygon clipping,
+        CACM, 17(1), 32-42.). This algorithm finds the intersection
+        of a convex and arbitrary polygon by successively removing
+        the portion of the latter that is "outside" each boundary
+        of the former. It can be found in many computer graphics
+        text books (e.g., Foley, J. D., A. van Dam, S. K. Feiner,
+        and J. F. Hughes, 1990: Computer graphics: principles and
+        practice, second edition. Addison Wesley, 1174 pp.). The
+        implementation in make_xgrids is particularly simple
+        because the clipping polygon is always a rectangle in
+        longitude/latitude space. For the purpose of finding the
+        line intersections in the clipping operations, the cell
+        boundaries are assumed to be straight lines in
+        longitude/latitude space. This treatment is only perfectly
+        accurate for cells bounded by lines of longitude and
+        latitude.</p>
+
+        <p>Spherical areas are calculated by taking the integral of
+        the negative sine of latitude around the boundary of a
+        polygon (Jones, P. W., 1999: First- and second-order
+        conservative remapping schemes for grids in spherical
+        coordinates. Monthly Weather Review, 127, 2204-2210.). The
+        integration pathways are again straight lines in
+        longitude/latitude space. make_xgrids checks that the
+        sphere and the individual cells of the atmosphere and ocean
+        grids are tiled by the surface exchange cells. The
+        fractional tiling errors are reported.</p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "Initial and Boundary Conditions"></a>5.5.&nbsp;Initial
+              and Boundary Conditions</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>After generating the model grid, it is time to generate
+        the initial and boundary conditions (ICs and BCs). These
+        conditions are specific to the details of the model grid,
+        so it is necessary to have the grid specificiation file in
+        hand before moving to the IC and BC generation.</p>
+
+        <p>There are two options for ICs and BCs.</p>
+
+        <p>--Idealized Conditions. These conditions are based on
+        subroutines that design idealized setups for either initial
+        conditions (e.g., exponential temperature profile) or
+        boundary conditions (e.g., cosine zonal wind stress). Code
+        for these purposes is found in the idealized_ic and
+        idealized_bc directories in the MOM4 distribution. Details
+        of available namelist choices are in the documentation file
+        idealized_ic.html as well as the comments within the source
+        code itself. Users can readily incorporate their favorite
+        idealized IC or BC into the MOM4 idealized preprocessing
+        step by emulating the code provided.</p>
+
+        <p>--Realistic Conditions. These ICs and BCs generally
+        result from a regridding routine to bring, say, the Levitus
+        analysis onto the model grid for initializing a model, or
+        for mapping surface fluxes onto the grid for boundary
+        conditions. Code enabling the regridding functions is found
+        in the preprocessing/regrid_2d, preprocessing/regrid_3d and
+        preprocessing/regrid directories in the MOM4
+        distribution.</p>
+
+        <p>In the remainder of this section, we detail code to
+        generate the ICs and BCs of use for MOM4.</p>
+
+        <div class="section" lang="en">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h4 class="title"><a name=
+                "2d Regridding: the common approach"></a>5.5.1.&nbsp;2d
+                Regridding: the common approach</h4>
+              </div>
+            </div>
+          </div>
+
+          <p>It is typical for air-sea fluxes of momentum, heat,
+          and mosture to live on a grid distinct from the ocean
+          model grid. In particular, most analysis are placed on a
+          spherical latitude-longitude grid, whereas most global
+          ocean models configured from MOM4 are run with tripolar
+          grids.</p>
+
+          <p>When running an ocean or ocean-ice model, it is useful
+          to map the boundary fluxes onto the ocean model grid
+          prior to the experiment. This preprocessing step saves
+          computational time that would otherwise be needed if the
+          fluxes were mapped each time step of a running
+          experiment. To enable this regridding, one should access
+          code in the preprocessing/regrid_2d directory. The
+          original data must be on a latitude-longitude grid to use
+          regrid_2d. The target/destination grid can be either
+          latitude-longitude with arbitrary resolution, or tripolar
+          with arbitrary resolution.</p>
+        </div>
+
+        <div class="section" lang="en">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h4 class="title"><a name=
+                "2d Regridding: the less common approach"></a>5.5.2.&nbsp;2d
+                Regridding: the less common approach</h4>
+              </div>
+            </div>
+          </div>
+
+          <p>In some cases, one may wish to take a set of forcing
+          fields from one tripolar MOM4 experiment and regrid them
+          onto another tripolar MOM4 experiment with different grid
+          resolution. In this case, it is necessary to regrid
+          before running the experiment.</p>
+
+          <p>As of the MOM4p0d distribution, there is a regridding
+          tool within the preprocessing/regrid directory that
+          enables one to regrid fields on one tripolar grid to
+          another tripolar grid. Indeed, one can regrid source data
+          from any logically rectangular grid (e.g.,
+          latitude-longitude grid or tripolar grid) to a
+          target/destination grid that is any logically rectangular
+          grid.</p>
+
+          <p>Note that this is new code, and so has been tested
+          only for particular cases. So the user should be extra
+          careful to scrutinize the results.</p>
+        </div>
+
+        <div class="section" lang="en">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h4 class="title"><a name=
+                "Setting the on_grid logical in the data_table"></a>5.5.3.&nbsp;Setting
+                the on_grid logical in the data_table</h4>
+              </div>
+            </div>
+          </div>
+
+          <p>The "on_grid" logical in the data_table indicates
+          whether an input file is on the grid of the model or
+          not.</p>
+
+          <p>on_grid=.true. means that the input file is on the
+          same grid as the ocean model. This is the recommended
+          setting for models running with specified atmospheric
+          forcing from data or an analysis product.</p>
+
+          <p>on_grid=.false. means the input file has data on a
+          grid differing from the ocean model. This feature is
+          allowed ONLY if the input data lives on a spherical grid.
+          This is a relevant setting if one wishes to keep the
+          input data on their native spherical grid. If the input
+          data is non-spherical, then on_grid=.false. is NOT
+          supported. Instead, it is necessary to preprocess the
+          data onto the ocean model grid.</p>
+        </div>
+
+        <div class="section" lang="en">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h4 class="title"><a name=
+                "Regridding river runoff data"></a>5.5.4.&nbsp;Regridding
+                river runoff data</h4>
+              </div>
+            </div>
+          </div>
+
+          <p>The tool preprocessing/runoff_regrid is of use to grid
+          river runoff data onto the ocean model grid. In this
+          case, runoff is moved to a nearest ocean/land boundary
+          point on the new grid. Note that the source runoff
+          dataset must be on a spherical latitude-longitude grid,
+          whereas the target/destination grid can be spherical or
+          tripolar. The regridding algorithm is conservative.</p>
+
+          <p>The conservative regridding scheme used in
+          runoff_regrid is an area average scheme, which is
+          similiar to the algorithm used in coupler flux exchange.
+          If any land point has runoff data, after remapping runoff
+          data onto destination grid, the runoff value of that land
+          point will be moved to the nearest ocean point. Before
+          using this tool, you must use make_xgrids to generate
+          exchange grid information between the source grid and
+          destination grid. The complete description can be found
+          in runoff_regrid.html.</p>
+        </div>
+
+        <div class="section" lang="en">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h4 class="title"><a name=
+                "Two ways to specify surface boundary fluxes"></a>5.5.5.&nbsp;Two
+                ways to specify surface boundary fluxes</h4>
+              </div>
+            </div>
+          </div>
+
+          <p>There are two ways to specify surface boundary fluxes
+          when using the coupler feature of FMS. One is through
+          flux exchange, and this employs a conservative algorithm
+          as appropriate for running a coupled ocean-atmosphere
+          model. It is assumed that the atmospheric model grid is
+          spherical with arbitrary resolution. The other method is
+          through data override, and this uses a non-conservative
+          scheme. Data override is of use to selectively remove,
+          say, one of the fluxes coming from an atmospheric model
+          and replace this flux with that from data. GFDL modelers
+          have found this feature to be very useful in diagnosing
+          problems with a coupled model.</p>
+        </div>
+
+        <div class="section" lang="en">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h4 class="title"><a name=
+                "3d Regridding for ICs or Sponges"></a>5.5.6.&nbsp;3d
+                Regridding for initial conditions or sponges</h4>
+              </div>
+            </div>
+          </div>
+
+          <p>When generating realistic initial conditions for an
+          ocean experiment, one generally requires the gridding of
+          temperature and salinity, such as from the Levitus
+          analysis product, onto the model's grid. For this
+          purpose, we are in need of vertical grid information in
+          addition to horizontal 2d information required for the
+          surface boundary conditions. Hence, we use the
+          preprocessing/regrid_3d. A similar procedure is required
+          to develop sponge data.</p>
+
+          <p>The original data must be on a spherical grid in order
+          to use regrid_3d. If the original data is on a tripolar
+          grid, we should use preprocessing/regrid, which can map
+          data from any logical rectangular grid onto any logical
+          rectangular grid.</p>
+        </div>
+
+        <div class="section" lang="en">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h4 class="title"><a name=
+                "Comments on the regridding algorithms"></a>5.5.7.&nbsp;Comments
+                on the regridding algorithms</h4>
+              </div>
+            </div>
+          </div>
+
+          <p>For preprocessing/regrid_3d, preprocessing/regrid_2d
+          and preprocessing/regrid, regridding is accomplished
+          non-conservatively using a nearest neighbor distance
+          weighting algorithm, or bilinear interpolation. The
+          interpolation algorithm is controlled through the
+          namelist option "interp_method".</p>
+
+          <p>Bilinear interpolation is recommanded for most cases
+          since it provides a smooth interpolation when regridding
+          from coarse grid to fine grid (the usual situation with
+          model destination grids typically having resolution more
+          refined than source data products), and it is more
+          efficient. Efficiency can become a particularly important
+          issue when developing initial and boundary conditions for
+          a refined resolution model.</p>
+
+          <p>If the original data is on a tripolar grid, nearest
+          neighbor distance weighting interpolation found in
+          preprocessing/regrid must be used, since bilinear
+          interpolation assumes the original data is on a
+          latitude-longitude grid. For preprocessing/regrid_2d,
+          preprocessing/regrid_3d and preprocessing/regrid using
+          the nearest neighbor distance weighting algorithm, a
+          maximum distance (in radians) can be selected using the
+          namelist value max_dist. Namelist option "num_nbrs" can
+          be adjusted for speed, although for most applications
+          this refinement is not necessary.</p>
+
+          <p>The complete namelist description for these algorithms
+          can be found in regrid_2d.html, regrid_3d.html and
+          regrid.html.</p>
+        </div>
+
+        <div class="section" lang="en">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h4 class="title"><a name=
+                "Acceptable data formats"></a>5.5.8.&nbsp;Acceptable
+                data formats</h4>
+              </div>
+            </div>
+          </div>
+
+          <p>When the input data is on a latitude-longitude grid,
+          preprocessing/regrid_2d and preprocessing/regrid_3d can
+          be used.</p>
+
+          <p>When the input data is on a tripolar grid or a
+          latitude-longitude grid, postprocessing/regrid can be
+          used.</p>
+
+          <p>For sponge generation, acceptable input data sets must
+          have NetCDF format with COARDS-compliance.</p>
+        </div>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "Time-related issues in forcing files"></a>5.6.&nbsp;
+              Time-related issues in forcing files</h3>
+            </div>
+          </div>
+        </div>There are many ways that data can be formatted in
+        time. The FMS tools used to read in time information, and
+        to time interpolate, are quite sophisticated and flexible.
+        Nonetheless, these tools cannot do everything, nor can they
+        know a priori what the modeler intends. It is therefore
+        necessary to maintain certain conventions when preparing
+        the time information for datasets. This section aims to
+        outline some of the common issues involved with time, and
+        to provide a guide for resolving possible problems.
+
+        <div class="section" lang="en">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h4 class="title"><a name=
+                "How it works and what do do if it fails"></a>5.6.1.&nbsp;
+                How it works and what to do if it fails</h4>
+              </div>
+            </div>
+          </div>
+
+          <p>Previous versions of MOM used IEEE binary formats and
+          MOM-specific headers to process forcing data. As of MOM4,
+          data are stored in portable formats (NetCDF currently),
+          and contain standardized metadata per the <a href=
+          "http://www.cgd.ucar.edu/cms/eaton/cf-metadata/" target=
+          "_top">CF1.0</a> convention.</p>
+
+          <p>Understading the functions of Fortran modules that
+          handle metadata and time-related problems will be very
+          helpful in identifying some user's problems. Some of the
+          most frequently used modules are listed below:</p>
+
+          <div class="variablelist">
+            <table border="0">
+              <col align="left" valign="top">
+
+              <tbody>
+                <tr>
+                  <td><span class="term"><b>mpp_io_mod
+                  :</b></span></td>
+
+                  <td>Low level I/O (open, close file, write,
+                  read,...)</td>
+                </tr>
+
+                <tr>
+                  <td><span class="term"><b>axis_utils_mod
+                  :</b></span></td>
+
+                  <td>process metadata: identify cartesian axis
+                  information (X/Y/Z/T)</td>
+                </tr>
+
+                <tr>
+                  <td><span class="term"><b>time_manager_mod
+                  :</b></span></td>
+
+                  <td>basic time operations, calendar,
+                  increment/decrement time</td>
+                </tr>
+
+                <tr>
+                  <td><span class="term"><b>time_interp_mod
+                  :</b></span></td>
+
+                  <td>Computes a weight for linearly interpolating
+                  between two dates</td>
+                </tr>
+
+                <tr>
+                  <td><span class=
+                  "term"><b>time_interp_external_mod
+                  :</b></span></td>
+
+                  <td>top level routines for requesting data</td>
+                </tr>
+
+                <tr>
+                  <td><span class="term"><b>data_override_mod
+                  :</b></span></td>
+
+                  <td>top level routines for requesting data</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="section" lang="en">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h4 class="title"><a name=
+                "Test your forcing files before use"></a>5.6.2.&nbsp;
+                Test your forcing files before use</h4>
+              </div>
+            </div>
+          </div>
+
+          <p>It is likely that you will encounter an error using
+          "off-the-shelf" NetCDF files to force your ocean model.
+          This could be due to inadequate metadata in the forcing
+          files, mis-specification of the DataTable, or errors in
+          the parsing of the axis information by axis_utils or
+          get_cal_time. You'll need some tools to help you diagnose
+          problems and apply the required fix.</p>
+
+          <p>The first thing you should do to setup a new forcing
+          file is use the test program: <span><b class=
+          "command">time_interp_external_mod:test_time_interp_external</b></span>.
+          This test program calls time_interp_external at
+          user-specified model times and returns information on how
+          the times were decoded and the resulting interpolation
+          indices and weights. It is STRONGLY suggested that you
+          pass your forcing files through this program before
+          including them in your model configuration. As you gain
+          familiarity with the metadata requirements, you will more
+          easily be able to identify errors and save a lot of time
+          debugging.</p>
+
+          <p>The forcing test program is located in <tt class=
+          "option">src/preprocessing/test_time_interp_ext</tt>.
+          There is a csh version and a Perl version.</p>
+
+          <p>Compilation</p>
+          <pre class="programlisting">
+ mkmf -m Makefile -p test_time_interp_ext.exe -t $TEMPLATE -c -Dtest_time_interp_external -x shared/{time_manager,fms,mpp,clocks,time_interp,axis_utils,platform,horiz_interp,constants,memutils}
+</pre>
+
+          <p>running csh version</p>
+          <pre class="programlisting">
+namelist options: 
+filename='foo.nc'                      ! name of forcing file
+fieldname='foo'                        ! name of variable in file
+year0=[integer]                        ! initial year to start model calendar
+month0=[integer]                       ! initial month to start model calendar
+day0=[integer]                         ! initial day to start model calendar
+days_inc=[integer]                     ! increment interval for model calendar
+ntime=[integer]                        ! number of model "timesteps"
+cal_type=['julian','noleap','360day']  ! model calendar
+</pre>
+
+          <p>running perl version</p>
+          <pre class="programlisting">
+ test_time_interp_ext.pl -f 'foo.nc' -v 'foo' [--nt [int] --year0 [int] --month0 [int] --day0 [int] --inc_days [int] --cal_type [char]]
+</pre>
+
+          <p>Modifying the file metadata should hopefully prove
+          straightforward. The <a href="http://nco.sourceforge.net"
+          target="_top">NCO operators</a> need to be installed on
+          your platform. The utility "ncatted" is most useful for
+          modifying or adding metadata. If for some reason, you are
+          unable to install the NCO operators, you can use the
+          NetCDF utilities "ncgen" and "ncdump" which come with the
+          NetCDF package.</p>
+        </div>
+
+        <div class="section" lang="en">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h4 class="title"><a name=
+                "Common metadata problems"></a>5.6.3.&nbsp; Common
+                metadata problems</h4>
+              </div>
+            </div>
+          </div>
+
+          <p><span><b class="command">Can't identify cartesian axis
+          information</b></span></p>
+
+          <p>axis_utils_mod:get_axis_cart should return the
+          cartesian information. If this fails, you will get a
+          somewhat cryptic error message: "file/fieldname could not
+          recognize axis atts in time_interp_external". The best
+          solution is to add the "cartesian_axis" attribute to the
+          axes, e.g. "ncatted -a cartesian_axis,axis_name,c,c,"X"
+          foo.nc".</p>
+
+          <p><span><b class="command">Calendar attribute does not
+          exist</b></span></p>
+
+          <p>This is a required attribute.
+          time_manager_mod:get_cal_time converts time units
+          appropriate to the specified calendar to the model time
+          representation. If the "calendar" attribute does not
+          exist, an error message appears "get_cal_time: calendar
+          attribute required. Check your dataset to make sure
+          calendar attribute exists " Use a ncatted command such
+          as: "ncatted -a calendar,time_axis_name,c,c,"julian"
+          foo.nc"</p>
+
+          <p>Currently, the FMS time_manager does not support the
+          Gregorian calendar. So, for instance if you have forcing
+          data that are encoded using the Gregorian calendar which
+          has an average year length of 365.2425 days compared with
+          the Julian calendar with an average year length of 365.25
+          days, assuming Julian calendar encoding will result in a
+          drift of 0.75 days/100 years. If your forcing times are
+          referenced to an early date such as "0001-01-01" your
+          times will drift by 15 days by the year 2000. Until the
+          Gregorian calendar is implemented in the FMS code, the
+          recommended solution is to change the reference date in
+          the forcing dataset using an application such as
+          Ferret</p>
+        </div>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "Scalability of MOM4 code"></a>5.7.&nbsp; Scalability
+              of MOM4 code</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>Scalability of a complex model like MOM4 is the
+        correlation between the number of processing elements (PE)
+        and the run time. One would expect that run time decreases
+        as the number of PEs increases. It is important, however,
+        to note that there are a number of important factors that
+        can affect scalability considerably:</p>
+
+        <div class="itemizedlist">
+          <ul type="disc">
+            <li>MOM4 test cases are designed for testing the code
+            integrity, they are not set for scalability study or
+            "production" purpose. Changes should be made if one
+            wants to study scalability of the code.</li>
+
+            <li>diag_freq (in MOM4p0) and diag_step (in MOM4p1) set
+            the time steps at which numerical diagnostics (e.g.,
+            energy, tracer budgets) are computed. The user needs to
+            set this value to be equal to the time step at the end
+            of the experiment, so that only a single instance of
+            the diagnostics is evaluated. For example, if time step
+            is 1 hour and run length is 4 days, diag_freq in MOM4p0
+            (diag_step in MOM4p1) should be set to 96.</li>
+
+            <li>diag_table contains all fields that will be saved
+            in history files. The frequency of saving and number of
+            fields can afect the total run time greatly. So when
+            testing performance, it is recommended that the
+            researcher reduce the output of history files.</li>
+
+            <li>Scalability is also dependent on the configuration
+            of the computing platform: Ethernet card, interconnect
+            between PEs, implementation of MPI, memory hierarchy,
+            version of compiler, ...</li>
+
+            <li>In examining the total run time the overheads due
+            to initialization and termination should be extracted
+            from total runtime for scalability study since they
+            contain a lot of I/O activities.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "Minimizing idle processors"></a>5.8.&nbsp;
+              Minimizing idle processors</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>When running an ocean-ice model with atmospheric data
+        forcing, it may happen that some ocean-ice tasks contain
+        only land points, in which case these processors stand
+        idle. FMS provides a feature to mask land-only tasks and to
+        thus run the model without allocating a processor for these
+        land-only domains. For example, if a processor domain
+        layout 30x50 is specified, but say 500 subdomains are land
+        only, you may run the model with 1500-500=1000 MPI tasks
+        only. Note that you do not get your results faster when
+        eliminating land-only processors, but compute costs may be
+        reduced.</p>
+
+        <p>In the following example, an "x" represents a land-only
+        subdomain, whereas a dot indicates a domain with a nonzero
+        number of "wet" ocean points:</p>
+
+        <p>x . x</p>
+
+        <p>x . .</p>
+
+        <p>. . .</p>
+
+        <p>In this example, three idle processors could be left out
+        (two in the northern-most row, and one in the second row)
+        since there are no wet ocean points on these "x" domains.
+        The ocean-ice model may thus be run with only 6 MPI tasks
+        rather than nine. To enable this feature of FMS, the
+        following variables in the namelist coupler_nml must be
+        specified.</p>
+
+        <p>coupler_nml</p>
+
+        <p>...</p>
+
+        <p>do_atmos = .false.</p>
+
+        <p>....</p>
+
+        <p>n_mask = 3</p>
+
+        <p>layout_mask = 3, 3</p>
+
+        <p>mask_list = 1,2, 1,3, 3,3</p>
+
+        <p>If a mask list is specified, the domain layout of the
+        ocean and the ice model is automatically the same, as
+        specified with layout_mask. Running the model, only 6 MPI
+        tasks need to be started.</p>
+
+        <p>For large and complex model topography, it is very
+        tedious to specify the mask list by hand. To simplify this
+        task, the preprocessing tool "check_mask" can be used after
+        the model grid and topography are specified, i.e., when
+        grid_spec.nc is generated. To do so requires adding the
+        following to topog_nml during the preprocessing stage</p>
+
+        <p>topog_nml</p>
+
+        <p>check_mask=.true.</p>
+
+        <p>The preprocessing code prints out a number of proposals
+        for possible domain layouts, number of land-only
+        subdomains, and templates for setting the mask_list. You
+        may copy these layouts to coupler_nml, but note that you
+        must replace spaces by a comma in "mask_list".</p>
+
+        <p>You may configure "check_mask" from the namelist
+        check_mask_nml. There are two variables "max_pe" and "halo"
+        required to perform the mask checking. The default settings
+        are</p>
+
+        <p>max_pe = 128 halo = 1</p>
+
+        <p>If you intend to employ more processors, then increase
+        max_pe. If you want to use higher order advection schemes,
+        then increase halo to halo=2 or even halo=3. Otherwise, the
+        halo information of masked domains may leak into ocean
+        domains, in which case the model will fail, with errors
+        reporting land values at ocean points.</p>
+
+        <p>In the postprocessing step, the single netCDF-output
+        files from the MPI tasks can be combined into one file
+        using the tool <a href="#mppnccombine" target=
+        "_top">mppnccombine</a>. The latest version adds "missing"
+        values at the location of land-only domains. Hence, the
+        only remaining trace of masking out land-only processors is
+        in your account files, where some compute time is
+        saved.</p>
+      </div>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "Postprocessing regrid tool"></a>6.&nbsp;Postprocessing
+            regrid tool</h2>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "Introduction to Postprocessing"></a>6.1.&nbsp;Introduction
+              to Postprocessing</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>For many analysis applications, it is sufficient, and
+        often preferable, to have output on the model's native grid
+        (i.e., the grid used to run the simulation). Accurate
+        computation of budgets, for example, must be done on the
+        model's native grid, preferably online during integration.
+        MOM4 provides numerous online diagnostics for this
+        purpose.</p>
+
+        <p>Many applications, such as model comparison projects,
+        require results on a common latitude-longitude spherical
+        grid. Such facilitates the development of difference maps.
+        For this purpose, we have developed a tool to regrid scalar
+        and vector fields from a tripolar grid to a spherical grid.
+        In principle, this tool can be used to regrid any logically
+        rectangular gridded field onto a spherical grid. However,
+        applications at GFDL have been limited to the tripolar to
+        spherical regrid case.</p>
+
+        <p>In general, regridding is a difficult task to perform
+        accurately and without producing noise or spurious results.
+        The user should carefully examine regridding results for
+        their physical integrity. Problems occur, in particular,
+        with fields near MOM4's partial bottom step topography in
+        the presence of realistic topography and land/sea geometry.
+        Indeed, we were unable to find a simple algorithm to handle
+        regridding in the vertical that did not produce egregious
+        levels of noise. Hence, the regridding tool provided with
+        MOM4 only handles horizontal regridding. The regridded data
+        will thus be on the source vertical grid.</p>
+
+        <p>Model comparisons should ideally be performed only after
+        regridding output using the same regridding algorithm.
+        Unfortunately, such is not generally the case since there
+        is no standard regridding algorithm used in the modeling
+        community.</p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "How to use the regridding tool"></a>6.2.&nbsp;How to
+              use the regridding tool</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>The regridding algorithm provided with the MOM4
+        distribution is located in the directory <span><b class=
+        "command">postprocessing/regrid</b></span></p>
+
+        <p>The algorithm accepts data from any logically
+        rectangular grid (e.g., tripolar or latitude-longitude) and
+        regrids to a spherical latitude-longitude grid. When the
+        data is on the tracer cell (T-cell), the regridding
+        interpolation is conservative. Thus, total heat, salt, and
+        passive tracer remain the same on the two grids. However,
+        when data is located at another position:</p>
+
+        <div class="itemizedlist">
+          <ul type="disc">
+            <li>corner or C-cell as for a B-grid horizontal
+            velocity component</li>
+
+            <li>east or E-cell as for an eastward tracer flux</li>
+
+            <li>north or N-cell as for a northward tracer flux</li>
+          </ul>
+        </div>
+
+        <p>then regridding is accomplished non-conservatively using
+        a nearest neighbor distance weighting algorithm. It is for
+        this reason that computationally accurate results are only
+        available when working on the model's native grids.</p>
+
+        <p>The regridding tool reads grids information from a
+        netcdf file, specified by the namelist "grid_spec_file".
+        "grid_spec_file" contains source grid, destination grid and
+        exchange grid information.</p>
+
+        <div class="itemizedlist">
+          <ul type="disc">
+            <li>source grid: src_grid.nc. This is the model's
+            native grid. It results from running preprocessing grid
+            generation code.</li>
+
+            <li>destination grid: dst_grid.nc. This is the
+            spherical latitude-lontitude grid. This grid can also
+            be obtained from running preprocessing grid generation
+            code. Be sure that the tripolar option is set to false
+            to ensure that dst_grid.nc is spherical.</li>
+
+            <li>exchange grid: grid_spec.nc. This is the union of
+            the source grid and destination grid. The exchange grid
+            is needed for conservative regridding. The same
+            conservative regridding algorithm is used for coupled
+            models with FMS. The tool to construct the exchange
+            grid is know as "make_xgrids". It is located in the
+            preprocessing directory. After grid_spec.nc is
+            generated, it should be passed to the regrid tool
+            through namelist "grid_spec_file"(No need to pass
+            src_grid.nc and dst_grid.nc to the regrid tool).</li>
+          </ul>
+        </div>
+
+        <p>To create the exchange grid, execute the command</p>
+
+        <p><span><b class="command">make_xgrids -o src_grid.nc -a
+        dst_grid.nc</b></span></p>
+
+        <p>The exchange grid creates a file grid_spec.nc. It has
+        new fields with names:</p>
+
+        <p>AREA_ATMxOCN, DI_ATMxOCN, DJ_ATMxOCN, I_ATM_ATMxOCN,
+        J_ATM_ATMxOCN, I_OCN_ATMxOCN, J_OCN_ATMxOCN, AREA_ATMxLND,
+        DI_ATMxLND, DJ_ATMxLND, I_ATM_ATMxLND, J_ATM_ATMxLND,
+        I_LND_ATMxLND, J_LND_ATMxLND, AREA_LNDxOCN, DI_LNDxOCN,
+        DJ_LNDxOCN, I_LND_LNDxOCN, J_LND_LNDxOCN, I_OCN_LNDxOCN,
+        J_OCN_LNDxOCN, xba, yba, xta, yta, AREA_ATM, xbl, ybl, xtl,
+        ytl, AREA_LND, AREA_LND_CELL, xto, yto, AREA_OCN</p>
+
+        <p>It is critical that src_grid.nc DO NOT already have any
+        of the above new exchange grid fields. If they do, then
+        these fields should be removed using netcdf <a href=
+        "http://nco.sourceforge.net/" target="_top">tools</a> such
+        as ncks.</p>
+
+        <p>After the grid_spec.nc file is generated, it is passed
+        into the regrid program through the nml option
+        "grid_spec_file".</p>
+
+        <p>The regrid program reads model data from a netcdf file,
+        which is specfied by the namelist variable "src_data".
+        Again, src_data fields are gridded according to
+        src_grid.nc. The number of fields to be regridded is
+        specified by num_flds. The name of the fields (e.g., temp,
+        salt) to be regridded is specified by the namelist variable
+        "fld_name". Each field can be a scalar or vector. If a
+        vector, then specify by vector_fld. Vector fields should
+        always be paired together (e.g., u,v components to the
+        horizontal current). The output file is a netcdf file
+        specified by the namelist variable "dst_data".</p>
+
+        <p>The complete namelist option description is available in
+        regrid.html or the code itself.</p>
+      </div>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "preparing the runscript"></a>7.&nbsp;Preparing the
+            runscript</h2>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "runscript"></a>7.1.&nbsp;The runscript</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>A runscript is provided in each <a href=
+        "#MOM4%20test%20cases" target="_top">test case</a>
+        directory (<tt class="filename">mom4/exp/<span class=
+        "emphasis"><em>$test_case</em></span></tt> ) for each
+        <a href="#MOM4%20test%20cases" target="_top">test case</a>.
+        Details can be found in <a href="quickstart_guide.html"
+        target="_top">quickstart_guide.html</a>.</p>
+
+        <p>Incorporated in the FMS infrastructure is <a href=
+        "../../shared/mpp/mpp.html" target="_top"><tt class=
+        "filename">MPP</tt></a> (Massively Parallel Processing),
+        which provides a uniform message-passing API interface to
+        the different message-passing libraries. If MPICH is
+        installed, the user can compile the MOM4 source code with
+        MPI. If the user does not have MPICH or the communications
+        library, the MOM4 source code can be compiled without MPI
+        by omitting the <tt class="option">CPPFLAGS</tt> value
+        <tt class="option">-Duse_libMPI</tt> in the example
+        runscript.</p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "the diagnostics table"></a>7.2.&nbsp;The diagnostics
+              table</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>The diagnostics table allows users to specify the
+        sampling rates and choose the output fields prior to
+        executing the MOM4 source code. It is included in the
+        <tt class="filename">input</tt> directory for each <a href=
+        "#mom4%20test%20cases" target="_top">test case</a>
+        (<tt class="filename">mom4/exp/<span class=
+        "emphasis"><em>$test_case</em></span>/input</tt>). A
+        portion of a sample MOM4 diagnostic table is displayed
+        below. Reference <a href=
+        "../../shared/diag_manager/diag_manager.html" target=
+        "_top">diag_manager.html</a> for detailed information on
+        the use of diag_manager.</p>
+        <pre class="programlisting">
+    "Diagnostics for MOM4 test case"
+    1980 1 1 0 0 0
+    #output files
+    "ocean_month",1,"months",1,"hours","Time"
+    "ocean_snap",1,"days",1,"hours","Time"
+    #####diagnostic field entries####
+    #===============================================================
+    # ocean model grid quantities (static fields and so not time averaged))
+    "ocean_model","geolon_t","geolon_t","ocean_month" "all",.false.,"none",2
+    "ocean_model","geolat_t","geolat_t","ocean_month","all",.false.,"none",2
+    #================================================================
+    # prognostic fields 
+    "ocean_model","temp","temp","ocean_month","all", "max", "none",2
+    "ocean_model","age_global","age_global","ocean_month","all","min","none",2
+    #================================================================
+    # diagnosing tracer transport 
+    "ocean_model","temp_xflux_sigma","temp_xflux_sigma","ocean_month","all",.true.,"none",2
+    "ocean_model","temp_yflux_sigma","temp_yflux_sigma","ocean_month","all",.true.,"none",2
+    #================================================================ 
+    # surface forcing
+    "ocean_model","sfc_hflux","sfc_hflux","ocean_month","all",.true.,"none",2
+    "ocean_model","sfc_hflux_adj","sfc_hflux_adj","ocean_month","all",.true.,"none",2
+    #================================================================
+    # ice model fields 
+    "ice_model", "FRAZIL",   "FRAZIL",     "ice_month", "all", .true., "none", 2,
+    "ice_model", "HI",    "HI",   "ice_month", "all", .true., "none", 2
+    #-----------------------------------------------------------------
+   
+</pre>
+
+        <p>The diagnostics manager module, <a href=
+        "../../shared/diag_manager/diag_manager.html" target=
+        "_top"><tt class="filename">diag_manager_mod</tt></a>, is a
+        set of simple calls for parallel diagnostics on distributed
+        systems. It provides a convenient set of interfaces for
+        writing data to disk in <a href=
+        "http://www.unidata.ucar.edu/packages/netcdf/" target=
+        "_top">NetCDF</a> format. The diagnostics manager is
+        packaged with the MOM4 source code. The FMS diagnostic
+        manager can handle scalar fields as well as arrays. For
+        more information on the diagnostics manager, reference
+        <a href="../../shared/diag_manager/diag_manager.html"
+        target="_top">diag_manager.html</a>.</p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "the field table"></a>7.3.&nbsp;The field table</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>The MOM4 field table is used to specify tracers and
+        their advection schemes, cross-land tracer mixing,
+        cross-land insertion, and other options. The field table is
+        included in the runscript as a namelist and is written to
+        an output file upon execution of the runscript.</p>
+        <pre class="programlisting">
+   <br>
+
+"prog_tracers","ocean_mod","temp"
+
+horizontal-advection-scheme = quicker
+vertical-advection-scheme = quicker
+restart_file  = ocean_temp_salt.res.nc
+/
+    <br>
+ 
+"prog_tracers","ocean_mod","salt"
+
+horizontal-advection-scheme = mdfl_sweby
+vertical-advection-scheme = mdfl_sweby
+restart_file  = ocean_temp_salt.res.nc
+/ 
+    <br>
+
+"tracer_packages","ocean_mod","ocean_age_tracer"
+
+names = global
+horizontal-advection-scheme = mdfl_sweby
+vertical-advection-scheme = mdfl_sweby
+restart_file  = ocean_age.res.nc
+min_tracer_limit=0.0
+/
+
+    <br>
+
+"namelists","ocean_mod","ocean_age_tracer/global"
+
+slat = -90.0
+nlat =  90.0
+wlon =   0.0
+elon = 360.0
+/
+
+
+<br>
+
+"xland_mix","ocean_mod","xland_mix"
+"xland","Gibraltar","ixland_1=274,ixland_2=276,jxland_1=146,jxland_2=146,kxland_1=1,kxland_2=28,vxland=0.55e6"
+"xland","Gibraltar","ixland_1=274,ixland_2=276,jxland_1=147,jxland_2=147,kxland_1=1,kxland_2=28,vxland=0.55e6"
+"xland","Black-Med","ixland_1=305,ixland_2=309,jxland_1=151,jxland_2=152,kxland_1=1,kxland_2=6,vxland=0.01e6"
+"xland","Black-Med","ixland_1=306,ixland_2=309,jxland_1=151,jxland_2=153,kxland_1=1,kxland_2=6,vxland=0.01e6"/
+
+"xland_insert","ocean_mod","xland_insert"
+"xland","Gibraltar","ixland_1=274,ixland_2=276,jxland_1=146,jxland_2=146,kxland_1=1,kxland_2=18,tauxland=86400.0"
+"xland","Gibraltar","ixland_1=274,ixland_2=276,jxland_1=147,jxland_2=147,kxland_1=1,kxland_2=18,tauxland=86400.0"
+"xland","Black-Med","ixland_1=305,ixland_2=309,jxland_1=151,jxland_2=152,kxland_1=1,kxland_2=6,tauxland=86400.0"
+"xland","Black-Med","ixland_1=306,ixland_2=309,jxland_1=151,jxland_2=153,kxland_1=1,kxland_2=6,tauxland=86400.0"/
+<br>
+
+"diff_cbt_enhance","ocean_mod","diff_cbt_enhance"
+"diffcbt","Gibraltar","itable=274,jtable=146,ktable_1=1,ktable_2=18,diff_cbt_table=0.01"
+"diffcbt","Gibraltar","itable=276,jtable=146,ktable_1=1,ktable_2=18,diff_cbt_table=0.01"
+"diffcbt","Gibraltar","itable=274,jtable=147,ktable_1=1,ktable_2=18,diff_cbt_table=0.01"
+"diffcbt","Gibraltar","itable=276,jtable=147,ktable_1=1,ktable_2=18,diff_cbt_table=0.01"
+"diffcbt","Black-Med","itable=305,jtable=151,ktable_1=1,ktable_2=6,diff_cbt_table=0.01"
+"diffcbt","Black-Med","itable=309,jtable=152,ktable_1=1,ktable_2=6,diff_cbt_table=0.01"
+"diffcbt","Black-Med","itable=306,jtable=151,ktable_1=1,ktable_2=6,diff_cbt_table=0.01"
+"diffcbt","Black-Med","itable=309,jtable=153,ktable_1=1,ktable_2=6,diff_cbt_table=0.01"/
+
+
+
+   
+</pre>
+
+        <p>In the first section of the field table, the user can
+        specify tracers to be used in the simulation. Although
+        there is no limit to the number of tracers specified,
+        temperature (<tt class="literal">temp</tt>) and salinity
+        (<tt class="literal">salt</tt>) must be included. The user
+        may also define the horizontal and vertical tracer
+        advection schemes. For more information on the field
+        manager, reference <a href=
+        "../../shared/field_manager/field_manager.html" target=
+        "_top">field_manager.html</a>.</p>
+
+        <p>In climate modeling, it is often necessary to allow
+        water masses that are separated by land to exchange tracer
+        and surface height properties. This situation arises in
+        models when the grid mesh is too coarse to resolve narrow
+        passageways that in reality provide crucial connections
+        between water masses. The cross-land mixing and cross-land
+        insertion establishes communication between bodies of water
+        separated by land. The communication consists of mixing
+        tracers and volume between non-adjacent water columns.
+        Momentum is not mixed. The scheme conserves total tracer
+        content, total volume, and maintains compatibility between
+        the tracer and volume budgets. The grid points where this
+        exchange takes place, and the rates of the exchange, are
+        specified in the field table.</p>
+
+        <p>For some cases, it is necessary to set a large vertical
+        tracer diffusivity at a specified point in the model, say
+        next to a river mouth to ensure fresh water is mixed
+        vertically. These diffusivities are specified in the field
+        table.</p>
+
+        <p>For a technical description of cross-land tracer mixing
+        and insertion, please reference <a href="./guide4p0.pdf"
+        target="_top">A Technical Guide to MOM4</a>.</p>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "mppnccombine"></a>7.4.&nbsp;mppnccombine</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>Running the MOM4 source code in a parallel processing
+        environment will produce one output <a href=
+        "http://www.unidata.ucar.edu/packages/netcdf/" target=
+        "_top">NetCDF</a> diagnostic file per processor. <a href=
+        "../../postprocessing/mppnccombine/mppnccombine.c" target=
+        "_top"><tt class="filename">mppnccombine</tt></a> joins
+        together an arbitrary number of data files containing
+        chunks of a decomposed domain into a unified <a href=
+        "http://www.unidata.ucar.edu/packages/netcdf/" target=
+        "_top">NetCDF</a> file. If the user is running the source
+        code on one processor, the domain is not decomposed and
+        there is only one data file. <a href=
+        "../../postprocessing/mppnccombine/mppnccombine.c" target=
+        "_top"><tt class="filename">mppnccombine</tt></a> will
+        still copy the full contents of the data file, but this is
+        inefficient and <a href=
+        "../../postprocessing/mppnccombine/mppnccombine.c" target=
+        "_top"><tt class="filename">mppnccombine</tt></a> should
+        not be used in this case. Executing <a href=
+        "../../postprocessing/mppnccombine/mppnccombine.c" target=
+        "_top"><tt class="filename">mppnccombine</tt></a> is
+        automated through the <a href="#runscript" target=
+        "_top">runscripts</a>. The data files are <a href=
+        "http://www.unidata.ucar.edu/packages/netcdf/" target=
+        "_top">NetCDF</a> format for now, but IEEE binary may be
+        supported in the future.</p>
+
+        <p><a href="../../postprocessing/mppnccombine/mppnccombine.c" target=
+        "_top"><tt class="filename">mppnccombine</tt></a> requires
+        decomposed dimensions in each file to have a <tt class=
+        "literal">domain_decomposition</tt> attribute. This
+        attribute contains four integer values: starting value of
+        the entire non-decomposed dimension range (usually 1),
+        ending value of the entire non-decomposed dimension range,
+        starting value of the current chunk's dimension range and
+        ending value of the current chunk's dimension range.
+        <tt class="filename">mppnccombine</tt> also requires that
+        each file have a <tt class="literal">NumFilesInSet</tt>
+        global attribute which contains a single integer value
+        representing the total number of chunks (i.e., files) to
+        combine.</p>
+
+        <p>The syntax of <a href=
+        "../../postprocessing/mppnccombine/mppnccombine.c" target=
+        "_top"><tt class="filename">mppnccombine</tt></a> is:</p>
+        <pre class="programlisting">
+        mppnccombine [-v] [-a] [-r] output.nc [input ...] 
+     
+</pre>
+
+        <div class="table">
+          <a name="id2502124"></a>
+
+          <p class="title"><b>Table&nbsp;1.&nbsp;mppnccombine
+          arguments</b></p>
+
+          <table summary="mppnccombine arguments" border="0">
+            <colgroup>
+              <col>
+              <col>
+            </colgroup>
+
+            <tbody>
+              <tr>
+                <td>-v</td>
+
+                <td>print some progress information</td>
+              </tr>
+
+              <tr>
+                <td>-a</td>
+
+                <td>append to an existing <a href=
+                "http://www.unidata.ucar.edu/packages/netcdf/"
+                target="_top">NetCDF</a> file</td>
+              </tr>
+
+              <tr>
+                <td>-r</td>
+
+                <td>remove the '.####' decomposed files after a
+                successful\ run</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>An output file must be specified and it is assumed to be
+        the first filename argument. If the output file already
+        exists, then it will not be modified unless the option is
+        chosen to append to it. If no input files are specified,
+        their names will be based on the name of the output file
+        plus the extensions '.0000', '.0001', etc. If input files
+        are specified, they are assumed to be absolute filenames. A
+        value of 0 is returned if execution is completed
+        successfully and a value of 1 indicates otherwise.</p>
+
+        <p>The source of <a href=
+        "../../postprocessing/mppnccombine/mppnccombine.c" target=
+        "_top"><tt class="filename">mppnccombine</tt></a> is
+        packaged with the MOM4 module in the <tt class=
+        "filename">postprocessing</tt> directory. <tt class=
+        "filename">mppnccombine.c</tt> should be compiled on the
+        platform where the user intends to run the FMS MOM4 source
+        code so the <a href="#runscript" target=
+        "_top">runscript</a> can call it. A C compiler and <a href=
+        "http://www.unidata.ucar.edu/packages/netcdf/" target=
+        "_top">NetCDF</a> library are required for compiling
+        <tt class="filename">mppnccombine.c</tt>:</p>
+        <pre class="programlisting">
+       cc -O -o mppnccombine -I/usr/local/include -L/usr/local/lib mppnccombine.c -lnetcdf
+     
+</pre>
+      </div>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "examining the output"></a>8.&nbsp;Examining the
+            output</h2>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "sample model output"></a>8.1.&nbsp;Sample model
+              output</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>Sample MOM4p1 model output data files are available at
+        <a href=
+        "ftp://ftp.gfdl.noaa.gov/perm/MOM4/mom4p1_pubrel_dec2009/exp"
+        target="_top">GFDL ftp site</a>. Output files are
+        classified into three subdirectories:</p>
+
+        <div class="itemizedlist">
+          <ul type="disc">
+            <li><tt class="filename">ascii</tt>: the description of
+            the setup of the run and verbose comments printed out
+            during the run.</li>
+
+            <li><tt class="filename">restart</tt>: the model fields
+            necessary to initialize future runs of the model.</li>
+
+            <li><tt class="filename">history</tt>: output of the
+            model, both averaged over specified time intervals and
+            snapshots.</li>
+          </ul>
+        </div>
+
+        <p>Note that these output files are compressed using
+        <span><b class="command">tar</b></span>. All <tt class=
+        "filename">.tar</tt> files should be decompressed for
+        viewing. The decompress command is:</p>
+        <pre class="programlisting">
+       tar -xvf filename.tar
+     
+</pre>
+      </div>
+
+      <div class="section" lang="en">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h3 class="title"><a name=
+              "analysis tools"></a>8.2.&nbsp;Analysis tools</h3>
+            </div>
+          </div>
+        </div>
+
+        <p>There are several graphical packages available to
+        display the model output. These packages vary widely
+        depending on factors, such as the number of dimensions, the
+        amount and complexity of options available and the output
+        data format. The data will first have to be put into a
+        common format that all the packages can read. FMS requires
+        the data to be stored in <a href=
+        "http://www.unidata.ucar.edu/packages/netcdf/" target=
+        "_top">NetCDF</a> format since it is so widely supported
+        for scientific visualization. The graphical package is also
+        dependent upon the computing environment. For ocean
+        modeling, <a href=
+        "http://meteora.ucsd.edu/~pierce/ncview_home_page.html"
+        target="_top">ncview</a>, <a href=
+        "http://ferret.wrc.noaa.gov/Ferret/" target=
+        "_top">Ferret</a> and <a href=
+        "http://grads.iges.org/grads/" target="_top">GrADS</a> are
+        most commonly used.</p>
+      </div>
+    </div>
+  </div><br>
+  <br>
+
+  <div class="footer" style="position:relative;">
+    <div style="float:right; clear:right; text-align:right;">
+      Document Author: <a href="" onclick=
+      "javascript:window.location='mai'+'lt'+'o:'+'Stephen.Griffies'+'%40'+'noaa.gov'"
+      onmouseover=
+      "javascript:window.status='send ema'+'il';return true;"
+      onmouseout=
+      "javascript:window.status='';return true;">&nbsp;Stephen&nbsp;Griffies</a><br>
+
+      <a href="mom4_manual.pdf">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+      &nbsp; &nbsp; &nbsp; Download Document as PDF</a><br>
+
+      <div style=
+      "position:absolute; bottom:0px; float:right; clear:right; text-align:right;">
+      *Links on this page may cause you to leave the GFDL website.
+      The U.S. Government does not endorse any non-Federal websites
+      on this page.
+      </div>
+    </div><a href="http://www.noaa.gov/privacy.html">Privacy
+    Policy</a> | <a href=
+    "http://www.noaa.gov/disclaimer.html">Disclaimer</a><br>
+    <a href="http://www.doc.gov/">US Department of Commerce</a> |
+    <a href="http://www.noaa.gov/">NOAA</a> | <a href=
+    "http://www.oar.noaa.gov/">OAR</a> | <a href=
+    "http://www.gfdl.noaa.gov/">Geophysical Fluid Dynamics
+    Laboratory</a><br>
+    physical address: Princeton Forrestal Campus 201 Forrestal
+    Road, Princeton NJ, 08542-0308<br>
+    mailing address: PO Box 308, Princeton NJ, 08542-0308<br>
+    phone: (609) 452-6500 fax: (609) 987-5063<br>
+    <a href="mailto:oar.gfdl.webmaster-data1@noaa.gov">mailto: web
+    master</a><br>
+    last modified: December 16, 2009
+  </div>
+</body>
+</html>

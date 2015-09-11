@@ -1,0 +1,668 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module rivers_mod</title>
+<link type="text/css" href="http://www.gfdl.noaa.gov/~fms/style/doc.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module rivers_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Chris.Milly@noaa.gov">   Christopher Milly </a>
+<br>
+<b>Reviewers:&nbsp;</b><a href="mailto:Elena.Shevliakova@noaa.gov">   Elena Shevliakova </a>,&nbsp;
+    <a href="mailto:Sergey.Malyshev@noaa.gov">   Sergey Malyshev </a>
+<br>
+<b>Change History:&nbsp;</b><a href="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS/land/lad/soil">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   Module containing processes relating to the rivers. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   Allocates river data and sets river destination indices. Includes tests
+   for checking whether points are coastal. Updates the state of the rivers
+   and runoff on the fast and slow time-scales. River boundary data is
+   updated on the slow time-scale. Given the local runoff field, calculates
+   the local portion of discharge.
+   <br>
+<br>
+   Initializes diagnostics and sends the diagnostic field output for the
+   slow time-scale river fields and static fields to the diagnostic manager. </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>   time_manager_mod<br>   diag_manager_mod<br>            mpp_mod<br>    mpp_domains_mod<br>         mpp_io_mod<br>            fms_mod<br>      constants_mod<br>     land_types_mod<br>land_properties_mod<br>       numerics_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#rivers_init">rivers_init</a>:</dt>
+<dd>   Initializes rivers data instance. </dd>
+<dt>
+<a href="#rivers_end">rivers_end</a>:</dt>
+<dd>   Deallocates rivers data instance. </dd>
+<dt>
+<a href="#init_routing">init_routing</a>:</dt>
+<dd>   Sets river destination indices. </dd>
+<dt>
+<a href="#is_coastal">is_coastal</a>:</dt>
+<dd>   Tests whether a point is a coastal point. </dd>
+<dt>
+<a href="#init_rivers_diag">init_rivers_diag</a>:</dt>
+<dd>   Initializes diagnostics for rivers module. </dd>
+<dt>
+<a href="#update_rivers_fast">update_rivers_fast</a>:</dt>
+<dd>   Fast time-scale update of state. </dd>
+<dt>
+<a href="#calc_discharge">calc_discharge</a>:</dt>
+<dd>   Given local runoff field, calculates local portion of discharge. </dd>
+<dt>
+<a href="#update_rivers_slow">update_rivers_slow</a>:</dt>
+<dd>   Slow time-scale update of state. </dd>
+<dt>
+<a href="#update_rivers_bnd_slow">update_rivers_bnd_slow</a>:</dt>
+<dd>   Updates the river boundary data on the slow time-scale. </dd>
+<dt>
+<a href="#diag_slow">diag_slow</a>:</dt>
+<dd>   Diagnostic field output of the slow time-scale variables. </dd>
+<dt>
+<a href="#diag_static">diag_static</a>:</dt>
+<dd>   Static diagnostic fields output. </dd>
+<dt>
+<a href="#print_error_mesg">print_error_mesg</a>:</dt>
+<dd>   Reports error, including file name and line. </dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="rivers_init"></a>
+<h4>rivers_init</h4>
+<pre>subroutine rivers_init &amp;
+     ( Rivers, gblon, gblat, garea, gfrac, time, dt_fast, dt_slow, domain, &amp;
+     id_lon, id_lat )
+
+  type(rivers_type), intent(inout) :: Rivers     ! data to initialize
+  real,            intent(in)      :: gblon(:)   ! lon boundaries of the grid cells
+  real,            intent(in)      :: gblat(:)   ! lat boundaries of the grid cells
+  real,            intent(in)      :: garea(:,:) ! total area of each grid cell
+  real,            intent(in)      :: gfrac(:,:) ! fraction of the cell covered by land
+  type(time_type), intent(in)      :: time       ! current time
+  type(time_type), intent(in)      :: dt_fast    ! fast time step
+  type(time_type), intent(in)      :: dt_slow    ! slow time step
+  type(domain2d),  intent(in)      :: domain     ! our domain
+  integer,         intent(in)      :: id_lon     ! ID of land longitude (X) diag axis
+  integer,         intent(in)      :: id_lat     ! ID of land latitude (Y) diag axis</pre>
+<pre>
+<b>call rivers_init </b>( Rivers, gblon, gblat, garea, gfrac, time, dt_fast, dt_slow, domain, id_lon, id_lat )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initializes rivers data instance. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="rivers_end"></a>
+<h4>rivers_end</h4>
+<pre>subroutine rivers_end(Rivers)
+
+  type(rivers_type), intent(inout) :: Rivers ! data to deallocate/finish</pre>
+<pre>
+<b>call rivers_end </b>(Rivers)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Deallocates rivers data instance. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="init_routing"></a>
+<h4>init_routing</h4>
+<pre>subroutine init_routing ( glonb, glatb, gfrac, is,ie, js,je, i_dest,j_dest )
+
+  real,    intent(in)  :: glonb(:)            ! lon boundaries of the global grid
+  real,    intent(in)  :: glatb(:)            ! lat boundaries of the global grid
+  real,    intent(in)  :: gfrac(:,:)          ! global array of land fractional area
+  integer, intent(in)  :: is,ie,js,je         ! boundaries of our domain
+
+  integer, intent(out) :: i_dest(is:ie,js:je) ! lon index of dest points
+  integer, intent(out) :: j_dest(is:ie,js:je) ! lat index of dest points</pre>
+<pre>
+<b>call init_routing </b>( glonb, glatb, gfrac, is,ie, js,je, i_dest,j_dest )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Sets river destination indices. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="is_coastal"></a>
+<h4>is_coastal</h4>
+<pre>logical function is_coastal(i, j, gfrac)
+
+  integer, intent(in) :: i, j       ! coordinates of the point in question
+  real,    intent(in) :: gfrac(:,:) ! fractional area of the land</pre>
+<pre>value= <b>is_coastal</b> (i, j, gfrac)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Returns true if and only if point (i,j) is a coastal point on the map gfrac. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="init_rivers_diag"></a>
+<h4>init_rivers_diag</h4>
+<pre>subroutine init_rivers_diag ( id_lon, id_lat, Time)
+
+  integer,         intent(in) :: id_lon  ! ID of land longitude (X) diag axis
+  integer,         intent(in) :: id_lat  ! ID of land latitude (Y) diag axis
+  type(time_type), intent(in) :: Time    ! current time</pre>
+<pre>
+<b>call init_rivers_diag </b>( id_lon, id_lat, Time)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initializes diagnostics for rivers module. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_rivers_fast"></a>
+<h4>update_rivers_fast</h4>
+<pre>subroutine update_rivers_fast ( Rivers )
+
+  type(rivers_type), intent(inout) :: Rivers ! data to update</pre>
+<pre>
+<b>call update_rivers_fast </b>( Rivers )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Updates state of the rivers and runoff on the fast time-scale. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="calc_discharge"></a>
+<h4>calc_discharge</h4>
+<pre>subroutine calc_discharge ( rivers, runoff, discharge )
+
+  type(rivers_type), intent(in)  :: rivers                           ! data to update
+  real,              intent(in)  :: runoff(rivers%is:,rivers%js:)    ! runoff, kg/m2/s
+  real,              intent(out) :: discharge(rivers%is:,rivers%js:) ! resulting discharge, kg/s</pre>
+<pre>
+<b>call calc_discharge </b>( rivers, runoff, discharge )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Given local runoff field, calculates local portion of discharge. Both
+   runoff and discharge fields are of local domain size. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_rivers_slow"></a>
+<h4>update_rivers_slow</h4>
+<pre>subroutine update_rivers_slow ( rivers, runoff_w, runoff_s )
+
+  type(rivers_type), intent(inout) :: rivers         ! river data to update
+  real,              intent(in)    :: runoff_w(:,:)  ! runoff of liquid water, kg/(m2 s)
+  real,              intent(in)    :: runoff_s(:,:)  ! snow runoff,  kg/(m2 s)</pre>
+<pre>
+<b>call update_rivers_slow </b>( rivers, runoff_w, runoff_s )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Updates state of the rivers and runoff on the slow time-scale. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_rivers_bnd_slow"></a>
+<h4>update_rivers_bnd_slow</h4>
+<pre>subroutine update_rivers_bnd_slow ( rivers, bnd )
+
+  type(rivers_type),    intent(in)    :: rivers  ! river data to update
+  type(land_data_type), intent(inout) :: bnd     ! land boundary data</pre>
+<pre>
+<b>call update_rivers_bnd_slow </b>( rivers, bnd )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Updates the river boundary data on the slow time-scale. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="diag_slow"></a>
+<h4>diag_slow</h4>
+<pre>subroutine diag_slow ( rivers )
+
+  type(rivers_type), intent(in) :: rivers  ! river data to update</pre>
+<pre>
+<b>call diag_slow </b>( rivers )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Diagnostic field output of the slow time-scale variables. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="diag_static"></a>
+<h4>diag_static</h4>
+<pre>subroutine diag_static ( rivers )
+
+  type(rivers_type), intent(in) :: rivers  ! river data</pre>
+<pre>
+<b>call diag_static </b>( rivers )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Static diagnostic fields output. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="print_error_mesg"></a>
+<h4>print_error_mesg</h4>
+<pre>subroutine print_error_mesg(mod_name, message, mode, file, line)
+
+  character(len=*), intent(in) :: mod_name   ! module name
+  character(len=*), intent(in) :: message    ! error message
+  integer,          intent(in) :: mode       ! error mode
+  character(len=*), intent(in) :: file       ! file containing error
+  integer,          intent(in) :: line       ! line number or error</pre>
+<pre>
+<b>call print_error_mesg </b>(mod_name, message, mode, file, line)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Reports error, including file name and line. </dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<hr>
+<h4>PUBLIC TYPES</h4>
+<div>
+<b>rivers_type</b>
+<br>
+<br>
+<div>
+<dl>   Describes the domain and physical properties of the rivers. <br>
+<br>
+<dt>
+<tt>domain</tt>
+</dt>
+<dl>   Computational domain <br>
+<span class="type">[domain2d, dimension2]</span>
+</dl>
+<dt>
+<tt>is</tt>
+</dt>
+<dl>   Computational domain bounds <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>ie</tt>
+</dt>
+<dl>   Computational domain bounds <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>js</tt>
+</dt>
+<dl>   Computational domain bounds <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>je</tt>
+</dt>
+<dl>   Computational domain bounds <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>gnlon</tt>
+</dt>
+<dl>   Size of global grid <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>gnlat</tt>
+</dt>
+<dl>   Size of global grid <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>i_dest</tt>
+</dt>
+<dl>   Longitude destination indices <br>
+<span class="type">[integer, pointer, dimension2]</span>
+</dl>
+<dt>
+<tt>j_dest</tt>
+</dt>
+<dl>   Latitude destination indices <br>
+<span class="type">[integer, pointer, dimension2]</span>
+</dl>
+<dt>
+<tt>warea</tt>
+</dt>
+<dl>   Area covered by water per grid cell <br>
+<span class="type">[real, pointer, dimension2, units: m2]</span>
+</dl>
+<dt>
+<tt>larea</tt>
+</dt>
+<dl>   Area of land per grid cell <br>
+<span class="type">[real, pointer, dimension2, units: m2]</span>
+</dl>
+<dt>
+<tt>discharge</tt>
+</dt>
+<dl>   Water discharge <br>
+<span class="type">[real, pointer, dimension2, units: kg/m2/s]</span>
+</dl>
+<dt>
+<tt>discharge_snow</tt>
+</dt>
+<dl>   Snow discharge <br>
+<span class="type">[real, pointer, dimension2, units: kg/m2/s]</span>
+</dl>
+<dt>
+<tt>time</tt>
+</dt>
+<dl>   Current time <br>
+<span class="type">[time_type, units: s]</span>
+</dl>
+<dt>
+<tt>dt</tt>
+</dt>
+<dl>   Fast time step <br>
+<span class="type">[real, units: s]</span>
+</dl>
+<dt>
+<tt>dt_slow</tt>
+</dt>
+<dl>   Slow time step <br>
+<span class="type">[real, units: s]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END PUBLIC TYPES -->
+<a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<hr>
+<h4>NAMELIST</h4>
+<div>
+<b>&amp;rivers_nml</b>
+<br>
+<br>
+<div>
+<dl>
+<dt>
+<tt>use_single_basin</tt>
+</dt>
+<dl>   If true, all river discharge goes to a single point <br>
+<span class="type">[logical, default: .false.]</span>
+</dl>
+<dt>
+<tt>i_dest0</tt>
+</dt>
+<dl>   Destination point longitude index <br>
+<span class="type">[integer, default: 1]</span>
+</dl>
+<dt>
+<tt>j_dest0</tt>
+</dt>
+<dl>   Destination point latitude index <br>
+<span class="type">[integer, default: 1]</span>
+</dl>
+<dt>
+<tt>min_water_frac</tt>
+</dt>
+<dl>   Minimum water area fraction for the point to be a
+   valid discharge destination <br>
+<span class="type">[real, default: 1e-4]</span>
+</dl>
+<dt>
+<tt>min_land_frac</tt>
+</dt>
+<dl>   "Land" for discharge destination calculations <br>
+<span class="type">[real, default: 1e-4]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END NAMELIST -->
+<a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<hr>
+<h4>DIAGNOSTIC FIELDS</h4>
+<div>Diagnostic fields may be output to a netcdf file by
+              specifying the module name identifier <b></b> and the desired field names (given below) in
+               file <b>diag_table</b>. See the documentation for diag_manager.<pre>Diagnostic fields for module name identifier: <b></b>
+</pre>
+<div>
+<table cellpadding="0" border="0">
+<tr>
+<td>
+<pre>field name   <br>----------   <br>discharge   
+discharge_snow   
+discharge_aw   
+discharge_snow_aw   
+dest   
+basin   
+</pre>
+</td><td>
+<pre>field description (units)<br>-------------------------<br>Discharge (kg/s)
+Snow Discharge (kg/s)
+Water discharge per unit ocean area (kg/(m2 s))
+Snow discharge per unit ocean area (kg/(m2 s))
+Destination points (dimensionless)
+River basins (dimensionless)
+</pre>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<!-- END DIAGNOSTIC FIELDS -->
+<a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>
+<dl>
+<dt>
+<b>FATAL in rivers_init</b>
+</dt>
+<dd>
+<span class="errmsg">Cannot allocate river data</span>
+</dd>
+<dd> 
+</dd>
+<dt>
+<b>FATAL in init_routing</b>
+</dt>
+<dd>
+<span class="errmsg">Cannot find file INPUT/river_destination_field: provide this file or set use_single_basin = .true. in rivers_nml</span>
+</dd>
+<dd>   The namelist settings request the river destination field to be read, but the file 
+   cannot be found. Either provide this file, or change module namelist parameters so 
+   it is not necessary. To do the latter, set use_single_basin = .true. in the namelist rivers_nml. </dd>
+<dt>
+<b>FATAL in init_routing</b>
+</dt>
+<dd>
+<span class="errmsg">Cannot allocate buffers</span>
+</dd>
+<dd> 
+</dd>
+<dt>
+<b>FATAL in init_routing</b>
+</dt>
+<dd>
+<span class="errmsg">Cannot allocate buffers for route compacting</span>
+</dd>
+<dd> 
+</dd>
+<dt>
+<b>FATAL in init_routing</b>
+</dt>
+<dd>
+<span class="errmsg">Cannot allocate routing table</span>
+</dd>
+<dd> 
+</dd>
+<dt>
+<b>FATAL in init_routing</b>
+</dt>
+<dd>
+<span class="errmsg">Route_compact index below zero</span>
+</dd>
+<dd> 
+</dd>
+<dt>
+<b>FATAL in init_routing</b>
+</dt>
+<dd>
+<span class="errmsg">Route_compact index above n_dest</span>
+</dd>
+<dd> 
+</dd>
+<dt>
+<b>FATAL in init_routing</b>
+</dt>
+<dd>
+<span class="errmsg">Route index below zero</span>
+</dd>
+<dd> 
+</dd>
+<dt>
+<b>FATAL in init_routing</b>
+</dt>
+<dd>
+<span class="errmsg">Route index above n_dest</span>
+</dd>
+<dd> 
+</dd>
+<dt>
+<b>ERROR in init_routing</b>
+</dt>
+<dd>
+<span class="errmsg">Runoff sink is not near coast</span>
+</dd>
+<dd> 
+</dd>
+<dt>
+<b>NOTE in init_routing</b>
+</dt>
+<dd>
+<span class="errmsg">Runoff sink re-routed from land or ocean cell to coastal cell</span>
+</dd>
+<dd> 
+</dd>
+</dl>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

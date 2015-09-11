@@ -1,0 +1,956 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module atmosphere_mod</title>
+<link type="text/css" href="http://www.gfdl.noaa.gov/~fms/style/doc.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module atmosphere_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Bonnie.Samuels@noaa.gov">   B.L. Samuels </a>
+<br>
+<b>Reviewers:&nbsp;</b><a href="mailto:Zhi.Liang@noaa.gov">   Zhi Liang </a>
+<br>
+<b>Change History:&nbsp;</b><a href="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS/atmos/ebm">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   interface for spherical grid dynamical core and physics
+   for the energy balance model (EBM) </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   The Energy Balance Model is a simple spectral atmospheric model
+   using diffusion and radiative balance. The EBM solves two
+   prognostic equations for atmospheric temperature and specific
+   humidity </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>            mpp_mod<br>            fms_mod<br>      constants_mod<br>     transforms_mod<br>   time_manager_mod<br>ebm_diagnostics_mod<br>      astronomy_mod<br> sat_vapor_pres_mod<br>    mpp_domains_mod<br> tracer_manager_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#atmosphere_init">atmosphere_init</a>:</dt>
+<dd>   public routine required for atmospheric components of coupled models
+   Read in restart files and initialize arrays </dd>
+<dt>
+<a href="#atmosphere_down">atmosphere_down</a>:</dt>
+<dd>   public routine required for atmospheric components of coupled models </dd>
+<dt>
+<a href="#atmosphere_up">atmosphere_up</a>:</dt>
+<dd>   public routine required for atmospheric components of coupled models </dd>
+<dt>
+<a href="#radiation">radiation</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#precipitation">precipitation</a>:</dt>
+<dd>   Precipiatation module for prognostic equation of atmospheric temperature
+   and specific humidity </dd>
+<dt>
+<a href="#diffusion">diffusion</a>:</dt>
+<dd>   Lateral eddy diffusion module for prognostic equation of atmospheric temperature
+   and specific humidity </dd>
+<dt>
+<a href="#diffusivity">diffusivity</a>:</dt>
+<dd>   For the a given scalar diffusion coefficient the routine returns an array </dd>
+<dt>
+<a href="#sat_mixing_ratio">sat_mixing_ratio</a>:</dt>
+<dd>   For the given temperatures routine returns the saturation mixing ratio
+   esat - saturation vapor pressure </dd>
+<dt>
+<a href="#deriv_sat_mixing_ratio">deriv_sat_mixing_ratio</a>:</dt>
+<dd>   For the given temperatures, routine returns the derivative of the  saturation mixing ratio </dd>
+<dt>
+<a href="#get_bottom_mass">get_bottom_mass</a>:</dt>
+<dd>   returns temp, sphum, pres, height at the lowest model level
+   and surface pressure </dd>
+<dt>
+<a href="#get_bottom_wind">get_bottom_wind</a>:</dt>
+<dd>   returns u and v on the mass grid at the lowest model level </dd>
+<dt>
+<a href="#atmosphere_resolution">atmosphere_resolution</a>:</dt>
+<dd>   returns the number of longitude and latitude grid points
+   for either the local PEs grid (default) or the global grid </dd>
+<dt>
+<a href="#get_atmosphere_axes">get_atmosphere_axes</a>:</dt>
+<dd>   returns the axis indices associated with the coupling grid </dd>
+<dt>
+<a href="#atmosphere_boundary">atmosphere_boundary</a>:</dt>
+<dd>   returns the longitude and latitude grid box edges
+   for either the local PEs grid (default) or the global grid </dd>
+<dt>
+<a href="#atmosphere_domain">atmosphere_domain</a>:</dt>
+<dd>   returns the domain2d variable associated with the coupling grid </dd>
+<dt>
+<a href="#atmosphere_end">atmosphere_end</a>:</dt>
+<dd>   write out restart file
+   Termination routine for atmosphere_mod. </dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="atmosphere_init"></a>
+<h4>atmosphere_init</h4>
+<pre>
+<b>call atmosphere_init </b>(Time_init, Time_in, Time_step_in, Surf_diff)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   public routine required for atmospheric components of coupled models
+   Read in restart files and initialize arrays </dd>
+<br>
+<br>
+<dt>
+<b>INPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>Time_init&nbsp;&nbsp;&nbsp;</tt></td><td>   The base (or initial) time of the experiment. <br>&nbsp;&nbsp;&nbsp;<span class="type">[type(time_type)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>Time_in&nbsp;&nbsp;&nbsp;</tt></td><td>   The current time. <br>&nbsp;&nbsp;&nbsp;<span class="type">[type(time_type)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>Time_step_in&nbsp;&nbsp;&nbsp;</tt></td><td>   The atmospheric model/physics time step. <br>&nbsp;&nbsp;&nbsp;<span class="type">[type(time_type)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+<dt>
+<b>INPUT/OUTPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>Surf_diff&nbsp;&nbsp;&nbsp;</tt></td><td>   The surface terms for vertical diffusion that are exchanged
+   with other component models. On input fields have not been
+   allocated, on output all arrays are allocated. <br>&nbsp;&nbsp;&nbsp;<span class="type">[type(surf_diff_type)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+</dl>
+</li>
+<li>
+<a name="atmosphere_down"></a>
+<h4>atmosphere_down</h4>
+<pre>
+<b>call atmosphere_down </b>(Time, frac_land, t_surf, albedo, rough_mom, &amp; u_star, b_star, q_star, dtau_du, dtau_dv, tau_x, tau_y, &amp; gust, coszen, net_surf_sw_down, surf_lw_down, &amp; Surf_diff)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   atmosphere_down
+   This routine calls the dynamical core and the
+   "downward pass" of the atmospheric physics.
+   It should only be called once per time step and before
+   calling atmosphere_up. </dd>
+<br>
+<br>
+<dt>
+<b>INPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>Time&nbsp;&nbsp;&nbsp;</tt></td><td>   time at the current time level (tau) <br>&nbsp;&nbsp;&nbsp;<span class="type">[type(time_type)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>frac_land&nbsp;&nbsp;&nbsp;</tt></td><td>   fraction (0. to 1.) of underlying surface which covered by land <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>t_surf&nbsp;&nbsp;&nbsp;</tt></td><td>   surface (skin) temperature (in deg k) <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>albedo&nbsp;&nbsp;&nbsp;</tt></td><td>   surface albedo <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>rough_mom&nbsp;&nbsp;&nbsp;</tt></td><td>   momentum roughness length (units=m) <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>u_star&nbsp;&nbsp;&nbsp;</tt></td><td>   friction velocity <br>&nbsp;&nbsp;&nbsp;<span class="type">[ real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>b_star&nbsp;&nbsp;&nbsp;</tt></td><td>   buoyancy scale <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je) ]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>q_star&nbsp;&nbsp;&nbsp;</tt></td><td>   moisture scale <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je) ]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>dtau_du&nbsp;&nbsp;&nbsp;</tt></td><td>   derivative of zonal wind stress w.r.t. the lowest level wind speed <br>&nbsp;&nbsp;&nbsp;<span class="type">[ real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>dtau_dv&nbsp;&nbsp;&nbsp;</tt></td><td>   derivative of meridional wind stress w.r.t. the lowest level wind speed <br>&nbsp;&nbsp;&nbsp;<span class="type">[ real, dimension(is:ie,js:je)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+<dt>
+<b>INPUT/OUTPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt> Surf_diff&nbsp;&nbsp;&nbsp;</tt></td><td>   Surface diffusion terms computed by the vertical diffusion scheme <br>&nbsp;&nbsp;&nbsp;<span class="type">[type(surf_diff_type)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+<dt>
+<b>OUTPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>gust&nbsp;&nbsp;&nbsp;</tt></td><td>   wind gustiness <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>coszen&nbsp;&nbsp;&nbsp;</tt></td><td>   cosine of the zenith angle <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>net_surf_sw_down&nbsp;&nbsp;&nbsp;</tt></td><td>   net shortwave surface flux (down minus up) (in watts/m**2) <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>surf_lw_down&nbsp;&nbsp;&nbsp;</tt></td><td>   downward longwave surface flux (in watts/m**2) <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+</dl>
+</li>
+<li>
+<a name="atmosphere_up"></a>
+<h4>atmosphere_up</h4>
+<pre>
+<b>call atmosphere_up </b>(Time, frac_land, Surf_diff, lprec, fprec, gust)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   atmosphere_up
+   This routine calls the "upward pass" of the atmospheric physics,
+   spherical diagnostics, and time differencing.  The prognostic
+   variables are advanced to the next time step.  It should only be
+   called once per time step and after calling atmosphere_down. </dd>
+<br>
+<br>
+<dt>
+<b>INPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>Time&nbsp;&nbsp;&nbsp;</tt></td><td>   time at the current time level (tau) <br>&nbsp;&nbsp;&nbsp;<span class="type">[type(time_type)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>frac_land&nbsp;&nbsp;&nbsp;</tt></td><td>   fraction (0. to 1.) of underlying surface which covered by land <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+<dt>
+<b>INPUT/OUTPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt> Surf_diff&nbsp;&nbsp;&nbsp;</tt></td><td>   urface diffusion terms computed by the vertical diffusion scheme <br>&nbsp;&nbsp;&nbsp;<span class="type">[type(surf_diff_type)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+<dt>
+<b>OUTPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>lprec&nbsp;&nbsp;&nbsp;</tt></td><td>   liquid precipitation rate (rain) in kg/m2/s <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>fprec&nbsp;&nbsp;&nbsp;</tt></td><td>   frozen precipitation rate (snow) in kg/m2/s <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>gust&nbsp;&nbsp;&nbsp;</tt></td><td>   wind gustiness <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+</dl>
+</li>
+<li>
+<a name="radiation"></a>
+<h4>radiation</h4>
+<pre>
+<b>call radiation </b>(Time, t_surf, albedo, coszen, net_surf_sw_down, surf_lw_down)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   radiation
+   Radiation module for prognostic equation of atmospheric temperature
+   The atmospheric tendency term (dt_tg) includes the balance of shortwave
+   and longwave radiation terms at the surface </dd>
+<br>
+<br>
+<dt>
+<b>INPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>Time&nbsp;&nbsp;&nbsp;</tt></td><td>   time at the current time level (tau) <br>&nbsp;&nbsp;&nbsp;<span class="type">[type(time_type)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>t_surf&nbsp;&nbsp;&nbsp;</tt></td><td>   surface (skin) temperature (in deg k) <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>albedo&nbsp;&nbsp;&nbsp;</tt></td><td>   surface albedo <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+<dt>
+<b>OUTPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>coszen&nbsp;&nbsp;&nbsp;</tt></td><td>   cosine of the zenith angle <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>net_surf_sw_down&nbsp;&nbsp;&nbsp;</tt></td><td>   net shortwave surface flux (down minus up) (in watts/m**2) <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>surf_lw_down&nbsp;&nbsp;&nbsp;</tt></td><td>   downward longwave surface flux (in watts/m**2) <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+</dl>
+</li>
+<li>
+<a name="precipitation"></a>
+<h4>precipitation</h4>
+<pre>
+<b>call precipitation </b>(lprec, fprec)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Precipiatation module for prognostic equation of atmospheric temperature
+   and specific humidity
+   The atmospheric tendency term (dt_tg) includes the latent heat flux released
+   during precipitation (tdel)
+   The specific humidity is the balance of evaporation and precipitation (dt_qg) </dd>
+<br>
+<br>
+<dt>
+<b>OUTPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>lprec&nbsp;&nbsp;&nbsp;</tt></td><td>   liquid precipitation rate (rain) in kg/m2/s <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>fprec&nbsp;&nbsp;&nbsp;</tt></td><td>   frozen precipitation rate (snow) in kg/m2/s <br>&nbsp;&nbsp;&nbsp;<span class="type">[real, dimension(is:ie,js:je)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+</dl>
+</li>
+<li>
+<a name="diffusion"></a>
+<h4>diffusion</h4>
+<pre>
+<b>call diffusion </b>()</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Lateral eddy diffusion module for prognostic equation of atmospheric temperature
+   and specific humidity
+   There are two options: uniform or variable diffusion </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="diffusivity"></a>
+<h4>diffusivity</h4>
+<pre>d = <b>diffusivity</b> ()</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   For the a given scalar diffusion coefficient the routine returns an array </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="sat_mixing_ratio"></a>
+<h4>sat_mixing_ratio</h4>
+<pre>q = <b>sat_mixing_ratio</b> (t)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   For the given temperatures routine returns the saturation mixing ratio
+   esat - saturation vapor pressure </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="deriv_sat_mixing_ratio"></a>
+<h4>deriv_sat_mixing_ratio</h4>
+<pre>q = <b>deriv_sat_mixing_ratio</b> (t)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   For the given temperatures, routine returns the derivative of the  saturation mixing ratio </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="get_bottom_mass"></a>
+<h4>get_bottom_mass</h4>
+<pre>
+<b>call get_bottom_mass </b>(t_bot_out, q_bot_out, p_bot, z_bot, p_surf)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   public routine required for atmospheric components of coupled models
+   returns temp, sphum, pres, height at the lowest model level
+   and surface pressure </dd>
+<br>
+<br>
+<dt>
+<b>OUTPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>t_bot_out&nbsp;&nbsp;&nbsp;</tt></td><td>   near surface temperature in degrees Kelvin <br>&nbsp;&nbsp;&nbsp;<span class="type">[real]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>q_bot_out&nbsp;&nbsp;&nbsp;</tt></td><td>   near surface mixing  ratio <br>&nbsp;&nbsp;&nbsp;<span class="type">[real]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>p_bot&nbsp;&nbsp;&nbsp;</tt></td><td>   pressure at which atmos near usrface values are assumed to be defined <br>&nbsp;&nbsp;&nbsp;<span class="type">[real]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>z_bot&nbsp;&nbsp;&nbsp;</tt></td><td>   height at which atmos near usrface values are assumed to be defined <br>&nbsp;&nbsp;&nbsp;<span class="type">[real]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>p_surf&nbsp;&nbsp;&nbsp;</tt></td><td>   surface pressure <br>&nbsp;&nbsp;&nbsp;<span class="type">[real]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+</dl>
+</li>
+<li>
+<a name="get_bottom_wind"></a>
+<h4>get_bottom_wind</h4>
+<pre>
+<b>call get_bottom_wind </b>(u_bot_out, v_bot_out)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   public routine required for atmospheric components of coupled models
+   returns u and v on the mass grid at the lowest model level </dd>
+<br>
+<br>
+<dt>
+<b>OUTPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>u_bot&nbsp;&nbsp;&nbsp;</tt></td><td>   near surface zonal      wind <br>&nbsp;&nbsp;&nbsp;<span class="type">[real]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>v_bot&nbsp;&nbsp;&nbsp;</tt></td><td>   near surface meridional wind <br>&nbsp;&nbsp;&nbsp;<span class="type">[real]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+</dl>
+</li>
+<li>
+<a name="atmosphere_resolution"></a>
+<h4>atmosphere_resolution</h4>
+<pre>
+<b>call atmosphere_resolution </b>(num_lon_out, num_lat_out, global)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   public routine required for atmospheric components of coupled models
+   returns the number of longitude and latitude grid points
+   for either the local PEs grid (default) or the global grid </dd>
+<br>
+<br>
+<dt>
+<b>INPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>global&nbsp;&nbsp;&nbsp;</tt></td><td>   Flag that specifies whether the returned compute domain size is
+   for the global grid (TRUE) or for the current processor (FALSE). <br>&nbsp;&nbsp;&nbsp;<span class="type">[logical,optional]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+<dt>
+<b>OUTPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>num_lon_out&nbsp;&nbsp;&nbsp;</tt></td><td>   The number of longitude points in the compute domain. <br>&nbsp;&nbsp;&nbsp;<span class="type">[integer]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>num_lat_out&nbsp;&nbsp;&nbsp;</tt></td><td>   The number of latitude points in the compute domain. <br>&nbsp;&nbsp;&nbsp;<span class="type">[integer]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+</dl>
+</li>
+<li>
+<a name="get_atmosphere_axes"></a>
+<h4>get_atmosphere_axes</h4>
+<pre>
+<b>call get_atmosphere_axes </b>(axes_out)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   public routine required for atmospheric components of coupled models
+   returns the axis indices associated with the coupling grid </dd>
+<br>
+<br>
+<dt>
+<b>OUTPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>axes_out&nbsp;&nbsp;&nbsp;</tt></td><td>   The axis identifiers for the atmospheric grids.
+   The size of axes must be least 1 but not greater than 4.
+   The axes are returned in the order (/ x, y, p_full, p_half /) <br>&nbsp;&nbsp;&nbsp;<span class="type">[integer,dimension(:)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+</dl>
+</li>
+<li>
+<a name="atmosphere_boundary"></a>
+<h4>atmosphere_boundary</h4>
+<pre>
+<b>call atmosphere_boundary </b>(lon_boundaries, lat_boundaries, global)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   public routine required for atmospheric components of coupled models
+   returns the longitude and latitude grid box edges
+   for either the local PEs grid (default) or the global grid </dd>
+<br>
+<br>
+<dt>
+<b>INPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>global&nbsp;&nbsp;&nbsp;</tt></td><td>   Flag that specifies whether the returned grid box edges are
+   for the global grid (TRUE) or for the current processor (FALSE). <br>&nbsp;&nbsp;&nbsp;<span class="type">[logical, optional]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+<dt>
+<b>OUTPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>lon_boundaries&nbsp;&nbsp;&nbsp;</tt></td><td>   The west-to-east longitude edges of grid boxes (in radians). <br>&nbsp;&nbsp;&nbsp;<span class="type">[real,dimension(:)]</span></td>
+</tr>
+<tr>
+<td valign="top" align="left"><tt>lat_boundaries&nbsp;&nbsp;&nbsp;</tt></td><td>   The south-to-north latitude edges of grid boxes (in radians). <br>&nbsp;&nbsp;&nbsp;<span class="type">[real,dimension(:)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+</dl>
+</li>
+<li>
+<a name="atmosphere_domain"></a>
+<h4>atmosphere_domain</h4>
+<pre>
+<b>call atmosphere_domain </b>(domain)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   public routine required for atmospheric components of coupled models
+   returns the domain2d variable associated with the coupling grid
+   note: coupling is done using the mass/temperature grid with no halos
+   <br>
+<br>
+   OUTPUT
+   Domain   The domain2d variable describing the grid used for coupling.
+   For the B-grid, this corresponds to the temperature grid
+   without halos. </dd>
+<br>
+<br>
+<dt>
+<b>INPUT/OUTPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>domain&nbsp;&nbsp;&nbsp;</tt></td><td>   The domain2d variable describing the grid used for coupling.
+   For the B-grid, this corresponds to the temperature grid
+   without halos. <br>&nbsp;&nbsp;&nbsp;<span class="type">[type (domain2d)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+</dl>
+</li>
+<li>
+<a name="atmosphere_end"></a>
+<h4>atmosphere_end</h4>
+<pre>
+<b>call atmosphere_end </b>(Time)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   public routine required for atmospheric components of coupled models
+   write out restart file
+   Termination routine for atmosphere_mod. </dd>
+<br>
+<br>
+<dt>
+<b>INPUT</b>
+</dt>
+<dd>
+<table border="0">
+<tr>
+<td valign="top" align="left"><tt>Time&nbsp;&nbsp;&nbsp;</tt></td><td>   time at the current time level (tau) <br>&nbsp;&nbsp;&nbsp;<span class="type">[type(time_type)]</span></td>
+</tr>
+</table>
+</dd>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<hr>
+<h4>PUBLIC TYPES</h4>
+<div>
+<table cellspacing="0" CELLPADDING="0" BORDER="0">
+<tr>
+<td>
+<pre>type surf_diff_type
+  real, pointer, dimension(:,:) :: dtmass  =&gt; NULL() ! dt/mass, where dt = atmospheric time step (sec)
+                                                     ! mass = mass of lowest atmospheric layer (Kg/m2)
+  real, pointer, dimension(:,:) :: dflux_t =&gt; NULL() ! derivative of the temperature flux at the top of the lowest
+                                                     ! atmospheric layer with respect to the temperature
+                                                     ! of that layer  (J/(m2 K))
+  real, pointer, dimension(:,:,:) :: dflux_tr =&gt; NULL() ! derivative of the flux of specific humidity
+                                                     ! at the top of the lowest atmospheric layer with respect to
+                                                     ! the specific humidity of that layer  (--/(m2 K))
+  real, pointer, dimension(:,:) :: delta_t =&gt; NULL() ! the increment in temperature in the lowest atmospheric
+                                                     ! layer (((i+1)-(i-1) if atmos model is leapfrog) (K)
+                                                     ! (defined in  gcm_vert_diff_down as the increment computed up
+                                                     ! to this point in model, including effect of vertical
+                                                     ! diffusive flux at top of lowest model level, presumed
+                                                     ! to be modified to include effects of surface fluxes
+                                                     ! outside of this module, then used to start upward
+                                                     ! tridiagonal sweep,
+  real, pointer, dimension(:,:,:):: delta_tr =&gt; NULL() ! similarly for the increment in specific humidity
+                                                     ! (non-dimensional  = Kg/Kg)
+  real, pointer, dimension(:,:) :: delta_u =&gt; NULL()
+  real, pointer, dimension(:,:) :: delta_v =&gt; NULL()
+end type surf_diff_type</pre>
+</td>
+</tr>
+</table>
+</div>
+<br>
+<!-- END PUBLIC TYPES -->
+<a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<hr>
+<h4>NAMELIST</h4>
+<div>
+<b>&amp;atmosphere_nml</b>
+<br>
+<br>
+<div>
+<dl>
+<dt>
+<tt>lon_max</tt>
+</dt>
+<dl>   This is the longitude of the spectral atmospheric grid <br>
+<span class="type">[integer, default: 180]</span>
+</dl>
+<dt>
+<tt>lat_max</tt>
+</dt>
+<dl>   This is the latitude of the spectral atmospheric grid
+   Note that the number of processors you use must be less than the number of
+   atmospheric latitude boxes and must divide into that number equally <br>
+<span class="type">[integer, default: 120]</span>
+</dl>
+<dt>
+<tt>num_fourier</tt>
+</dt>
+<dl>   num_fourier is used along with lon_max, lat_max in the spectral transforms of grids <br>
+<span class="type">[integer, default: 42]</span>
+</dl>
+<dt>
+<tt>diff</tt>
+</dt>
+<dl>   background atmospheric lateral eddy diffusion coefficient for the EBM <br>
+<span class="type">[real, units: m^2/sec, default: 1.e04]</span>
+</dl>
+<dt>
+<tt>nu</tt>
+</dt>
+<dl>   scaling factor for spherical grid analysis used in diffusion subroutine <br>
+<span class="type">[real, default: 4.0e16]</span>
+</dl>
+<dt>
+<tt>solar_constant</tt>
+</dt>
+<dl>   standard value for the annual mean solar flux at the top of atmosphere.
+   Default value if seasonal_solar=.false. <br>
+<span class="type">[real, units: Watts/m^2, default: 1360.0]</span>
+</dl>
+<dt>
+<tt>atm_abs</tt>
+</dt>
+<dl>   atmospheric absorption (fraction) <br>
+<span class="type">[real, default: 0.15]</span>
+</dl>
+<dt>
+<tt>atm_ref</tt>
+</dt>
+<dl>   atmosphere reflectance  (fraction) <br>
+<span class="type">[real, default: 0.05]</span>
+</dl>
+<dt>
+<tt>mass</tt>
+</dt>
+<dl>   mass = mass of lowest atmospheric layer (Kg/m2) <br>
+<span class="type">[real, units: Kg/m2, default: 8.e03]</span>
+</dl>
+<dt>
+<tt>rh</tt>
+</dt>
+<dl>   relative humidity (fraction) <br>
+<span class="type">[real, default: 0.8]</span>
+</dl>
+<dt>
+<tt>t_bot_atm</tt>
+</dt>
+<dl>   temperature at the bottom of the atmosphere <br>
+<span class="type">[real, units: deg K, default: 30.0]</span>
+</dl>
+<dt>
+<tt>seasonal_solar</tt>
+</dt>
+<dl>   If .true., seasonal solar value is computed <br>
+<span class="type">[logical, units: Watts/m^2, default: .true.]</span>
+</dl>
+<dt>
+<tt>diff_is_uniform</tt>
+</dt>
+<dl> 
+<br>
+<span class="type">[logical, default: .false.]</span>
+</dl>
+<dt>
+<tt>tg_init</tt>
+</dt>
+<dl>   constant value for inital atmospheric temperature  (degK) <br>
+<span class="type">[real, units: deg K, default: 273.0]</span>
+</dl>
+<dt>
+<tt>debug_ebm_atm</tt>
+</dt>
+<dl>   For debugging purposes. <br>
+<span class="type">[logical, default: .false.]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END NAMELIST -->
+<a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<a name="REFERENCES"></a>
+<hr>
+<h4>REFERENCES</h4>
+<!-- BEGIN REFERENCES -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END REFERENCES -->
+<a name="COMPILER SPECIFICS"></a>
+<hr>
+<h4>COMPILER SPECIFICS</h4>
+<!-- BEGIN COMPILER SPECIFICS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END COMPILER SPECIFICS -->
+<a name="PRECOMPILER OPTIONS"></a>
+<hr>
+<h4>PRECOMPILER OPTIONS</h4>
+<!-- BEGIN PRECOMPILER OPTIONS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END PRECOMPILER OPTIONS -->
+<a name="LOADER OPTIONS"></a>
+<hr>
+<h4>LOADER OPTIONS</h4>
+<!-- BEGIN LOADER -->
+<div>None.<br>
+<br>
+</div>
+<!-- END LOADER OPTIONS -->
+<a name="TEST PROGRAM"></a>
+<hr>
+<h4>TEST PROGRAM</h4>
+<!-- BEGIN TEST PROGRAM -->
+<div>None.<br>
+</div>
+<br>
+<!-- END TEST PROGRAM -->
+<a name="KNOWN BUGS"></a>
+<hr>
+<h4>KNOWN BUGS</h4>
+<!-- BEGIN KNOWN BUGS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END KNOWN BUGS -->
+<a name="NOTES"></a>
+<hr>
+<h4>NOTES</h4>
+<!-- BEGIN NOTES -->
+<div>None.<br>
+</div>
+<br>
+<!-- END NOTES -->
+<a name="FUTURE PLANS"></a>
+<hr>
+<h4>FUTURE PLANS</h4>
+<!-- BEGIN FUTURE PLANS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END FUTURE PLANS -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

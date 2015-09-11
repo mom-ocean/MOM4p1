@@ -1,0 +1,1097 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module land_properties_mod</title>
+<link type="text/css" href="http://www.gfdl.noaa.gov/~fms/style/doc.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module land_properties_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Chris.Milly@noaa.gov">   Christopher Milly </a>
+<br>
+<b>Reviewers:&nbsp;</b><a href="mailto:Elena.Shevliakova@noaa.gov">   Elena Shevliakova </a>,&nbsp;
+    <a href="mailto:Sergey.Malyshev@noaa.gov">   Sergey Malyshev </a>
+<br>
+<b>Change History:&nbsp;</b><a href="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS/land/lad/soil">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   Contains land properties namelist variables and procedures relating
+   to the properties of the land. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   Initialization and calculation of the land property data. The input
+   cover field and implied glacier field are obtained and the glacier mask
+   and cover type are redefined, if necessary. The properties that depend
+   on cover and ground types are assigned. The land properties diagnostics
+   are initialized and the static fields are sent to the diagnostic manager
+   for output.
+   <br>
+<br>
+   Updates the rapidly changing parameters. Computes the albedo of
+   the hypothetical no-snow and deep-snow surfaces and uses snow mass to
+   blend snow-free and deep-snow albedo values. Regrids integer index data
+   to any output grid from a uniformly spaced grid using a maximum-area
+   voting scheme. Includes calculation of total area of each land cover
+   type within the territory and the determination of the type occupying
+   the biggest area within the territory. </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>  mpp_domains_mod<br> time_manager_mod<br>       mpp_io_mod<br>          fms_mod<br>    constants_mod<br> horiz_interp_mod<br>climap_albedo_mod<br> diag_manager_mod<br>   topography_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#land_properties_init">land_properties_init</a>:</dt>
+<dd>   Initialize land property data. </dd>
+<dt>
+<a href="#update_land_properties_slow">update_land_properties_slow</a>:</dt>
+<dd>   Updates slowly changing parameters, such as cover type. </dd>
+<dt>
+<a href="#update_land_properties_fast">update_land_properties_fast</a>:</dt>
+<dd>   Updates the rapidly changing parameters, such as albedo. </dd>
+<dt>
+<a href="#regrid_discrete_field">regrid_discrete_field</a>:</dt>
+<dd>   Regrids integer index data to any output grid from a uniformly spaced
+   grid using a maximum-area voting scheme. </dd>
+<dt>
+<a href="#typemax">typemax</a>:</dt>
+<dd>   Calculation of total area of each land cover type within the territory
+   and the determination of the type occupying the biggest area within the
+   territory. </dd>
+<dt>
+<a href="#init_land_properties_diag">init_land_properties_diag</a>:</dt>
+<dd>   Initializes land properties diagnostics. </dd>
+<dt>
+<a href="#diag_static">diag_static</a>:</dt>
+<dd>   Sends static fields to diagnostic output. </dd>
+<dt>
+<a href="#land_properties_end">land_properties_end</a>:</dt>
+<dd>   Deallocates the land property data. </dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="land_properties_init"></a>
+<h4>land_properties_init</h4>
+<pre>subroutine land_properties_init ( &amp;
+     lonb,   latb,  land,  time,  domain, &amp;
+     glacier,         &amp;
+     lake,            &amp;
+     rough_momentum,  &amp;
+     rough_heat,      &amp;
+     rough_scale,     &amp;  ! topographic roughness for drag scaling
+     soil_therm_con,  &amp;
+     soil_therm_cap,  &amp;
+     veg_rs_min,      &amp;
+     max_water,       &amp;
+     tau_groundwater, &amp;
+     max_snow_out,    &amp;
+     cover_type,      &amp;
+     id_lon, id_lat )
+
+  real,            intent(in) :: lonb(:), latb(:) ! boundaries of the cells,
+                                                  ! radian
+  logical,         intent(in) :: land(:,:,:)      ! land mask
+  type(time_type), intent(in) :: time             ! current time
+  type(domain2d),  intent(in) :: domain           ! our domain 
+
+  logical, intent(out), dimension(:,:,:) :: glacier, lake ! glacier, lake masks
+  real   , intent(out), dimension(:,:,:) :: &amp;
+       rough_momentum, &amp;                  ! roughness length for momentum
+       rough_heat,     &amp;                
+       rough_scale,    &amp;
+       veg_rs_min,     &amp; 
+       max_water,      &amp;
+       tau_groundwater                    ! groundwater residence time
+  real   , intent(out), dimension(:,:,:,:) :: &amp;
+       soil_therm_con, &amp;
+       soil_therm_cap
+  real   , intent(out)  :: max_snow_out
+  integer, intent(out), dimension(:,:,:) :: cover_type
+  integer, intent(in) :: id_lon, id_lat   ! ids of diagnostic axes</pre>
+<pre>
+<b>call land_properties_init </b>(lonb, latb, land, time, domain, &amp; glacier, lake, rough_momentum, rough_heat, soil_therm_con, &amp; soil_therm_cap, veg_rs_min, max_water, tau_groundwater, max_snow_out, &amp; id_lon, id_lat )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Reads and re-grids each land input data field and allocates arrays.
+   The input cover field and implied glacier field are obtained, if either
+   will be needed. Then, the ice cover type is reset to tundra. It
+   may be changed back to ice according to actual glacier specification
+   later. The glacier mask and cover type are redefined, if necessary.
+   <br>
+<br>
+   The appropriate cover type to glacier cells is assigned, if any. The
+   ground (soil) type is defined and the groundwater residence time is
+   calculated. The properties that depend on cover and ground types are
+   assigned. If requested, the snow-free albedo is changed to the CLIMAP
+   array.
+   <br>
+<br>
+   The land properties diagnostics are initialized and the static fields 
+   are sent to the diagnostic manager for output. </dd>
+<br>
+<br>
+<dt>
+<b>NOTE</b>
+</dt>
+<dd>   ---- Cover (vegetation) type. There are 12 possible cases: veg_to_use can
+   take 4 values, and glaciers can be (1) absent, (2) based on input cover
+   field, or (3) based on climap albedo field. (use of climap albedo forces
+   use of climap to locate glaciers, if glaciers are used.) the code
+   ensures consistency between cover_type field and glacier mask, with
+   the latter taking precedence: where glacier based on input cover field
+   must be removed in deference to climap or if no glaciers are used,
+   such points are assigned tundra (or global constant) type. <br>
+<br>   ---- Ground (soil) type. To force consistency with glacier, already
+   defined, any ice soil types are first re-set to coarse soil.
+   ice types are then located on the basis of glacier. note that a distinct
+   ice type is used only if soil_to_use='variable'; this is in contrast
+   to the analogous treatment of vegetation types. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_land_properties_slow"></a>
+<h4>update_land_properties_slow</h4>
+<pre>subroutine update_land_properties_slow ( &amp;
+     lonb,   latb,  land,  time,  domain, &amp;
+     glacier,         &amp;
+     lake,            &amp;
+     rough_momentum,  &amp;
+     rough_heat,      &amp;
+     rough_scale,     &amp;  ! topographic roughness for drag scaling
+     soil_therm_con,  &amp;
+     soil_therm_cap,  &amp;
+     veg_rs_min,      &amp;
+     max_water,       &amp;
+     tau_groundwater, &amp;
+     max_snow_out,    &amp;
+     cover_type )
+
+  real,            intent(in) :: lonb(:), latb(:) ! boundaries of the cells,
+                                                  ! radian
+  logical,         intent(in) :: land(:,:,:)      ! land mask
+  type(time_type), intent(in) :: time             ! current time
+  type(domain2d),  intent(in) :: domain           ! our domain 
+
+  logical, intent(out), dimension(:,:,:) :: glacier  ! glacier mask
+  logical, intent(out), dimension(:,:,:) :: lake     ! lake mask
+  real   , intent(out), dimension(:,:,:) :: &amp;
+       rough_momentum, &amp;                  ! roughness length for momentum
+       rough_heat,     &amp;                
+       rough_scale,    &amp;
+       veg_rs_min,     &amp; 
+       max_water,      &amp;
+       tau_groundwater                    ! groundwater residence time
+  real   , intent(out), dimension(:,:,:,:) :: &amp;
+       soil_therm_con, &amp;
+       soil_therm_cap
+  real   , intent(out)  :: max_snow_out
+  integer, intent(inout), dimension(:,:,:)  :: cover_type</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Updates slowly changing parameters, such as cover type. </dd>
+<br>
+<br>
+<dt>
+<b>NOTE</b>
+</dt>
+<dd>   ---- Cover (vegetation) type. There are 12 possible cases: veg_to_use can
+   take 4 values, and glaciers can be (1) absent, (2) based on input cover
+   field, or (3) based on climap albedo field. (use of climap albedo forces
+   use of climap to locate glaciers, if glaciers are used.) the code
+   ensures consistency between cover_type field and glacier mask, with
+   the latter taking precedence: where glacier based on input cover field
+   must be removed in deference to climap or if no glaciers are used,
+   such points are assigned tundra (or global constant) type. <br>
+<br>   ---- Ground (soil) type. Any ice soil types are first re-set to coarse soil.
+   ice types are then located on the basis of glacier. note that a distinct
+   ice type is used only if soil_to_use='variable'; this is in contrast
+   to the analogous treatment of vegetation types. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_land_properties_fast"></a>
+<h4>update_land_properties_fast</h4>
+<pre>subroutine update_land_properties_fast (snowmass, t_sfc, land, albedo, cover_type)
+
+!-----------------------------------------------------------------------
+!
+! INPUT
+!    snowmass     = mass of snow on the ground (in kg/(m**2))
+!    t_sfc        = surface temperature (in degrees kelvin)
+!    land         = logical land mask
+! 
+!  OUTPUT
+!    albedo       = surface albedo
+
+real,    intent(in),  dimension(:,:,:) :: snowmass, t_sfc
+logical, intent(in) , dimension(:,:,:) :: land
+real,    intent(out), dimension(:,:,:) :: albedo
+integer, intent(in),  dimension(:,:,:) :: cover_type
+!-----------------------------------------------------------------------</pre>
+<pre>
+<b>call update_land_properties_fast </b>(snowmass, t_sfc, land, albedo)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Updates the rapidly changing parameters. Computes the albedo of
+   hypothetical no-snow and deep-snow surfaces and uses snow mass to blend
+   snow-free and deep-snow albedo values. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="regrid_discrete_field"></a>
+<h4>regrid_discrete_field</h4>
+<pre>subroutine regrid_discrete_field (data_in, wb_in, sb_in, dlon_in, dlat_in, &amp;
+     lon_out, lat_out, ntype, &amp;   
+     mask_out, data_out, mask_in)
+
+!-----------------------------------------------------------------------
+!  input:
+!  -----
+!     data_in     input data; dimensioned by mdim x ndim
+!                      stored from south to north
+!     wb_in      longitude corresponding to western boundary of box i=1
+!     sb_in      latitude corresponding to southern boundary of box j=1
+!     dlon_in    x axis grid spacing in degrees of longitude
+!     dlat_in    y axis grid spacing in degrees of latitude
+!
+!     lon_out   longitudes of output data at grid box boundaries
+!                  dimensioned by size(data_out,1)+1
+!     lat_out   latitudes of output data at grid box boundaries
+!                  dimensioned by size(data_out,2)+1
+!     ntype     number of land cover types specified
+!     mask_out  output mask that specifies where the data are defined
+!
+!  output:
+!  ------
+!     data_out     output number of land cover type
+!
+!  optional
+!  --------
+!     mask_in   input mask;  =0.0 for data points that should not
+!               be used or have no data; has the same size as data_in
+!
+!-----------------------------------------------------------------------
+  integer, intent(in)           :: ntype
+  integer, intent(in)           :: data_in(:,:)
+  real,    intent(in)           :: sb_in,wb_in, dlat_in, dlon_in
+  real,    intent(in)           :: lon_out(:), lat_out(:)
+  logical, intent(in)           :: mask_out(:,:)
+  integer, intent(out)          :: data_out(:,:)
+  real,    intent(in), optional :: mask_in(:,:)</pre>
+<pre>
+<b>call regrid_discrete_field </b>(data_in, wb_in, sb_in, dlon_in, dlat_in, &amp; lon_out, lat_out, ntype, mask_out, data_out, mask_in)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Regrids integer index data to any output grid from a uniformly spaced
+   grid using a maximum-area voting scheme. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="typemax"></a>
+<h4>typemax</h4>
+<pre>subroutine typemax(data,area,facis,facie,facjs,facje,ntype,ntypemax,enlarge)
+
+  integer, intent(in)    :: data(:,:)
+  real,    intent(in)    :: facis,facie,facjs,facje
+  real,    intent(in)    :: area(:,:)
+  integer, intent(in)    :: ntype   
+  integer, intent(out)   :: ntypemax ! number of land cover type to be assigned
+                                     ! to the entire grid cell; 
+  logical, intent(inout) :: enlarge  ! says if it's necessary to repeat the
+                                     ! process for a larger area</pre>
+<pre>
+<b>call typemax </b>(data,area,facis,facie,facjs,facje,ntype,ntypemax,enlarge)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Calculation of total area of each land cover type within the territory
+   and the determination of the type occupying the biggest area within the
+   territory. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="init_land_properties_diag"></a>
+<h4>init_land_properties_diag</h4>
+<pre>subroutine init_land_properties_diag (id_lon, id_lat, Time)
+
+  integer,         intent(in) :: id_lon  ! ID of land longitude (X) axis  
+  integer,         intent(in) :: id_lat  ! ID of land longitude (X) axis
+  type(time_type), intent(in) :: Time    ! current time</pre>
+<pre>
+<b>call init_land_properties_diag </b>(id_lon, id_lat, Time)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initializes land properties diagnostics. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="diag_static"></a>
+<h4>diag_static</h4>
+<pre>subroutine diag_static ( Time,mask )
+
+  type(time_type), intent(in) :: Time
+  logical,         intent(in) :: mask(:,:,:)</pre>
+<pre>
+<b>call diag_static </b>( Time,mask )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Sends static fields to diagnostic output. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="land_properties_end"></a>
+<h4>land_properties_end</h4>
+<pre>subroutine land_properties_end()</pre>
+<pre>
+<b>call land_properties_end </b>()</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Deallocates the land property data. </dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<!-- END PUBLIC TYPES --><a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<hr>
+<h4>NAMELIST</h4>
+<div>
+<b>&amp;land_properties_nml</b>
+<br>
+<br>
+<div>
+<dl>
+<dt>
+<tt>n_dim_ground_types</tt>
+</dt>
+<dl>   Size of ground (soil) parameter lookup tables <br>
+<span class="type">[integer, parameter, default: 11]</span>
+</dl>
+<dt>
+<tt>n_dim_cover_types</tt>
+</dt>
+<dl>   Size of cover (vegetation) parameter lookup tables <br>
+<span class="type">[integer, parameter, default: 14]</span>
+</dl>
+<dt>
+<tt>n_map_ground_types</tt>
+</dt>
+<dl>   Number of ground types in input map file <br>
+<span class="type">[integer, parameter, default: 10]</span>
+</dl>
+<dt>
+<tt>n_map_cover_types</tt>
+</dt>
+<dl>   Number of cover types in input map file <br>
+<span class="type">[integer, parameter, default: 11]</span>
+</dl>
+<dt>
+<tt>do_all_mcm</tt>
+</dt>
+<dl>   Run Manabe Climate Model land surface. Setting this global control
+   option to TRUE causes specification all the following (regardless of
+   default or input settings, which are then ignored):
+   veg_to_use      = 'cons_ssl'
+   soil_to_use     = 'cons_ssl'
+   use_climap      = .true.  (this forced by veg_to_use='cons_ssl')
+   use_climap_mcm  = .true.
+   do_mcm_masking  = .true.
+   use_single_geo  = .true.
+   geo_res_time    = res_time_ssl
+   factor_root     = 1.
+   factor_rough    = 1.
+   z_root_min      = 0.
+   max_snow        = max_snow_ssl <br>
+<span class="type">[logical, default: .false.]</span>
+</dl>
+<dt>
+<tt>veg_to_use</tt>
+</dt>
+<dl>   Choice of method for defining vegetation.
+   'variable' - use input map to index vegetation parameter vectors
+   'constant' - use veg_index_constant to index veg parameter vectors
+   'cons_tun' - use tuned global constant vegetation
+   'cons_ssl' - use Manabe Climate Model-like vegetation (forces use_climap to be true) <br>
+<span class="type">[character*8, default: 'variable']</span>
+</dl>
+<dt>
+<tt>soil_to_use</tt>
+</dt>
+<dl>   Choice of method for defining soil.
+   'variable' - use input map to index soil parameter vectors
+   'constant' - use soil_index_constant to index soil parameter vectors
+   'cons_ssl' - use Manabe Climate Model-like soil <br>
+<span class="type">[character*8, default: 'variable']</span>
+</dl>
+<dt>
+<tt>use_glaciers</tt>
+</dt>
+<dl>   False to remove glaciers from land <br>
+<span class="type">[logical, default: .true.]</span>
+</dl>
+<dt>
+<tt>use_climap</tt>
+</dt>
+<dl>   True to override default albedo by CLIMAP and to invoke use of CLIMAP
+   to define glacier locations (if use_glaciers) <br>
+<span class="type">[logical, default: .false.]</span>
+</dl>
+<dt>
+<tt>use_desert_albedo_map</tt>
+</dt>
+<dl>   true to override default snow-free albedo of desert only by
+   albedo map (SRB) <br>
+<span class="type">[logical, default: .false.]</span>
+</dl>
+<dt>
+<tt>use_climap_mcm</tt>
+</dt>
+<dl>   Run Manabe Climate Model land surface <br>
+<span class="type">[logical, default: .false.]</span>
+</dl>
+<dt>
+<tt>do_mcm_masking</tt>
+</dt>
+<dl>   True to use Manabe Climate Model snow-albedo function <br>
+<span class="type">[logical, default: .false.]</span>
+</dl>
+<dt>
+<tt>use_single_basin</tt>
+</dt>
+<dl>   True to avoid using basin maps <br>
+<span class="type">[logical, default: .false.]</span>
+</dl>
+<dt>
+<tt>use_single_geo</tt>
+</dt>
+<dl>   True for global constant groundwater residence time <br>
+<span class="type">[logical, default: .false.]</span>
+</dl>
+<dt>
+<tt>i_dest0</tt>
+</dt>
+<dl>   If use_single_geo is set to .true., all the river discharge is put in a
+   single grid cell. i_dest0 is the longitude index of this grid cell. <br>
+<span class="type">[integer, default: 1]</span>
+</dl>
+<dt>
+<tt>j_dest0</tt>
+</dt>
+<dl>   If use_single_geo is set to .true., all the river discharge is put in a
+   single grid cell. j_dest0 is the latitude index of this grid cell. <br>
+<span class="type">[integer, default: 1]</span>
+</dl>
+<dt>
+<tt>veg_index_constant</tt>
+</dt>
+<dl>   Veg index used when veg_to_use='constant' <br>
+<span class="type">[integer, default: 3]</span>
+</dl>
+<dt>
+<tt>soil_index_constant</tt>
+</dt>
+<dl>   Soil index used when soil_to_use='constant' <br>
+<span class="type">[integer, default: 2]</span>
+</dl>
+<dt>
+<tt>soil_index_ice_substitute</tt>
+</dt>
+<dl>   Ground type to be substituted for ice ground type when such type is
+   over-ruled due to absence of glacier cover type. if this is set to zero,
+   then the ground type is temporarily marked as ocean, and, if land is
+   present, ground type will then be assigned based on neighbor cells
+   through regrid_discrete_field. <br>
+<span class="type">[integer, default: 1]</span>
+</dl>
+<dt>
+<tt>geo_res_time</tt>
+</dt>
+<dl>   Time constant when use_single_geo is true <br>
+<span class="type">[real, units: s, default: 60.*86400.]</span>
+</dl>
+<dt>
+<tt>t_range</tt>
+</dt>
+<dl>   Temperature range over which snow/glacier albedo varies <br>
+<span class="type">[real, units: K, default: 10.0]</span>
+</dl>
+<dt>
+<tt>factor_root</tt>
+</dt>
+<dl>   Global factor for critical_root_density <br>
+<span class="type">[real, default: 1.0]</span>
+</dl>
+<dt>
+<tt>factor_stomata</tt>
+</dt>
+<dl>   Global factor for veg_rs_min_vec <br>
+<span class="type">[real, default: 1.0]</span>
+</dl>
+<dt>
+<tt>factor_rough</tt>
+</dt>
+<dl>   Global factor for rough_momentum_vec <br>
+<span class="type">[real, default: 1.0]</span>
+</dl>
+<dt>
+<tt>z_root_min</tt>
+</dt>
+<dl>   lower bound for root-zone depth <br>
+<span class="type">[real, units: m, default: 0.01]</span>
+</dl>
+<dt>
+<tt>max_snow</tt>
+</dt>
+<dl>   Value of snow above which 'snow runoff' occurs <br>
+<span class="type">[real, units: kg/m3, default: 1000.]</span>
+</dl>
+<dt>
+<tt>sfc_heat_factor</tt>
+</dt>
+<dl>   "fudge" factor for heat capacity and thermal
+   conductivity in surface soil layers <br>
+<span class="type">[real, default: 1.]</span>
+</dl>
+<dt>
+<tt>num_sfc_layers</tt>
+</dt>
+<dl>   number of surface layers for sfc_heat_factor <br>
+<span class="type">[integer, default: 0]</span>
+</dl>
+<dt>
+<tt>dynamic_cover_type</tt>
+</dt>
+<dl>   Set to true if cover type forcing data varies with time. <br>
+<span class="type">[logical, default: true]</span>
+</dl>
+<dt>
+<tt>read_old_ascii_cover</tt>
+</dt>
+<dl>   Set to true if reading the original ASCII static cover type forcing data <br>
+<span class="type">[logical, default: false]</span>
+</dl>
+<dt>
+<tt>cover_dataset_init_year</tt>
+</dt>
+<dl>   The initial year in the cover_type dataset. <br>
+<span class="type">[integer, default: 1860]</span>
+</dl>
+<dt>
+<tt>cover_dataset_entry</tt>
+</dt>
+<dl>   Beginning time for reading the cover_type dataset (yr,mo,dy,hr,mn,sc). <br>
+<span class="type">[integer, default: (/1,1,1,0,0,0/)]</span>
+</dl>
+<dt>
+<tt>veg_rs_min_vec</tt>
+</dt>
+<dl>   Minimum bulk stomatal resistance. For default values, refer to the table
+   in the Public Code section below. <br>
+<span class="type">[real, dimensionn_dim_cover_types, units: s/m]</span>
+</dl>
+<dt>
+<tt>veg_zeta_vec</tt>
+</dt>
+<dl>   Depth scale of root distribution. For default values, refer to the table
+   in the Public Code section below. <br>
+<span class="type">[real, dimensionn_dim_cover_types, units: m]</span>
+</dl>
+<dt>
+<tt>veg_root_mass_vec</tt>
+</dt>
+<dl>   Root biomass areal density. For default values, refer to the table
+   in the Public Code section below. <br>
+<span class="type">[real, dimensionn_dim_cover_types, units: kg/m2]</span>
+</dl>
+<dt>
+<tt>rough_momentum_vec</tt>
+</dt>
+<dl>   Roughness length for momentum. For default values, refer to the table
+   in the Public Code section below. <br>
+<span class="type">[real, dimensionn_dim_cover_types, units: m]</span>
+</dl>
+<dt>
+<tt>k_over_B_vec</tt>
+</dt>
+<dl>   ln (z_0_momentum / z_0_scalar). For default values, refer to the table
+   in the Public Code section below. <br>
+<span class="type">[real, dimensionn_dim_cover_types]</span>
+</dl>
+<dt>
+<tt>crit_snowmass_vec</tt>
+</dt>
+<dl>   Snow amount that half hides surface. For default values, refer to the
+   table in the Public Code section below. <br>
+<span class="type">[real, dimensionn_dim_cover_types, units: kg/m3]</span>
+</dl>
+<dt>
+<tt>min_nosnow_alb_vec</tt>
+</dt>
+<dl>   Snow-free albedo at freezing point. For default values, refer to
+   the table in the Public Code section below. <br>
+<span class="type">[real, dimensionn_dim_cover_types]</span>
+</dl>
+<dt>
+<tt>max_nosnow_alb_vec</tt>
+</dt>
+<dl>   Snow-free albedo at t_range below freezing. For default values, refer to
+   the table in the Public Code section below. <br>
+<span class="type">[real, dimensionn_dim_cover_types]</span>
+</dl>
+<dt>
+<tt>min_snow_alb_vec</tt>
+</dt>
+<dl>   Snow albedo at freezing point.  For default values, refer to
+   the table in the Public Code section below. <br>
+<span class="type">[real, dimensionn_dim_cover_types]</span>
+</dl>
+<dt>
+<tt>max_snow_alb_vec</tt>
+</dt>
+<dl>   Snow albedo at t_range below freezing.  For default values, refer to
+   the table in the Public Code section below. <br>
+<span class="type">[real, dimensionn_dim_cover_types]</span>
+</dl>
+<dt>
+<tt>soil_awc_vec</tt>
+</dt>
+<dl>   Available water capacity. For default values, refer to the table in
+   the Public Code section below. <br>
+<span class="type">[real, dimensionn_dim_ground_types, units: kg/m3]</span>
+</dl>
+<dt>
+<tt>soil_therm_cap_vec</tt>
+</dt>
+<dl>   Volumetric heat capacity. For default values, refer to the table in the
+   Public Code section below. <br>
+<span class="type">[real, dimensionn_dim_ground_types, units: J/(K m3)]</span>
+</dl>
+<dt>
+<tt>soil_therm_dif_vec</tt>
+</dt>
+<dl>   Thermal diffusivity. For default values, refer to the table in the
+   Public Code section below. <br>
+<span class="type">[real, dimensionn_dim_ground_types, units: m2/s]</span>
+</dl>
+<dt>
+<tt>use_topo_rough</tt>
+</dt>
+<dl>   If true, the topographic momentum drag scaling scheme is used <br>
+<span class="type">[logical, default: false]</span>
+</dl>
+<dt>
+<tt>max_topo_rough</tt>
+</dt>
+<dl>   Maximum of topographic "roughness length" used for momentum drag scaling <br>
+<span class="type">[real, units: m, default: 100]</span>
+</dl>
+<dt>
+<tt>topo_rough_factor</tt>
+</dt>
+<dl>   Scaling factor to convert topography variance to topographic 
+   "roughness length" <br>
+<span class="type">[real, default: 1.0]</span>
+</dl>
+<dt>
+<tt>topo_rough_source</tt>
+</dt>
+<dl>   Source of the sub-grid topography variance data for topographic momentum drag scaling. 
+   'computed' means that the variance is calculated based on high-resolution 
+   topography data. 'input' means that the data will be provided in specified file
+   (NetCDF of IEEE binary) <br>
+<span class="type">[caharacter(len=16), default: 'computed']</span>
+</dl>
+<dt>
+<tt>topo_rough_file</tt>
+</dt>
+<dl>   Name of the file to be used as an input for sub-grid topography variance data. 
+   The file can be either NetCDF (in this case variable name can also be specified), or
+   IEEE. <br>
+<span class="type">[character(len=256), default: INPUT/mg_drag.data.nc]</span>
+</dl>
+<dt>
+<tt>topo_rough_var</tt>
+</dt>
+<dl>   Name of the NetCDF variable to be used as a topography variance field. Ignored if
+   the file specified in topo_rough_file is not NetCDF file. <br>
+<span class="type">[character(len=128), default: ghprime]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END NAMELIST -->
+<a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<hr>
+<h4>DIAGNOSTIC FIELDS</h4>
+<div>Diagnostic fields may be output to a netcdf file by
+              specifying the module name identifier <b></b> and the desired field names (given below) in
+               file <b>diag_table</b>. See the documentation for diag_manager.<pre>Diagnostic fields for module name identifier: <b></b>
+</pre>
+<div>
+<table cellpadding="0" border="0">
+<tr>
+<td>
+<pre>field name   <br>----------   <br>albedo_max_no_snow   
+albedo_min_no_snow   
+cover_type   
+ground_type   
+</pre>
+</td><td>
+<pre>field description (units)<br>-------------------------<br>Maximum snow-free land albedo (dimensionless)
+Minimum snow-free land albedo (dimensionless)
+Land surface cover type (dimensionless)
+Land surface ground type (dimensionless)
+</pre>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<!-- END DIAGNOSTIC FIELDS -->
+<a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<hr>
+<h4>PUBLIC CODE</h4>
+<div>
+<table cellspacing="0" CELLPADDING="5" BORDER="0">
+<tr>
+<td>From module land_properties_mod:<br>
+<pre>! the following namelist vectors contain properties indexed by cover (veg) type:
+!  0      ocean
+!  1 (BE) broadleaf evergreen trees
+!  2 (BD) broadleaf deciduous trees
+!  3 (BN) broadleaf/needleleaf trees
+!  4 (NE) needleleaf evergreen trees
+!  5 (ND) needleleaf deciduous trees
+!  6 (G)  grassland
+!  7 (D)  desert
+!  8 (T)  tundra
+!  9 (A)  agriculture
+! 10 (I)  ice
+! 11 (L)  lake
+! 12 (TV) tuned global vegetation
+! 13 (SV) Manabe Climate Model-like vegetation
+! 14 (SI) Manabe Climate Model-like ice/glacier
+
+! veg_rs_min_vec       minimum bulk stomatal resistance           s/m
+! veg_zeta_vec         depth scale of root distribution            m
+! veg_root_mass_vec    root biomass areal density               kg/m**2
+! rough_momentum_vec   roughness length for momentum               m
+! k_over_B_vec         ln (z_0_momentum / z_0_scalar)              -
+! crit_snowmass_vec    snow amount that half hides surface      kg/m**3
+! min_nosnow_alb_vec   snow-free albedo at freezing point          -
+! max_nosnow_alb_vec   snow-free albedo at t_range below freezing       -
+! min_snow_alb_vec     snow albedo at freezing point               -
+! max_snow_alb_vec     snow albedo at t_range below freezing       -
+
+real, dimension(n_dim_cover_types) :: &amp;
+!                      BE     BD     BN     NE     ND      G      D      T      A      I      L     TV     SV     SI
+veg_rs_min_vec    =(/  43.6,  131., 87.1,  69.7,  218.,  56.6,  .01,   170.,  56.6, .01,   .01,     67.,  .01,   .01/),&amp; 
+veg_zeta_vec      =(/  .26,   .29,  .35,   .17,   .17,   .26,   .35,   .11,   .25,   0.0,   1.0,   .35,   .35,   0.0/),&amp;
+veg_root_mass_vec =(/  4.9,   4.2,  4.3,   2.9,   2.9,   1.4,  .762,   1.2,   .15,   0.0,   1.0,  .362,  .762,   0.0/),&amp;
+rough_momentum_vec=(/ 2.65,  .90,   1.2,   .90,   .80,   .07,   .01,   .07,   .40,   .01, 1.4e-4,  1.0,  .045,  .045/),&amp;
+k_over_B_vec      =(/   2.,    2.,    2.,    2.,    2.,   2.,    2.,    2.,    2.,    2.,  0.25,    2.,    0.,    0. /),&amp;
+crit_snowmass_vec =(/  60.,   10.,   25.,   40.,   40.,   5.,    5.,    5.,    5.,    5.,    5.,  100.,    5.,    5. /),&amp;
+min_nosnow_alb_vec=(/0.149, 0.130, 0.132, 0.126, 0.143, 0.182, 0.333, 0.139, 0.160, 0.650, 0.06,  0.12,   999.,  0.55/),&amp;
+max_nosnow_alb_vec=(/0.149, 0.130, 0.132, 0.126, 0.143, 0.182, 0.333, 0.139, 0.160, 0.800, 0.06,  0.12,   999.,  0.65/),&amp;
+min_snow_alb_vec  =(/0.650, 0.650, 0.650, 0.650, 0.650, 0.650, 0.650, 0.650, 0.650, 0.650, 0.06,  0.450, 0.450, 0.650/),&amp;
+max_snow_alb_vec  =(/0.800, 0.800, 0.800, 0.800, 0.800, 0.800, 0.800, 0.800, 0.800, 0.800, 0.06,  0.600, 0.600, 0.800/)
+!                      BE     BD     BN     NE     ND      G      D      T      A      I      L     TV     SV     SI
+
+
+! the following vectors contain properties indexed by ground (soil) type:
+!  0       ocean
+!  1 (C)   coarse soil
+!  2 (M)   medium soil
+!  3 (F)   fine soil
+!  4 (CM)  coarse/medium mix
+!  5 (CF)  coarse/fine mix
+!  6 (MF)  medium/fine mix
+!  7 (CMF) coarse/medium/fine mix
+!  8 (P)   organic soil (peat)
+!  9 (I)   ice
+! 10 (L)   lake
+! 11 (MCM)  Manabe Climate Model
+
+! soil_awc_vec         available water capacity                 kg/m**3
+! soil_therm_cap_vec   volumetric heat capacity                J/(K m**3)
+! soil_therm_dif_vec   thermal diffusivity                       m**2/s
+
+real, dimension(n_dim_ground_types) :: &amp;
+!   C      M      F      CM     CF     MF    CMF     P      I      L      MCM
+soil_awc_vec      = &amp;
+(/   63.,  132.,  109.,   98.,   86.,  120.,  101.,  445., 1000., 1000.,  150./),&amp;
+soil_therm_cap_vec= &amp;
+(/ 1.8e6, 2.0e6, 2.6e6, 1.9e6, 2.2e6, 2.3e6, 2.1e6, 3.0e6, 1.6e6, 8.4e7, 1.0/),&amp;
+soil_therm_dif_vec=&amp;
+(/8.3e-7,4.0e-7,5.2e-7,6.2e-7,6.8e-7,4.6e-7,5.8e-7,1.3e-7,1.1e-6, 1.0,  2.0e-7/)
+!   C      M      F      CM     CF     MF    CMF     P      I      L      MCM</pre>
+</td>
+</tr>
+</table>
+<br>
+</div>
+<!-- END PUBLIC CODE -->
+<a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>
+<dl>
+<dt>
+<b>FATAL in land_properties_init</b>
+</dt>
+<dd>
+<span class="errmsg">Cannot find file INPUT/cover_type_field.nc</span>
+</dd>
+<dd>   The cover type field file cannot be found. Provide this file or set up
+   namelist parameters so it is not necessary. To do the latter, set
+   veg_to_use to something other than 'variable' in the namelist
+   land_properties_nml. </dd>
+<dt>
+<b>FATAL in land_properties_init</b>
+</dt>
+<dd>
+<span class="errmsg">must set cover_dataset_entry when using dynamic cover type inputs</span>
+</dd>
+<dd>   When specifying dynamic cover type forcing data inputs, the
+   cover_dataset_entry time must be set. </dd>
+<dt>
+<b>NOTE in land_properties_init</b>
+</dt>
+<dd>
+<span class="errmsg">Using the static ASCII cover type dataset.</span>
+</dd>
+<dd>   Using the read_old_ascii_cover option. Reading the ASCII cover type dataset. </dd>
+<dt>
+<b>NOTE in land_properties_init</b>
+</dt>
+<dd>
+<span class="errmsg">Using the static NetCDF cover type dataset.</span>
+</dd>
+<dd>   Using the static NetCDF cover type dataset. </dd>
+<dt>
+<b>FATAL in land_properties_init</b>
+</dt>
+<dd>
+<span class="errmsg">must set cover_dataset_entry when using time-varying cover type inputs</span>
+</dd>
+<dd>   When specifying static_cover_type_netcdf forcing data inputs, the
+   cover_dataset_entry time must be set. </dd>
+<dt>
+<b>NOTE in land_properties_init</b>
+</dt>
+<dd>
+<span class="errmsg">Cannot find the netCDF file INPUT/cover_type_field. Using the ASCII file.</span>
+</dd>
+<dd>   The netCDF cover type field file cannot be found. Using the ASCII file. </dd>
+<dt>
+<b>FATAL in land_properties_init</b>
+</dt>
+<dd>
+<span class="errmsg">Cannot find file INPUT/ground_type_field</span>
+</dd>
+<dd>   The ground (soil) type field file cannot be found. Provide this file or
+   set up namelist parameters so it is not necessary. To do the latter, set
+   soil_to_use to something other than 'variable' in the namelist
+   land_properties_nml. </dd>
+<dt>
+<b>FATAL in land_properties_init</b>
+</dt>
+<dd>
+<span class="errmsg">Cannot find file INPUT/groundwater_residence_time_field</span>
+</dd>
+<dd>   The groundwater residence time field file cannot be found. Provide this file
+   or set up namelist parameters so it is not necessary. To do the latter, set
+   use_single_geo to .true. in the namelist land_properties_nml. </dd>
+<dt>
+<b>FATAL in land_properties_init</b>
+</dt>
+<dd>
+<span class="errmsg">could not read topography data</span>
+</dd>
+<dd>   get_topog_stdev failed to provide topography variance data. </dd>
+<dt>
+<b>FATAL in land_properties_init</b>
+</dt>
+<dd>
+<span class="errmsg">input file for topography standard deviation ... does not exist</span>
+</dd>
+<dd>   topo_rough_source is set to 'input', but input file name either
+   not specified or specified incorrectly, so the program cannot 
+   find it. </dd>
+<dt>
+<b>FATAL in land_properties_init</b>
+</dt>
+<dd>
+<span class="errmsg">... is not a valid value for topo_rough_source</span>
+</dd>
+<dd>   specified value of namelist parameter topo_rough_source is invalid; 
+   valid values are 'computed' or 'input'. </dd>
+<dt>
+<b>FATAL in update_land_properties_slow</b>
+</dt>
+<dd>
+<span class="errmsg">Cannot find file INPUT/cover_type_field.nc</span>
+</dd>
+<dd>   The cover type field file cannot be found. Provide this file or set up
+   namelist parameters so it is not necessary. To do the latter, set
+   veg_to_use to something other than 'variable' in the namelist
+   land_properties_nml. </dd>
+<dt>
+<b>FATAL in update_land_properties_slow</b>
+</dt>
+<dd>
+<span class="errmsg">Cannot find file INPUT/ground_type_field</span>
+</dd>
+<dd>   The ground (soil) type field file cannot be found. Provide this file or
+   set up namelist parameters so it is not necessary. To do the latter, set
+   soil_to_use to something other than 'variable' in the namelist
+   land_properties_nml. </dd>
+<dt>
+<b>FATAL in update_land_properties_slow</b>
+</dt>
+<dd>
+<span class="errmsg">Cannot find file INPUT/groundwater_residence_time_field</span>
+</dd>
+<dd>   The groundwater residence time field file cannot be found. Provide this
+   file or set up namelist parameters so it is not necessary. To do the
+   latter, set use_single_geo to .true. in the namelist land_properties_nml. </dd>
+<dt>
+<b>FATAL in update_land_properties_slow</b>
+</dt>
+<dd>
+<span class="errmsg">could not read topography data</span>
+</dd>
+<dd>   get_topog_stdev failed to provide topography variance data. </dd>
+<dt>
+<b>FATAL in update_land_properties_slow</b>
+</dt>
+<dd>
+<span class="errmsg">input file for topography standard deviation ... does not exist</span>
+</dd>
+<dd>   topo_rough_source is set to 'input', but input file name either
+   not specified or specified incorrectly, so the program cannot 
+   find it. </dd>
+<dt>
+<b>FATAL in update_land_properties_slow</b>
+</dt>
+<dd>
+<span class="errmsg">... is not a valid value for topo_rough_source</span>
+</dd>
+<dd>   specified value of namelist parameter topo_rough_source is invalid; 
+   valid values are 'computed' or 'input'. </dd>
+<dt>
+<b>FATAL in regrid_discrete_field</b>
+</dt>
+<dd>
+<span class="errmsg">inner dimension for input data is too small.</span>
+</dd>
+<dd> 
+</dd>
+</dl>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# template for the gfortran compiler version 4.4.0 (experimental) when using libMPI
+# typical use with mkmf
+# mkmf -t template.ifc -c"-Duse_libMPI -Duse_netCDF" path_names /usr/local/include
+# The following is the location of netcdf include dir which has netcdf.mod file (compiled with the proper compiler). 
+NETCDF_MOD_LOC = /opt/netcdf/gfort/include
+#
+FFLAGS = -fcray-pointer  -g  -fdefault-real-8 -O2 -Waliasing -ffree-line-length-none -fno-range-check
+CPPFLAGS =  -I/usr/include -I/usr/include/mpi -I$(NETCDF_MOD_LOC) 
+FC = gfortran 
+LD = gfortran
+LDFLAGS = -L/usr/lib -lnetcdf_ifort -L/usr/lib/mpich/lib  -lmpich
+CFLAGS = -D__IFC
+

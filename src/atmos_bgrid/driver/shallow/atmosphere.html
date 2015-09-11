@@ -1,0 +1,251 @@
+<HTML>
+<TITLE>module atmosphere_mod</TITLE>
+<BODY BGCOLOR="#AABBCC" TEXT="#332211" >
+
+<DIV ALIGN="CENTER"> <FONT SIZE=1>
+<A HREF="#INTERFACE">PUBLIC INTERFACE</A> / 
+<A HREF="#ROUTINES">ROUTINES</A> / 
+<A HREF="#NAMELIST">NAMELIST</A> / 
+<A HREF="#ERRORS">ERRORS</A>
+</FONT>
+<BR><BR></DIV><HR>
+
+<H2>module atmosphere_mod</H2>
+<A NAME="HEADER">
+<PRE>
+<PRE>
+     <B>Contact:</B>   B. Wyman
+     <B>Reviewers:</B>
+     <B>Change history:</B> <A HREF="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS
+/atmos_bgrid/driver/shallow/atmosphere.f90">WebCVS Log for shallow/atmosphere.f90</A>
+
+</PRE>
+</A><!-- END HEADER -->
+<!-- ------------------------------------------------------------------>
+<A NAME="OVERVIEW">
+<HR>
+<H4>OVERVIEW</H4>
+<!-- BEGIN OVERVIEW -->
+<PRE>
+
+     Atmospheric driver for the B-grid dynamical core using
+     forcing from a simple shallow water test case.
+
+</PRE>
+</A><!-- END OVERVIEW -->
+<!-- ------------------------------------------------------------------>
+<A NAME="DESCRIPTION">
+<!-- BEGIN DESCRIPTION -->
+<PRE>
+     The B-grid dynamical core can be run as a shallow water model by
+     setting the number of model levels to ONE.  Since the same computer
+     code is used for the shallow water version, some prognostic variables
+     represent different fields. The surface pressure (ps) now represents
+     the free surface geopotential height and temperature becomes another
+     tracer.  The zonal and meridional wind components (u,v) are the same.
+     
+     Not all terms can be applied in the shallow water version.
+     Namelist values should be set to turn off these terms.
+     Here is a list of terms that should not be used:
+        * vertical advection (set to NONE)
+        * slope correction in bgrid_horiz_diff (set to zero)
+        * energy conservation (set to FALSE)
+        * pgf scheme should be set to default
+        * sponge should probably not be used
+
+     Diagnostic fields have not been modified for the shallow water version.
+     Some fields have no meaning in the one level model.
+     (For example: zsurf, omega, pres_full, pres_half.)
+
+</PRE>
+</A><!-- END DESCRIPTION -->
+<!-- ------------------------------------------------------------------>
+<A NAME="OTHER MODULES USED">
+<HR>
+<H4>OTHER MODULES USED</H4>
+<!-- BEGIN OTHER MODULES USED -->
+<PRE>
+
+   bgrid_horiz_mod
+   bgrid_vert_mod
+   bgrid_prog_var_mod
+   bgrid_halo_mod
+   bgrid_change_grid_mod
+   bgrid_core_driver_mod
+   shallow_physics_mod
+   time_manager_mod
+   fms_mod
+
+</PRE>
+</A><!-- END MODULES_USED -->
+<!-- ------------------------------------------------------------------>
+<A NAME="PUBLIC INTERFACE">
+<HR>
+<H4>PUBLIC INTERFACE</H4>
+<!-- BEGIN PUBLIC INTERFACE -->
+<PRE>
+
+  <b>use atmosphere_mod</b> [,only: atmosphere_init,       atmosphere_end,
+                             atmosphere,
+                             atmosphere_resolution, atmosphere_boundary,
+                             get_atmosphere_axes  ]
+
+  NOTES
+
+     1)  Optional namelist interface <b>&atmosphere_nml</b> may be
+         read from file <b>input.nml</b>.
+                                
+</PRE>
+</A><!-- END PUBLIC INTERFACE -->
+<!-- ------------------------------------------------------------------>
+<A NAME="PUBLIC ROUTINES">
+<HR>
+<H4>PUBLIC ROUTINES</H4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<PRE>
+
+<b>call atmosphere_init</b> ( Time_init, Time, Time_step )
+
+DESCRIPTION
+   Initialization routine for running the bgrid dynamical core.
+
+INPUT
+   Time_init   The base (or initial) time for the experiment.
+               The base time is usually subtracted from the current time
+               when outputting time in diagnostic routines.
+                 <FONT SIZE=-1 COLOR="#000099">[time_type]</FONT>
+
+   Time        The current time.  <FONT SIZE=-1 COLOR="#000099">[time_type]</FONT>
+
+   Time_step   The atmospheric model/physics time step.  <FONT SIZE=-1 COLOR="#000099">[time_type]</FONT>
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+
+<b>call atmosphere_end</b>
+
+DESCRIPTION
+   This routine terminates the module.
+   There are no arguments to this routine.
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+
+<b>call atmosphere</b> ( Time )
+
+DESCRIPTION
+   Advances the B-grid prognostic variables one time step forward.
+   The dynamical core, forcing for shallow water model, diagnostics,
+   and time differencing are all called.  This routine should only
+   be called once per time step.
+
+INPUT
+   Time    The current time.  <FONT SIZE=-1 COLOR="#000099">[time_type]</FONT>
+
+NOTE
+   The prognostic variables are stored in a private data structure
+   (i.e., derived-type variable) defined in the specification section
+   of this module.
+
+---------------------------------------------------------------------
+
+<b>call get_atmosphere_axes</b> ( axes )
+
+OUTPUT
+
+   axes   Axis identifiers for the atmospheric grids as returned by the
+          diagnostics manager. The size of axes must be: 1 &lt;= size(axes) &lt;= 4.
+          The axes returned are ordered: (/ x, y, p_full, p_half /).
+             [integer, dimension(:)]
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+
+<b>call atmosphere_resolution</b> ( nlon, nlat <FONT COLOR="#007700">[, global]</FONT> )
+
+DESCRIPTION
+   Returns the resolution of compute domain for either the
+   current processor or the global domain.
+
+OUTPUT
+   nlon   The number of longitude points in the compute domain.
+             <FONT SIZE=-1 COLOR="#000099">[integer]</FONT>
+
+   nlat   The number of latitude points in the compute domain.
+             <FONT SIZE=-1 COLOR="#000099">[integer]</FONT>
+
+OPTIONAL INPUT
+
+   global  Flag that specifies whether the returned compute domain size is
+           for the global grid (TRUE) or for the current processor (FALSE).
+              <FONT SIZE=-1 COLOR="#000099">[logical, default: FALSE]</FONT>
+           
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+
+<b>call atmosphere_boundary</b> ( blon, blat <FONT COLOR="#007700">[, global]</FONT> )
+
+DESCRIPTION
+   Returns the grid box edges of compute domain for either the
+   current processor or the global domain.
+
+OUTPUT
+   blon    The west-to-east longitude edges of grid boxes (in radians).
+              <FONT SIZE=-1 COLOR="#000099">[real, dimension(nlon+1)]</FONT>
+
+   blat    The south-to-north latitude edges of grid boxes (in radians).
+              <FONT SIZE=-1 COLOR="#000099">[real, dimension(nlat+1)]</FONT>
+
+OPTIONAL INPUT
+   global  Flag that specifies whether the returned grid box edges are
+           for the global grid (TRUE) or for the current processor (FALSE).
+              <FONT SIZE=-1 COLOR="#000099">[logical, default: FALSE]</FONT>
+           
+NOTE
+   The size of the output arguments, blon and blat, must be +1 more than the
+   output arguments for call atmosphere_resolution, nlon+1 and nlat+1, respectively.
+
+</PRE>
+</A><!-- END PUBLIC ROUTINES -->
+<!-- ------------------------------------------------------------------>
+<A NAME="NAMELIST">
+<HR>
+<H4>NAMELIST</H4>
+<!-- BEGIN NAMELIST -->
+<PRE>
+
+<b>&atmosphere_nml</b>
+
+ physics_window  The number of "i" and "j" rows processed each time
+                 the modular physics is called. To process the entire
+                 domain use physics_window = 0,0.
+                    <FONT SIZE=-1 COLOR="#000099">[integer, default: physics_window = 0,0]</FONT>
+
+</PRE>
+</A><!-- END NAMELIST -->
+<!-- ------------------------------------------------------------------>
+<A NAME="ERRORS">
+<HR>
+<H4>ERROR MESSAGES</H4>
+<!-- BEGIN ERRORS -->
+<PRE>
+
+<b>FATAL errors in atmosphere_mod</b>
+
+    <b>number of model levels not correct for shallow water version</b>
+        This version of atmosphere runs a shallow water version of the B-grid core.
+        There must be only ONE model level used.  Check your namelist value or
+        restart file.
+
+    <b>size of argument is incorrect</b>
+        The size of the argument to get_atmosphere_axes must be
+        between 1 and 4.
+
+
+</PRE>
+</A><!-- END ERRORS -->
+<!-- ------------------------------------------------------------------>
+
+<HR>
+</BODY>
+</HTML>

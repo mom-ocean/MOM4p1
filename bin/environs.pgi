@@ -1,0 +1,8 @@
+        source $MODULESHOME/init/csh
+        module rm PrgEnv-pgi PrgEnv-pathscale
+        module load PrgEnv-pgi/2.2.41
+        module load netcdf/3.6.2
+        module list
+        setenv MPICH_MAX_SHORT_MSG_SIZE 8000
+        setenv NC_BLKSZ 1M
+

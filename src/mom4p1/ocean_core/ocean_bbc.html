@@ -1,0 +1,323 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module ocean_bbc_mod</title>
+<link type="text/css" href="http://data1.gfdl.noaa.gov/~fms/style/docbook.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module ocean_bbc_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Matthew.Harrison@noaa.gov">   Matthew Harrison </a>,&nbsp;
+    <a href="mailto:Stephen.Griffies@noaa.gov">   S.M. Griffies </a>
+<br>
+<b>Reviewers:&nbsp;</b>
+<br>
+<b>Change History:&nbsp;</b><a href="http://cobweb.gfdl.noaa.gov/fms-cgi-bin/viewcvs/FMS/ocean/mom4p1/ocean_core">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   Set bottom boundary conditions </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   Set bottom boundary conditions </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>    diag_manager_mod<br>             fms_mod<br>             mpp_mod<br>     mpp_domains_mod<br>ocean_parameters_mod<br>     ocean_types_mod<br>   ocean_domains_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#ocean_bbc_init">ocean_bbc_init</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#get_ocean_bbc">get_ocean_bbc</a>:</dt>
+<dd></dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="ocean_bbc_init"></a>
+<h4>ocean_bbc_init</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initialize the bottom boundary condition module </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="get_ocean_bbc"></a>
+<h4>get_ocean_bbc</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Set bottom boundary conditions for velocity and tracer.
+   <br>
+<br>
+   Dimensions of bottom momentum flux are 
+   N/m^2 = (kg/m^3)*(m^2/s^2).
+   <br>
+<br>
+   Note the use of rho0 for the conversion from m^2/s^2 to 
+   (kg/m^3)*(m^2/s^2).  We do not know the precise value 
+   of cdbot, so the rho0 approximate value is well within 
+   our level of uncertainty.  No reason therefore to 
+   use in situ rho for this conversion, even when using 
+   non-Boussinesq version of mom4.   
+   <br>
+<br>
+   Note that bmf needs to be computed on the data domain since the 
+   halo values are accessed in ocean_vert_gotm.F90.
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<!-- END PUBLIC TYPES --><a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<hr>
+<h4>NAMELIST</h4>
+<div>
+<b>&amp;ocean_bbc_nml</b>
+<br>
+<br>
+<div>
+<dl>
+<dt>
+<tt>cdbot</tt>
+</dt>
+<dl>   Dimensionless coefficient for quadratic bottom drag. <br>
+<span class="type">[real, units: dimensionless]</span>
+</dl>
+<dt>
+<tt>bmf_implicit</tt>
+</dt>
+<dl>   For incorporating the bottom momentum drag implicitly in time.
+   This code is fresh and not fully tested.  
+   Default is bmf_implicit=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>cdbot_law_of_wall</tt>
+</dt>
+<dl>   For determining bottom drag coefficient using a constant roughness length.
+   Will take maximum between cdbot and the computed value using law of
+   wall log-profile.  This option of use when have very very 
+   refined vertical resolution (say on order of meters) near the bottom.
+   Terrain following coordinates should use this option since they generally 
+   have very refined vertical grid spacing on topography. 
+   Default is cdbot_law_of_wall=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>law_of_wall_rough_length</tt>
+</dt>
+<dl>   Bottom roughness length.  Default is law_of_wall_rough_length=0.01m, following
+   the default used in the Princeton Ocean Model (POM). This value 
+   corresponds to "Law of Wall" physics. <br>
+<span class="type">[real, units: metre]</span>
+</dl>
+<dt>
+<tt>cdbot_roughness_length</tt>
+</dt>
+<dl>   For determining bottom drag coefficient using a map of the roughness length.
+   This approach is more relevant for coarse models
+   than the constant roughness length used in the cdbot_law_of_wall option. 
+   Default is cdbot_roughness_length=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>uresidual</tt>
+</dt>
+<dl>   Residual bottom velocity due to unresolved fluctuations (e.g., waves and tides)
+   that contribute to bottom dissipation.  Should be set to zero when running 
+   with explicit representation of tidal forcing and when waves are well resolved.
+   Default is uresidual=.05. <br>
+<span class="type">[real, units: m/s]</span>
+</dl>
+<dt>
+<tt>uvmag_max</tt>
+</dt>
+<dl>   Maximum magnitude of the bottom velocity used to compute the bottom 
+   momentum drag.  Default is uvmag_max=10.0. <br>
+<span class="type">[real, units: m/s]</span>
+</dl>
+<dt>
+<tt>bmf_max</tt>
+</dt>
+<dl>   Maximum magnitude of the bottom momentum drag.
+   Default is bmf_max=1.0. <br>
+<span class="type">[real, units: N/m2]</span>
+</dl>
+<dt>
+<tt>debug_this_module</tt>
+</dt>
+<dl>   For debugging purposes. <br>
+<span class="type">[logical]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END NAMELIST -->
+<a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<a name="REFERENCES"></a>
+<hr>
+<h4>REFERENCES</h4>
+<!-- BEGIN REFERENCES -->
+<div>
+<ol>
+<li>   R.C. Pacanowski and S.M. Griffies
+   The MOM3 Manual (1999) </li>
+<li>   S.M. Griffies, M.J. Harrison, R.C. Pacanowski, and A. Rosati 
+   A Technical Guide to MOM4 (2003) </li>
+<li>   S.M. Griffies, 2006: Elements of mom4p1 </li>
+</ol>
+</div>
+<br>
+<!-- END REFERENCES -->
+<a name="COMPILER SPECIFICS"></a>
+<hr>
+<h4>COMPILER SPECIFICS</h4>
+<!-- BEGIN COMPILER SPECIFICS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END COMPILER SPECIFICS -->
+<a name="PRECOMPILER OPTIONS"></a>
+<hr>
+<h4>PRECOMPILER OPTIONS</h4>
+<!-- BEGIN PRECOMPILER OPTIONS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END PRECOMPILER OPTIONS -->
+<a name="LOADER OPTIONS"></a>
+<hr>
+<h4>LOADER OPTIONS</h4>
+<!-- BEGIN LOADER -->
+<div>None.<br>
+<br>
+</div>
+<!-- END LOADER OPTIONS -->
+<a name="TEST PROGRAM"></a>
+<hr>
+<h4>TEST PROGRAM</h4>
+<!-- BEGIN TEST PROGRAM -->
+<div>None.<br>
+</div>
+<br>
+<!-- END TEST PROGRAM -->
+<a name="KNOWN BUGS"></a>
+<hr>
+<h4>KNOWN BUGS</h4>
+<!-- BEGIN KNOWN BUGS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END KNOWN BUGS -->
+<a name="NOTES"></a>
+<hr>
+<h4>NOTES</h4>
+<!-- BEGIN NOTES -->
+<div>None.<br>
+</div>
+<br>
+<!-- END NOTES -->
+<a name="FUTURE PLANS"></a>
+<hr>
+<h4>FUTURE PLANS</h4>
+<!-- BEGIN FUTURE PLANS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END FUTURE PLANS -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

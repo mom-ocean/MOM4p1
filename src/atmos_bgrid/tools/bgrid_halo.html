@@ -1,0 +1,251 @@
+<HTML>
+<TITLE>module bgrid_halo_mod</TITLE>
+<BODY BGCOLOR="#AABBCC" TEXT="#332211" >
+
+<DIV ALIGN="CENTER"> <FONT SIZE=-2>
+<A HREF="#INTERFACE">PUBLIC INTERFACE</A> / 
+<A HREF="#ROUTINES">ROUTINES</A> / 
+<A HREF="#ERRORS">ERRORS</A> / 
+<A HREF="#NOTES">NOTES</A> 
+</FONT>
+<BR><BR></DIV><HR>
+
+
+<H2>module bgrid_halo_mod</H2>
+<A NAME="HEADER">
+<PRE>
+     <B>Contact:</B>   B. Wyman
+     <B>Reviewers:</B>
+     <B>Change history:</B> <A HREF="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS
+/atmos/bgrid/tools/bgrid_halo.f90">WebCVS Log for bgrid_halo.f90</A>
+
+</PRE>
+</A><!-- END HEADER -->
+<!--------------------------------------------------------------------->
+<A NAME="OVERVIEW">
+<HR>
+<H4>OVERVIEW</H4>
+<!-- BEGIN OVERVIEW -->
+<PRE>
+
+     Provides an interface for updating the B-grid dynamical core
+     halo rows and columns, including the polar halo rows.
+     See the <A HREF="#NOTES">notes</A> section for a description of the polar 
+     boundary condition.
+
+</PRE>
+</A><!-- END OVERVIEW -->
+<!--------------------------------------------------------------------->
+<A NAME="DESCRIPTION">
+<!-- BEGIN DESCRIPTION -->
+<PRE>
+     Optional arguments allow for customized halo updates.
+
+</PRE>
+</A><!-- END DESCRIPTION -->
+<!--------------------------------------------------------------------->
+<A NAME="MODULES_USED">
+<HR>
+<H4>OTHER MODULES USED</H4>
+<!-- BEGIN MODULES_USED -->
+<PRE>
+
+    horiz_grid_mod
+     utilities_mod
+   mpp_domains_mod
+
+</PRE>
+</A><!-- END MODULES_USED -->
+<!--------------------------------------------------------------------->
+<A NAME="INTERFACE">
+<HR>
+<H4>PUBLIC INTERFACE</H4>
+<!-- BEGIN INTERFACE -->
+<PRE>
+
+   <b>use bgrid_halo_mod</b> [, only: update_halo,
+                               vel_flux_boundary,
+                               TEMP, UWND, VWND, WIND,
+                               SOUTH, NORTH, WEST, EAST,
+                               NOPOLE, POLEONLY ]
+
+   <a href="#update_halo">update_halo</a>
+        Updates all requested rows in the halo region for a requested
+        field of type: <b>TEMP</b>, <b>UWND</b>, or <b>VWND</b>.  By default all boundaries
+        will be updated.  To update only specific boundaries use the
+        public parameters: <b>SOUTH</b>, <b>NORTH</b>, <b>WEST</b>, <b>EAST</b>, <b>NOPOLE</b>, and <b>POLEONLY</b>.
+
+   <a href="#vel_flux_boundary">vel_flux_boundary</a>
+        Zeros-out the sub-polar row of meridional velocity flux fields.
+        This routine is needed by several dynamics routines for conservation,
+        but should not normally be needed by the user.
+
+   TEMP, UWND, VWND, WIND
+        Integer parameters to be used for the "field" argument to
+        interface update_halo.  The VWND value will result in a sign flip
+        beyond the polar rows.  Data at auxilary mass flux points can
+        also use these values: UFLX points use TEMP and VFLX points use
+        either UWND or VWND depending whether a sign flip is desired.
+        The WIND value is used with the 4D version to process the
+        u,v components together.
+
+   SOUTH, NORTH, WEST, EAST
+        Integer parameters to be used with the optional "halos" argument to
+        interface update_halo. By default all halos are updated.
+
+   NOPOLE, POLEONLY
+        Integer parameters to be used with the optional "flags" argument to
+        interface update_halo. NOPOLE applies only to fields UWND, VWND, 
+        and WIND. POLEONLY applies south and north halo updates only
+        at the polar boundaries.
+
+</PRE>
+</A><!-- END INTERFACE -->
+<!--------------------------------------------------------------------->
+<A NAME="ROUTINES">
+<HR>
+<H4>PUBLIC ROUTINES</H4>
+<!-- BEGIN ROUTINES -->
+<PRE>
+<a name="update_halo">
+
+<b>call update_halo</b> ( Hgrid, field, data <FONT COLOR="#007700">[, halos, flags]</FONT> )
+
+INPUT
+   field     Specifies which field/grid the data is on.
+             You must use the publicly accessible parameters: 
+             <B>TEMP</B>, <B>UWND</B>, <B>VWND</B>, or <B>WIND</B>.
+             See the notes below and the description of 
+             these parameters above.
+                <FONT SIZE=-1 COLOR="#000099">[integer,scalar]</FONT>
+
+INPUT/OUTPUT
+   Hgrid     The derived-type variable returned by a previous call to horiz_grid_init.
+             See the module horiz_grid_mod for details.
+                <FONT SIZE=-1 COLOR="#000099">[type(horiz_grid_type)]</FONT>
+
+   data      Data array on any valid grid, may have 2, 3, or 4 dimensions.
+             The dimensions correspond to the x, y and z axes, and tracer number.
+                <FONT SIZE=-1 COLOR="#000099">[real, dimension(Hgrid%ilb:,Hgrid%jlb:)]</FONT>
+                <FONT SIZE=-1 COLOR="#000099">[real, dimension(Hgrid%ilb:,Hgrid%jlb:,:)]</FONT>
+                <FONT SIZE=-1 COLOR="#000099">[real, dimension(Hgrid%ilb:,Hgrid%jlb:,:,:)]</FONT>
+
+OPTIONAL INPUT
+   halos     Integer flag that describes which halo regions should be updated.
+             The value of "halos" should be some combination of the public
+             parameters: SOUTH, NORTH, WEST, EAST. By default all halo regions
+             are updated. For example, to only update the north and east halo 
+             regions set halos=NORTH+EAST.
+                <FONT SIZE=-1 COLOR="#000099">[integer]</FONT>
+
+   flags     Can be set to either: NOPOLE or POLEONLY.
+             The NOPOLE flag suppresses the halo update of velocity
+             components at the pole row only.
+             The POLEONLY flag is used to update only the north and
+             south polar halos rows without updating the interior
+             halo rows. This kind of update will require no
+             processor to processor communication.
+                <FONT SIZE=-1 COLOR="#000099">[integer]</FONT>
+
+NOTE
+   The field identifier <b>WIND</b> can only be used with the 4D version
+   of this interface. The 4th dimension must have size=2, corresponding
+   to the UWND and VWND components, respectively.
+
+------------------------------------------------------------------------
+<a name="vel_flux_boundary">
+
+<b>call vel_flux_boundary</b> ( Hgrid, data )
+
+INPUT
+   Hgrid     Data structure returned by a previous call to horiz_grid_init.
+             See the module horiz_grid_mod for details.
+                <FONT SIZE=-1 COLOR="#000099">[type(horiz_grid_type)]</FONT>
+INPUT/OUTPUT
+   data      Real data array located between velocity points along
+             the y-axis (on the UFLX grid). The data in the sub-polar
+             row will be set to zero.
+                <FONT SIZE=-1 COLOR="#000099">[real,dimension(:,Hgrid%jlb:) or dimension(:,Hgrid%jlb:,:)]</FONT>
+
+</PRE>
+</A><!-- END ROUTINES -->
+<!--------------------------------------------------------------------->
+<A NAME="ERRORS">
+<HR>
+<H4>ERROR MESSAGES</H4>
+<!-- BEGIN ERRORS -->
+<PRE>
+
+<b>Fatal errors in update_halo</b>
+
+    i dimension has wrong size
+        <FONT SIZE=-1>The 1st (i) dimension of input/output argument data must
+          have a size equal to Hgrid % isize (the entire i dimension).</FONT>
+
+    j dimension has wrong size
+        <FONT SIZE=-1>The 2nd (j) dimension of input/output argument data must
+          have a size equal to Hgrid % jsize (the entire j dimension).</FONT>
+
+    invalid field
+        <FONT SIZE=-1>The input argument "field" has an incorrect value.  Make sure
+          you are using one of public parameters: <b>TEMP</b>, <b>UWND</b>, <b>VWND</b>, or <b>WIND</b>.</FONT>
+
+    4th dimension must have size 2 for wind components
+        <FONT SIZE=-1>If WIND fields are specified then the 4th dimension of
+          data array must have size of 2.</FONT>
+
+</PRE>
+</A><!-- END ERRORS -->
+<!--------------------------------------------------------------------->
+<A NAME="BUGS">
+<HR>
+<H4>KNOWN BUGS</H4>
+<!-- BEGIN BUGS -->
+<PRE>
+
+     None.
+
+</PRE>
+</A><!-- END BUGS -->
+<!--------------------------------------------------------------------->
+<A NAME="NOTES">
+<HR>
+<H4>NOTES</H4>
+<!-- BEGIN NOTES -->
+<PRE>
+   At the north-south polar boundaries the following 
+   boundary conditions are applied:
+
+      a) Velocities at the poles are equal to zero
+
+             u(i,p) = 0
+             v(i,p) = 0
+
+      b) Halo points along the north and south polar boundaries
+         are set as follows:
+
+             T(i,p+1/2) =  T(i,p-1/2)
+             u(i,p+1)   =  u(i,p-1)
+             v(i,p+1)   = -v(i,p-1)
+      
+         where p + # is a halo row and p - # is a row within 
+         the computational domain.
+
+</PRE>
+</A><!-- END NOTES -->
+<!--------------------------------------------------------------------->
+<A NAME="PLANS">
+<HR>
+<H4>FUTURE PLANS</H4>
+<!-- BEGIN PLANS -->
+<PRE>
+
+     Implement realistic cross-polar flow boundary condition.
+
+</PRE>
+</A><!-- END PLANS -->
+<!--------------------------------------------------------------------->
+
+<HR>
+</BODY>
+</HTML>

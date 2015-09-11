@@ -1,0 +1,603 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module ocean_submesoscale_mod</title>
+<link type="text/css" href="http://data1.gfdl.noaa.gov/~fms/style/docbook.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module ocean_submesoscale_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Stephen.Griffies@noaa.gov">   S. M. Griffies </a>
+<br>
+<b>Reviewers:&nbsp;</b>
+<br>
+<b>Change History:&nbsp;</b><a href="http://cobweb.gfdl.noaa.gov/fms-cgi-bin/viewcvs/FMS/ocean/mom4p1/ocean_param/mixing">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   This module computes a streamfunction within
+   the upper surface boundary layer, and applies this
+   streamfunction to all tracers. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   This module computes a streamfunction within
+   the upper surface boundary layer, and applies this
+   streamfunction to all tracers. </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>        constants_mod<br>     diag_manager_mod<br>              fms_mod<br>      mpp_domains_mod<br>              mpp_mod<br>    ocean_domains_mod<br>  ocean_operators_mod<br> ocean_parameters_mod<br>ocean_tracer_diag_mod<br>      ocean_types_mod<br>       ocean_util_mod<br>  ocean_workspace_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#ocean_submesoscale_init">ocean_submesoscale_init</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#submeso_restrat">submeso_restrat</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#compute_bldepth">compute_bldepth</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#tracer_derivs">tracer_derivs</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#compute_psi">compute_psi</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#compute_transport">compute_transport</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#compute_submeso_skewsion">compute_submeso_skewsion</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#compute_flux_x">compute_flux_x</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#compute_flux_y">compute_flux_y</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#compute_flux_z">compute_flux_z</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#compute_submeso_advection">compute_submeso_advection</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#maximum_bottom_w_general">maximum_bottom_w_general</a>:</dt>
+<dd></dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="ocean_submesoscale_init"></a>
+<h4>ocean_submesoscale_init</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initialization for the ocean_submesoscale module. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="submeso_restrat"></a>
+<h4>submeso_restrat</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   This routine computes a thickness and density weighted time tendency
+   for each tracer, arising from the effects of parameterized 
+   submesoscale eddies in the surface mixed layer. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="compute_bldepth"></a>
+<h4>compute_bldepth</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute the boundary layer depth and kblt. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="tracer_derivs"></a>
+<h4>tracer_derivs</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute the tracer derivatives: 
+   horizontal derivative (constant k-level)
+   and vertical derivative. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="compute_psi"></a>
+<h4>compute_psi</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute the vector streamfunction 
+   <br>
+<br>
+   Units of psi are m^2/sec
+   <br>
+<br>
+   If computing skewsion tendency, then need psi at depth_zt. 
+   If computing advection tendency, then need psi at depth_zwt. 
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="compute_transport"></a>
+<h4>compute_transport</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute the mass transport from submeso </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="compute_submeso_skewsion"></a>
+<h4>compute_submeso_skewsion</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute tendency from skewsion for submeso. 
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="compute_flux_x"></a>
+<h4>compute_flux_x</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Subroutine computes the zonal submesoscale tracer flux component.
+   <br>
+<br>
+   fx has physical dimensions (area*diffusivity*density*tracer gradient)
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="compute_flux_y"></a>
+<h4>compute_flux_y</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Subroutine computes the meridional submesoscale tracer flux component.
+   <br>
+<br>
+   fy has physical dimensions (area*diffusivity*density*tracer gradient)
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="compute_flux_z"></a>
+<h4>compute_flux_z</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Subroutine computes the vertical submeso tracer flux component.
+   <br>
+<br>
+   Surface and bottom boundary condition fz(k=0)=fz(k=kmt(i,j))=0
+   <br>
+<br>
+   fz has physical dimensions (density*diffusivity*tracer gradient)
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="compute_submeso_advection"></a>
+<h4>compute_submeso_advection</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Sweby scheme to compute the tendency from advection for submeso. 
+   Presently this scheme has problems, and is not usable.  
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="maximum_bottom_w_general"></a>
+<h4>maximum_bottom_w_general</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute maximum vertical velocity from submeso. </dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<!-- END PUBLIC TYPES --><a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<hr>
+<h4>NAMELIST</h4>
+<div>
+<b>&amp;ocean_submesoscale_nml</b>
+<br>
+<br>
+<div>
+<dl>
+<dt>
+<tt>use_this_module=</tt>
+</dt>
+<dl>   Must be .true. to use this module. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>debug_this_module</tt>
+</dt>
+<dl>   For debugging purposes. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>diag_step</tt>
+</dt>
+<dl>   Number of time steps between computing max bottom value for wrho_bt_submeso.
+   Default diag_step=1200. <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>submeso_skew_flux</tt>
+</dt>
+<dl>   For computing the tendency as convergence of skew flux.
+   Default submeso_skew_flux=.true. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>submeso_advective_flux</tt>
+</dt>
+<dl>   For computing the tendency as convergence of advective flux.
+   This approach uses flux limited sweby advection, which ensures
+   that the resulting tendency will not create extrema in the 
+   tracer field.  
+   This option has a bug, and so cannot be used.  
+   Default submeso_advective_flux=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>submeso_diag_advect_transport</tt>
+</dt>
+<dl>   For diagnosing the advective mass transport.
+   Doing so requires a call to a subroutine.  If not aiming 
+   to diagnose the velocity, then saves time to set 
+   submeso_diag_advect_transport=.false. 
+   Default submeso_diag_advect_transport=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>use_hblt_constant</tt>
+</dt>
+<dl>   For running with a constant boundary layer depth. This for the case when 
+   not using a realistic mixed layer scheme.  Default use_hblt_constant=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>constant_hblt</tt>
+</dt>
+<dl>   The boundary layer depth for the case when use_hblt_constant=.true.
+   Default constant_hblt=100.0. <br>
+<span class="type">[real, units: metre]</span>
+</dl>
+<dt>
+<tt>use_hblt_equal_mld</tt>
+</dt>
+<dl>   For using the diagnosed mld as the hblt for submeso.  
+   This is useful for those test models that do not have a mixed layer
+   scheme enabled, such as KPP, where the mixed layer scheme provides a
+   boundary layer depth.  In this case, it is sensible to employ the diagnosed
+   mixed layer depth for the submeso scheme. Additionally, in general it is 
+   more physical to use the mld than the KPP hblt as the depth over which 
+   the submesoscale eddies act.  Hence, default use_hblt_equal_mld=.true. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>min_kblt</tt>
+</dt>
+<dl>   The minimum number of vertical cells in the surface boundary layer 
+   that are required in order to compute the submesoscale streamfunction.
+   Default min_kblt=3.  Need at least three to fit a parabola with zero 
+   streamfunction at the top and bottom of the boundary layer. <br>
+<span class="type">[integer, units: dimensionless]</span>
+</dl>
+<dt>
+<tt>minimum_hblt</tt>
+</dt>
+<dl>   For setting a floor to the hblt used for submesoscale scheme. 
+   Default minimum_hblt=0.0. <br>
+<span class="type">[real, units: metre]</span>
+</dl>
+<dt>
+<tt>smooth_hblt</tt>
+</dt>
+<dl>   For smoothing on the hblt field. This is useful since the hblt 
+   obtained from KPP or diagnosed mld can have some grid noise. 
+   Default smooth_hblt=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>vel_micom_smooth</tt>
+</dt>
+<dl>   Velocity scale that is used for computing the Laplacian mixing 
+   coefficient used in the Laplacian smoothing of hblt. 
+   Default vel_micom_smooth=0.2. <br>
+<span class="type">[real, units: m/sec]</span>
+</dl>
+<dt>
+<tt>smooth_psi</tt>
+</dt>
+<dl>   For doing a horizontal 1-2-1 smoothing on the psix and psiy fields. 
+   This is useful to reduce noise. Default smooth_psi=.true. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>limit_psi</tt>
+</dt>
+<dl>   For limiting the magnitude of psi in order to reduce possibility of 
+   model crashes.  Default limit_psi=.true. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>limit_psi_velocity_scale</tt>
+</dt>
+<dl>   Velocity scale used to limit the value of psi when limit_psi=.true.
+   Default limit_psi_velocity_scale=0.5. <br>
+<span class="type">[real, units: metre/sec]</span>
+</dl>
+<dt>
+<tt>submeso_limit_flux</tt>
+</dt>
+<dl>   For limiting the fluxes arising from submeso scheme, according to 
+   tmask_limit. When reach a point where tmask_limit=1.0, then set
+   the submeso flux for this cell to zero. 
+   Default submeso_limit_flux=.true. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>coefficient_ce</tt>
+</dt>
+<dl>   The dimensionless coefficient from the Fox-Kemper etal scheme. 
+   They recommend setting coefficient_ce between 0.06 and 0.08.  
+   Default coefficient_ce=0.07. <br>
+<span class="type">[real, units: dimensionless]</span>
+</dl>
+<dt>
+<tt>time_constant</tt>
+</dt>
+<dl>   Timescale to mix momentum across the mixed layer.  
+   Default time_constant=86400.0 = 1day. <br>
+<span class="type">[real, units: seconds]</span>
+</dl>
+<dt>
+<tt>front_length_const</tt>
+</dt>
+<dl>   Take constant horizontal length scale of submesoscale front. 
+   Default front_length_const=5e3. <br>
+<span class="type">[real, units: metre]</span>
+</dl>
+<dt>
+<tt>front_length_deform_radius</tt>
+</dt>
+<dl>   To compute the front length using the mixed layer deformation 
+   radius. Default front_length_deform_radius=.true.  Note, 
+   will have a floor on the variable front length set by the
+   nml setting for front_length_const. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>transport_units</tt>
+</dt>
+<dl>   The units for writing out the transport.  Either in 
+   Sv (10^9 kg/s) or mks (kg/s). Note the mks unit is requested 
+   for CMIP5 purposes.
+   Default transport_units = 'Sv'. <br>
+<span class="type">[character]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END NAMELIST -->
+<a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<a name="REFERENCES"></a>
+<hr>
+<h4>REFERENCES</h4>
+<!-- BEGIN REFERENCES -->
+<div>
+<ol>
+<li>   Fox-Kemper, Ferrari, and Hallberg 2008: Parameterization of 
+   mixed layer eddies. Part I: theory and diagnosis
+   Journal of Physical Oceanography, in press. </li>
+<li>   Fox-Kemper, Danabasoglu, Ferrari, and Hallberg 2008: 
+   Parameterizing submesoscale physics in global models.
+   Clivar Exchanges, vol 13, no.1,  Jan2008. pages 3-5. </li>
+</ol>
+</div>
+<br>
+<!-- END REFERENCES -->
+<a name="COMPILER SPECIFICS"></a>
+<hr>
+<h4>COMPILER SPECIFICS</h4>
+<!-- BEGIN COMPILER SPECIFICS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END COMPILER SPECIFICS -->
+<a name="PRECOMPILER OPTIONS"></a>
+<hr>
+<h4>PRECOMPILER OPTIONS</h4>
+<!-- BEGIN PRECOMPILER OPTIONS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END PRECOMPILER OPTIONS -->
+<a name="LOADER OPTIONS"></a>
+<hr>
+<h4>LOADER OPTIONS</h4>
+<!-- BEGIN LOADER -->
+<div>None.<br>
+<br>
+</div>
+<!-- END LOADER OPTIONS -->
+<a name="TEST PROGRAM"></a>
+<hr>
+<h4>TEST PROGRAM</h4>
+<!-- BEGIN TEST PROGRAM -->
+<div>None.<br>
+</div>
+<br>
+<!-- END TEST PROGRAM -->
+<a name="KNOWN BUGS"></a>
+<hr>
+<h4>KNOWN BUGS</h4>
+<!-- BEGIN KNOWN BUGS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END KNOWN BUGS -->
+<a name="NOTES"></a>
+<hr>
+<h4>NOTES</h4>
+<!-- BEGIN NOTES -->
+<div>None.<br>
+</div>
+<br>
+<!-- END NOTES -->
+<a name="FUTURE PLANS"></a>
+<hr>
+<h4>FUTURE PLANS</h4>
+<!-- BEGIN FUTURE PLANS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END FUTURE PLANS -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

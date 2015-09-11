@@ -1,0 +1,105 @@
+This is the README file for December 2009 MOM4p1 public release.
+
+
+Where to start
+~~~~~~~~~~~~~~
+A good place to start is the "doc" directory, where you
+will find  "user" guides for the MOM.  
+
+How to run the MOM4p1 tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There are 5 types of test models provided for this release in the exp directory 
+all using the GFDL shared infrastructure (FMS). Each type has a compile and a run script.
+
+1. Solo     : stand alone MOM4p1 Ocean model.
+2. Coupled  : MOM4p1 coupled with GFDL ice model  (besides null versions of atmosphere and land models).
+3. EBM      : MOM4p1 coupled with GFDL ice and atmosphere energy balanced model 
+4. ICCM     : MOM4p1 coupled with GFDL ice, land and atmosphere in low resolution setup.  
+5  CM2.1p1  : GFDL CM2.1 model coupled with MOM4p1
+
+To run Solo models:
+
+         0. Ensure that you have the right environment variable for your platform
+            in the file  bin/environs.YOUR_PLATFORM_ID  
+            YOUR_PLATFORM_ID could be any string that identifies your platform. 
+            The file bin/environs.YOUR_PLATFORM_ID gets sourced at the beginning of
+            all compile and run scripts and is there to make sure all compile and 
+            run time library paths are found.
+  
+	 1. cd to exp and run mom4p1_solo_compile.csh first.
+	 
+         2. Modify the 'name' variable in the script 
+            mom4p1_solo_run.csh to be the name of the test you 
+            want to run. A list of available tests is included in the script.
+            Also make sure you have a large enough working directory and
+            made a symbolic link to it called "work" in your top directory. I.e.,
+            > cd mom4p1_pubrel_dec2009
+            > ln -s YOUR_LARGE_WORK_DIR work
+            
+         3. Get the required input data for the test from GFDL ftp site.
+            You can get the info by running the script mom4p1_solo_run.csh
+            and following the instructions.
+	 
+	 4. Run mom4p1_solo_run.csh
+         
+         5. The results go into "work"
+         
+To run all other models foo:
+         Do the same steps above to foo_compile.csh and  foo_run.csh
+
+
+
+Note:    The scripts have been tested fully only with Intel Fortran compiler on ia64 platform 
+         and partly with pgi and pathscale compilers on x86_64 and 
+         also gfortran4.3 compiler on Core2Duo processor. 
+
+Note:    Some of these tests require a large disk space to save the input data.
+         Choose a partition with enough space (1-2 G) to untar the code and data bundels.
+
+Note:    If you want to use the same root directory for all three experiments we suggest to
+         compile in the order of increasing complexity: solo -> coupled -> ebm .
+         You may have to remove some of the existing .o and .mod files
+         if you want to compile ebm experiment after the coupled experiment.
+         E.g., you probably have to:   cd ../exec; rm mpp*.o mpp*.mod fms_io*.o fms_io*.mod 
+
+Note:    IBM platform users might want to add the following line to the top of the run scripts 
+             setenv LDR_CNTRL MAXDATA=0xD0000000@DSA 
+
+
+Note:    The compile scripts provide the basic capability to use static memory allocation 
+         which might be faster on some platforms. In that case you need to adjust the values
+         of domain bounds properly according to the number of processors and layout. 
+
+Note:    The compile scripts use netcdf3 by default. 
+         If you want to use netcdf4 libraries instead you can do so by deleting the "-Duse_netCDF3"
+         from the CPPs in compile scripts and then recompile.  Also, to make mppnccombine work with
+         netcdf4 make sure to pass the -Duse_netCDF4 to the C compiler.  
+
+
+Summary of directory contents
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+bin/
+     -- mkmf script for creating Makefiles
+     -- template files for the mkmf script
+     -- assorted other scripts
+
+exp/
+     -- all MOM4 experiments (test cases)
+
+src/   
+     -- source code for all models
+
+src/postprocessing/
+    -- source code for postprocessing programs
+
+src/preprocessing/
+    -- source code for preprocessing programs
+
+
+
+Questions and Comments
+~~~~~~~~~~~~~~~~~~~~~~
+For questions and comments please subscribe and write to the mom4p1 community mailing list 
+oar.gfdl.mom4p1@noaa.gov 
+
+

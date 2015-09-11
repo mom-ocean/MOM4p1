@@ -1,0 +1,238 @@
+<HTML>
+<TITLE>module bgrid_change_grid_mod</TITLE>
+<BODY BGCOLOR="#AABBCC" TEXT="#332211" >
+
+<DIV ALIGN="CENTER"> <FONT SIZE=-2>
+<A HREF="#INTERFACE">PUBLIC INTERFACE</A> / 
+<A HREF="#ROUTINES">ROUTINES</A> / 
+<A HREF="#ERRORS">ERRORS</A> / 
+<A HREF="#NOTES">NOTES</A> 
+</FONT>
+<BR><BR></DIV><HR>
+
+
+<H2>module bgrid_change_grid_mod</H2>
+<A NAME="HEADER">
+<PRE>
+     <B>Contact:</B>   Bruce Wyman
+     <B>Reviewers:</B>
+     <B>Change history:</B> <A HREF="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS
+/atmos/bgrid/tools/bgrid_change_grid.f90">WebCVS Log for bgrid_change_grid.f90</A>
+
+</PRE>
+</A><!-- END HEADER -->
+<!--------------------------------------------------------------------->
+<A NAME="OVERVIEW">
+<HR>
+<H4>OVERVIEW</H4>
+<!-- BEGIN OVERVIEW -->
+<PRE>
+
+    Provides interfaces to interpolate data between the 
+    four basic sub-grid locations on B-grid.
+
+</PRE>
+</A><!-- END OVERVIEW -->
+<!--------------------------------------------------------------------->
+<A NAME="DESCRIPTION">
+<!-- BEGIN DESCRIPTION -->
+<PRE>
+    The B-grid model has four basic sub-grids that correspond to
+    temperature (TEMP), velocity (WIND), zonal mass flux (UFLX),
+    and meridional mass flux (VFLX) grid points. The orientation of
+    these points to each other for the same i,j can be depicted as:
+
+                   VFLX(i,j)    WIND(i,j)
+
+                   TEMP(i,j)    UFLX(i,j)
+
+    The interpolation between the sub-grids is done using either
+    a 4-pt or 2-pt averaging.  The averaging can use area-weighting
+    or equal-weighting (a simple average). Overloaded interfaces
+    can accommodate either one or two input fields.
+
+    Not all grid changes are currently available, 
+    see the <a href="#NOTES">notes</a> section for details.
+
+</PRE>
+</A><!-- END DESCRIPTION -->
+<!--------------------------------------------------------------------->
+<A NAME="MODULES_USED">
+<HR>
+<H4>OTHER MODULES USED</H4>
+<!-- BEGIN MODULES_USED -->
+<PRE>
+
+    bgrid_horiz_mod
+    fms_mod
+
+</PRE>
+</A><!-- END MODULES_USED -->
+<!--------------------------------------------------------------------->
+<A NAME="INTERFACE">
+<HR>
+<H4>PUBLIC INTERFACE</H4>
+<!-- BEGIN INTERFACE -->
+<PRE>
+
+   <b>use bgrid_change_grid_mod</b> [,only:  change_grid,
+                               TEMP_GRID, WIND_GRID,
+                               UFLX_GRID, VFLX_GRID]
+
+   <a href="#change_grid">change_grid</a>
+        Interpolates from sub-grid to another sub-grid.
+
+  Public parameters that identify the four basic sub-grids:
+ 
+      <b>TEMP_GRID</b> = temperature (mass) grid
+      <b>WIND_GRID</b> = velocity (momentum) grid
+      <b>UFLX_GRID</b> = zonal mass flux grid; grid points are located
+                   between temperature points along the x-axis
+      <b>VFLX_GRID</b> = meridional mass flux grid; grid points are located
+                   between temperature points along the y-axis
+
+
+</PRE>
+</A><!-- END INTERFACE -->
+<!--------------------------------------------------------------------->
+<A NAME="ROUTINES">
+<HR>
+<H4>PUBLIC ROUTINES</H4>
+<!-- BEGIN ROUTINES -->
+<PRE>
+<a name="change_grid">
+
+<b>call change_grid</b> ( Hgrid, grid_inp, grid_out, data_inp, data_out
+                      <FONT COLOR="GREEN">[, weight, mask_inp]</FONT> )
+         OR
+
+<b>call change_grid</b> ( Hgrid, grid_inp, grid_out, data_inp1, data_inp2,
+                       data_out1, data_out2 <FONT COLOR="GREEN">[, weight, mask_inp]</FONT> )
+
+  INPUT
+      Hgrid        horizontal grid constants [horiz_grid_type]
+      grid_inp     grid identifier for the input grid
+                     [integer]
+      grid_out     grid identifier for the output grid
+                     [integer]
+      data_inp,
+      data_inp1,
+      data_inp2 = input data
+                     [real, dimension(Hgrid%ilb:,Hgrid%jlb:)]
+                     [real, dimension(Hgrid%ilb:,Hgrid%jlb:,:)]
+
+   OUTPUT
+      data_out,
+      data_out1,
+      data_out2 = output data
+                     [real, dimension(Hgrid%ilb:,Hgrid%jlb:)]
+                     [real, dimension(Hgrid%ilb:,Hgrid%jlb:,:)]
+
+   OPTIONAL INPUT
+      weight = integer flag that type of interpolation
+                 weight=AREA for area weighting (the default) or
+                 weight=EQUAL for simple 4-pt (or 2pt) averaging
+      mask_inp = grid box mask (typically for step-coordinate model)
+                     [real, dimension(Hgrid%ilb:,Hgrid%jlb:)]
+                     [real, dimension(Hgrid%ilb:,Hgrid%jlb:,:)]
+
+  NOTES
+
+     1) Possible grid identifiers are: 
+          TEMP_GRID = temperature (mass) grid
+          WIND_GRID = velocity (momentum) grid
+          UFLX_GRID = zonal mass flux grid; grid points are located
+                      between temperature points along the x-axis
+          VFLX_GRID = meridional mass flux grid; grid points are located
+                      between temperature points along the y-axis
+     2) Halo are not updated, see the notes section below.
+     3) The input and output arrays may be the same since 
+        temporary memory is used to compute the result.
+
+</PRE>
+</A><!-- END ROUTINES -->
+<!--------------------------------------------------------------------->
+<A NAME="ERRORS">
+<HR>
+<H4>ERROR MESSAGES</H4>
+<!-- BEGIN ERRORS -->
+<PRE>
+
+<b>FATAL errors in change_grid</b>
+
+    invalid grid change specified
+        The input and output grid identifiers must be set using the
+        public module parameters: TEMP_GRID, WIND_GRID, UFLX_GRID, VFLX_GRID.
+        Several grid conversions are not possible, refer to the notes section.
+
+    invalid value of area_weight
+        The optional input argument weight must be set to
+        one of the public module parameters: AREA or EQUAL.
+
+<b>WARNING message in bgrid_change_grid</b>
+
+    optional mask argument not used for this type of grid interpolation
+        The optional mask argument is not used with two-point interpolations.
+
+</PRE>
+</A><!-- END ERRORS -->
+<!--------------------------------------------------------------------->
+<A NAME="BUGS">
+<HR>
+<H4>KNOWN BUGS</H4>
+<!-- BEGIN BUGS -->
+<PRE>
+
+     None.
+
+</PRE>
+</A><!-- END BUGS -->
+<!--------------------------------------------------------------------->
+<A NAME="NOTES">
+<HR>
+<H4>NOTES</H4>
+<!-- BEGIN NOTES -->
+<PRE>
+
+    The following are valid 4-pt interpolations:
+
+         "grid_inp"  --&gt;  "grid_out"
+
+          WIND_GRID  --&gt;  TEMP_GRID     (south &amp; west halos not computed)
+          TEMP_GRID  --&gt;  WIND_GRID     (north &amp; east halos not computed)
+          VFLX_GRID  --&gt;  UFLX_GRID     (south &amp; east halos not computed)
+          UFLX_GRID  --&gt;  VFLX_GRID     (north &amp; west halos not computed)
+
+    The following are valid 2-pt interpolations:
+
+          TEMP_GRID  --&gt;  UFLX_GRID     (east  halo not computed)
+          TEMP_GRID  --&gt;  VFLX_GRID     (north halo not computed)
+
+    The following have not been implemented.
+    They are INVALID and will produce a FATAL error.
+
+          WIND_GRID  --&gt;  UFLX_GRID
+          WIND_GRID  --&gt;  VFLX_GRID
+          VFLX_GRID  --&gt;  TEMP_GRID
+          VFLX_GRID  --&gt;  WIND_GRID
+          UFLX_GRID  --&gt;  TEMP_GRID
+          UFLX_GRID  --&gt;  WIND_GRID
+
+</PRE>
+</A><!-- END NOTES -->
+<!--------------------------------------------------------------------->
+<A NAME="PLANS">
+<HR>
+<H4>FUTURE PLANS</H4>
+<!-- BEGIN PLANS -->
+<PRE>
+
+     Implement 2-pt interpolations that are currently not allowed.
+
+</PRE>
+</A><!-- END PLANS -->
+<!--------------------------------------------------------------------->
+
+<HR>
+</BODY>
+</HTML>

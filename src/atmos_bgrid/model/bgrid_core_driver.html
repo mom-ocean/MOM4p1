@@ -1,0 +1,429 @@
+<HTML>
+<TITLE>module bgrid_core_driver_mod</TITLE>
+<BODY BGCOLOR="#AABBCC" TEXT="#332211" >
+
+<DIV ALIGN="CENTER"> <FONT SIZE=-2>
+<A HREF="#INTERFACE">PUBLIC INTERFACE</A> / 
+<A HREF="#DATA_TYPES">DATA</A> / 
+<A HREF="#ROUTINES">ROUTINES</A> / 
+<A HREF="#NAMELIST">NAMELIST</A> / 
+<A HREF="#ERRORS">ERRORS</A> / 
+<A HREF="#NOTES">NOTES</A> 
+</FONT>
+<BR><BR></DIV><HR>
+
+<H2>module bgrid_core_driver_mod</H2>
+<A NAME="HEADER">
+<PRE>
+     <B>Contact:</B>   B. Wyman
+     <B>Reviewers:</B>
+     <B>Change history:</B> <A HREF="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS
+/atmos/bgrid/model/bgrid_core_driver.f90">WebCVS Log for bgrid_core_driver.f90</A>
+
+</PRE>
+</A><!-- END HEADER -->
+<!--------------------------------------------------------------------->
+<A NAME="OVERVIEW">
+<HR>
+<H4>OVERVIEW</H4>
+<!-- BEGIN OVERVIEW -->
+<PRE>
+
+    Provides high-level interfaces to the FMS B-grid dynamical core
+    that allow easy initialization, integration, and diagnostics.
+
+</PRE>
+</A><!-- END OVERVIEW -->
+<!--------------------------------------------------------------------->
+<A NAME="DESCRIPTION">
+<!-- BEGIN DESCRIPTION -->
+<PRE>
+    This module performs the following:
+      - reads namelist input,
+      - calls routines to set up B-grid core constants,
+      - read and write restart files, and
+      - output diagnostic fields.
+
+</PRE>
+</A><!-- END DESCRIPTION -->
+<!--------------------------------------------------------------------->
+<A NAME="MODULES_USED">
+<HR>
+<H4>OTHER MODULES USED</H4>
+<!-- BEGIN MODULES_USED -->
+<PRE>
+
+   bgrid_core_mod
+   bgrid_horiz_mod
+   bgrid_vert_mod
+   bgrid_prog_var_mod
+   bgrid_diagnostics_mod
+   bgrid_integrals_mod
+   bgrid_conserve_energy_mod
+   field_manager_mod
+   tracer_manager_mod
+   time_manager_mod
+   fms_mod
+
+</PRE>
+</A><!-- END MODULES_USED -->
+<!--------------------------------------------------------------------->
+<A NAME="INTERFACE">
+<HR>
+<H4>PUBLIC INTERFACE</H4>
+<!-- BEGIN INTERFACE -->
+<PRE>
+
+   <b>use bgrid_core_driver_mod</b> [ ,only: bgrid_dynam_type, 
+                                      bgrid_core_driver_init,
+                                      bgrid_core_driver,
+                                      bgrid_core_driver_end,
+                                      bgrid_core_time_diff,
+                                      get_bottom_data,
+                                      put_bottom_data   ]
+
+   <a href="#DATA_TYPES">bgrid_dynam_type</a>
+        A data structure (derived-type variable) that contains 
+        various constants used by the B-grid dynamical core.
+        For more details see the documentation for module bgrid_core_mod.
+
+   <a href="#bgrid_core_driver_init">bgrid_core_driver_init</a>
+        Initializes the B-grid dynamical core.
+        This interface returns values for data structures of type
+        "bgrid_dynam_type" and "prog_var_type".  Also internally
+        initialized are other B-grid derived-type variables for
+        the horizontal and vertical grid constants.
+
+   <a href="#bgrid_core_driver">bgrid_core_driver</a>
+        A wrapper for integrating the dynamical core one (atmospheric) time step.
+        Note that only the tendencies of prognostic variables are updated.
+
+   <a href="#bgrid_core_time_diff">bgrid_core_time_diff</a>
+        Performs the time differencing of the prognostics variables 
+        and then outputs diagnostics for the B-grid dynamical core.
+
+   <a href="#bgrid_core_driver_end">bgrid_core_driver_end</a>
+        A wrapper for terminating the dynamical core.
+
+   <a href="#get_bottom_data">get_bottom_data</a>, <a href="#put_bottom_data">put_bottom_data</a>
+        Routines for "extracting" or "inserting" a 2-D field of data at the lowest
+        model level "from" or "into" a 3-dimensional data field.
+
+   NOTES
+
+      * A namelist interface called <a href="#NAMELIST">bgrid_core_driver_nml</a> is read
+        from file <b>input.nml</b>.
+
+</PRE>
+</A><!-- END INTERFACE -->
+<!--------------------------------------------------------------------->
+<A NAME="DATA_TYPES">
+<HR>
+<H4>PUBLIC DATA</H4>
+<!-- BEGIN DATA_TYPES -->
+<PRE>
+
+<b>type (bgrid_dynam_type)</b>
+
+     This data structure is inherited from and initialize in
+     module bgrid_core_mod.  See <A HREF="bgrid_core.html#DATA_TYPES">bgrid_core_mod</A> for details.
+
+</PRE>
+</A><!-- END DATA_TYPES -->
+<!--------------------------------------------------------------------->
+<A NAME="ROUTINES">
+<HR>
+<H4>PUBLIC ROUTINES</H4>
+<!-- BEGIN ROUTINES -->
+<PRE>
+<a name="bgrid_core_driver_init">
+
+<b>call bgrid_core_driver_init</b> ( Time_init, Time, Time_step, 
+                               Var, Var_dt, Dynam, phys_axes )
+
+DESCRIPTION
+   Returns initialized/allocated values for the "bgrid_dynam_type"
+   and "prog_var_type" data structures. Also internally initialized
+   are other B-grid data structures for the horizontal and vertical
+   grid constants.
+
+INPUT
+   Time_init  The initial (or base) time.  <FONT SIZE=-1 COLOR="#000099">[time_type]</FONT>
+
+   Time       The current time.  <FONT SIZE=-1 COLOR="#000099">[time_type]</FONT>
+
+   Time_step  The atmospheric model/physics time step.  <FONT SIZE=-1 COLOR="#000099">[time_type]</FONT>
+
+INPUT/OUTPUT
+   Var        A derived-type variable that contains the prognostic
+              variables for the B-grid dynamical core.
+              The returned values will have been initialized
+              by prog_var_mod (most likely read from a restart file).
+                 <FONT SIZE=-1 COLOR="#000099">[type(prog_var_type)]</FONT>
+
+   Var_dt     A derived-type variable that contains the prognostic
+              variable time tendencies. The returned value is zero.
+                 <FONT SIZE=-1 COLOR="#000099">[type(prog_var_type)]</FONT>
+
+   Dynam      A derived-type variable that contains almost everything
+              needed by the dynamical core.
+                 <FONT SIZE=-1 COLOR="#000099">[type(bgrid_dynam_type)]</FONT>
+
+OUTPUT
+   phys_axes  Axis identifiers as returned by the diagnostics manager
+              and needed for subsequent calls to the diagnostics manager.
+                 <FONT SIZE=-1 COLOR="#000099">[integer, dimension(4)]</FONT>
+              
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+<a name="bgrid_core_driver">
+
+<b>call bgrid_core_driver</b> ( Time_diag, Var, Var_dt, Dynam, omega )
+
+DESCRIPTION
+   Updates the prognostic variable tendencies with the dynamical
+   core tendencies for the current atmospheric time step.
+   Also calls diagnostics routines for outputting the dynamical
+   core tendencies. It is assumed that the initial prognostic
+   variable tendencies are zero.
+
+INPUT
+   Time_diag  The diagnostics time, usually the current time + time step.
+                 <FONT SIZE=-1 COLOR="#000099">[type(time_type)]</FONT>
+
+   Var        A derived-type variable that contains the B-grid's
+              prognostic variables.
+                 <FONT SIZE=-1 COLOR="#000099">[type(prog_var_type)]</FONT>
+
+INPUT/OUTPUT
+   Var_dt     A derived-type variable that contains the TENDENCIES
+              for the B-grid's prognostic variables.
+                 <FONT SIZE=-1 COLOR="#000099">[type(prog_var_type)]</FONT>
+
+   Dynam      The derived-type variable returned by a previous call
+              to bgrid_core_driver_init (see above).
+                 <FONT SIZE=-1 COLOR="#000099">[type(bgrid_dynam_type)]</FONT>
+
+OUTPUT
+   omega      The omega diagnostic (from the thermodynamic equation) in
+              pascals per second. The array should have horizontal dimensions that
+              are consistent with the data domain of the B-grid dynamical core.
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(ilb:,jlb:,:)]</FONT>
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+<a name="bgrid_core_time_diff">
+
+<b>call bgrid_core_time_diff</b> ( omega, Time_diag, Dynam, Var, Var_dt )
+
+DESCRIPTION
+     Performs the time differencing of the prognostics variables 
+     and outputs diagnostics for the B-grid dynamical core.
+
+INPUT
+   omega      The pressure vertical velocity in Pascals/second.
+              This is only needed for diagnostic purposes.
+                 <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:,:)]</FONT>
+
+   Time_diag  The diagnostics time, usually the current time + time step.
+                 <FONT SIZE=-1 COLOR="#000099">[type(time_type)]</FONT>
+
+   Dynam      The derived-type variable returned by a previous call
+              to bgrid_core_driver_init (see above).
+                 <FONT SIZE=-1 COLOR="#000099">[type(bgrid_dynam_type)]</FONT>
+
+INPUT/OUTPUT
+   Var        The prognostic variables. On input quantities are at the
+              current time step and on output they are at the next time step.
+                 <FONT SIZE=-1 COLOR="#000099">[type(prog_var_type)]</FONT>
+
+   Var_dt     The time tendencies for the prognostic variables.
+              The output tendencies will have been set to zero.
+                 <FONT SIZE=-1 COLOR="#000099">[type(prog_var_type)]</FONT>
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+<a name="bgrid_core_driver_end">
+
+<b>call bgrid_core_driver_end</b> (Var, Dynam)
+
+DESCRIPTION
+   Termination routine for the B-grid dynamical core.
+
+INPUT
+
+   Var        The prognostic variables.
+                 <FONT SIZE=-1 COLOR="#000099">[type(prog_var_type)]</FONT>
+
+INPUT/OUTPUT
+
+   Dynam   The derived-type variable returned by a previous call
+           to bgrid_core_driver_init (see above).
+              <FONT SIZE=-1 COLOR="#000099">[type(bgrid_dynam_type)]</FONT>
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+<a name="get_bottom_data">
+
+<b>call get_bottom_data</b> ( a, b, a_bot, b_bot, <FONT COLOR="#007700">[, k_bot]</FONT> )
+
+DESCRIPTION
+   Given a pair of 3-dimensional model fields this interface returns
+   the 2-dimensional fields at the model level closest to the ground.
+   If optional argument "kbot" is NOT present the returned field
+   will be the 2-d field at k = size(a,3).
+
+INPUT
+   a, b            Three-dimension fields on the model grid.
+                   The last dimension varies from the top of the atmosphere
+                   towards the surface.
+                      <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:,:)]</FONT>
+
+OUTPUT
+   a_bot, b_bot    Data located at the model level closest to the ground.
+                   Must have the same size as the first two dimensions of a and b.
+                      <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+OPTIONAL INPUT
+   k_bot           The vertical index for the model level closest to
+                   the ground. Must have the same size as a_bot and b_bot.
+                      <FONT SIZE=-1 COLOR="#000099">[integer, dimension(:,:)]</FONT>
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+<a name="put_bottom_data">
+
+<b>call put_bottom_data</b> ( a_bot, b_bot, a, b <FONT COLOR="#007700">[, k_bot]</FONT> )
+
+DESCRIPTION
+   Inserts two-dimensional data at the lowest model level
+   into 3-dimensional model fields.
+
+INPUT
+   a_bot, b_bot   Data located at the model level closest to the ground.
+                  This data will be inserted into arrays a and b.
+                     <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+INPUT/OUTPUT
+   a, b           Three-dimension fields on the model grid.
+                     <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:,:)]</FONT>
+
+OPTIONAL INPUT
+   k_bot          The vertical index for the model level closest to
+                  the ground. Must have the same size as a_bot and b_bot.
+                     <FONT SIZE=-1 COLOR="#000099">[integer, dimension(:,:)]</FONT>
+
+</PRE>
+</A><!-- END ROUTINES -->
+<!--------------------------------------------------------------------->
+<A NAME="NAMELIST">
+<HR>
+<H4>NAMELIST</H4>
+<!-- BEGIN NAMELIST -->
+<PRE>
+
+ <b>&bgrid_core_driver_nml</b>
+
+    num_adjust_dt       The number of adjustment time steps for each advection
+                        time step, where num_adjust_dt &gt;= 1. 
+                          <FONT SIZE=-1 COLOR="#000099">[integer, default: num_adjust_dt = 3]</FONT>
+
+    num_advec_dt        The number of advection/dynamics time steps for each
+                        atmospheric/physics time step, where num_advec_dt &gt;= 1.
+                          <FONT SIZE=-1 COLOR="#000099">[integer, default: num_advec_dt = 1]</FONT>
+
+    decomp              The domain decomposition, where decomp(1) = x-axis decomposition,
+                        decomp(2) = y-axis decomposition.  If decomp(1)*decomp(2) does not
+                        equal the number of processors the model will fail.
+                        If decomp(1)=decomp(2)=0, then decomposition is determined by
+                        the MPP_DOMAINS module.
+                            <FONT SIZE=-1 COLOR="#000099">[integer, dimension(2), default: decomp = 0,0]</FONT>
+
+    filter_option       Determines how polar filtering is performed.
+                        filter_option = 0,  no polar filtering (decrease time step)
+                                      = 1,  obsolete scheme (NO NOT USE)
+                                      = 2,  default scheme (refer to the technical documentation)
+                           <FONT SIZE=-1 COLOR="#000099">[integer, default: filter_option = 2]</FONT>
+
+    filter_weight       Weight applied to the polar filter that will increase (or decrease)
+                        the strength of the standard Arakawa and Lamb filter response function.
+                        SS(new) = SS(std)**filter_weight, where SS(std) is the standard response function.
+                           <FONT SIZE=-1 COLOR="#000099">[integer, default: filter_weight = 1 ]</FONT>
+
+    ref_lat_filter      The reference latitude for polar filtering. Poleward of this
+                        latitude (in both hemispheres) the polar filter is applied.
+                        Setting this argument &gt;= 90. will turn off polar filtering.
+                          <FONT SIZE=-1 COLOR="#000099">[real, default: ref_lat_filter = 60.]</FONT>
+
+    do_conserve_energy  If TRUE the temperature tendency will be updated to guarantee
+                        that the dynamical core conserves total energy.  The correction
+                        is applied as a uniform global value.
+                          <FONT SIZE=-1 COLOR="#000099">[logical, default: do_conserve_energy=.false.]</FONT>
+
+    pgf_scheme          The scheme used to compute the pressure gradient.
+                        Specify one of the following:  'DEFAULT', 'FINITE_VOLUME' (case-insensitive).
+                        The default scheme is that of Simmons and Burridge.
+                            <FONT SIZE=-1 COLOR="#000099">[character, default: pgf_scheme = 'default']</FONT>
+
+    restart_output_format   Format used for the output restart file.
+                            only possible values are: 'native' or 'netcdf'.
+                               <FONT SIZE=-1 COLOR="#000099">[character, default: restart_output_format='netcdf']</FONT>
+
+    do_average_omega        If TRUE the omega diagostic returned by the dynamical core
+                            is averaged over all adjustment time steps. If FALSE then
+                            omega for the last adjustment step is returned.
+                               <FONT SIZE=-1 COLOR="#000099">[logical, default: do_average_omega=.false.]</FONT>
+
+    ddamp_coeff         Damping coefficient for divergence damping. The coefficent has been normalized
+                        by the maximum value so that ddamp_coeff should be in the range [0,1].
+                        Use ddamp_coeff &gt; 0 for second-order, and ddamp_coeff &lt; 0 for fourth-order.
+                        If ddamp_coeff = 0 then no divergence damping is done.
+                            <FONT SIZE=-1 COLOR="#000099">[real, default: ddamp_coeff = 0.]</FONT>
+
+    verbose             Flag that control additional printed output.
+                        Currently, this option is not being used.
+                          <FONT SIZE=-1 COLOR="#000099">[integer, default: verbose = 0]</FONT>
+
+ NOTES
+
+
+</PRE>
+</A><!-- END NAMELIST -->
+<!--------------------------------------------------------------------->
+<A NAME="ERRORS">
+<HR>
+<H4>ERROR MESSAGES</H4>
+<!-- BEGIN ERRORS -->
+<PRE>
+
+     None.
+
+</PRE>
+</A><!-- END ERRORS -->
+<!--------------------------------------------------------------------->
+<A NAME="NOTES">
+<HR>
+<H4>NOTES</H4>
+<!-- BEGIN NOTES -->
+<PRE>
+
+     None.
+
+</PRE>
+</A><!-- END NOTES -->
+<!--------------------------------------------------------------------->
+<A NAME="PLANS">
+<HR>
+<H4>FUTURE PLANS</H4>
+<!-- BEGIN PLANS -->
+<PRE>
+
+     None.
+
+</PRE>
+</A><!-- END PLANS -->
+<!--------------------------------------------------------------------->
+
+<HR>
+</BODY>
+</HTML>

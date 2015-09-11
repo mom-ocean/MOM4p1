@@ -1,0 +1,798 @@
+<html>
+<head>
+  <meta name="generator" content=
+  "HTML Tidy for Linux/x86 (vers 1 September 2005), see www.w3.org">
+  <meta http-equiv="Content-Type" content=
+  "text/html; charset=us-ascii">
+
+  <title>Mosaic Tool User Guide</title>
+  <link rel="stylesheet" href=
+  "http://cobweb.gfdl.noaa.gov/fms/style/docbook.css" type=
+  "text/css">
+  <meta name="generator" content="DocBook XSL Stylesheets V1.64.1">
+  <meta name="description" content=
+  "Mosaic Tool User Guide">
+</head>
+
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084"
+alink="#0000FF">
+  <div class="article" lang="en">
+    <div class="titlepage">
+      <div>
+        <div>
+          <h1 class="title"><a name="id2440054"></a>Mosaic Tool User Guide</h1>
+        </div>
+
+        <div>
+          <div class="author">
+            <h3 class="author"><span class="firstname">Zhi</span>
+            <span class="surname">Liang</span></h3><a href=""
+            onclick=
+            "javascript:window.location='mai'+'lt'+'o:'+'Zhi.Liang'+'%40'+'@noaa.gov'"
+            onmouseover=
+            "javascript:window.status='send ema'+'il';return true;"
+            onmouseout=
+            "javascript:window.status='';return true;">Zhi.Liang<img border="0"
+            src="http://www.gfdl.noaa.gov/fms/images/atgreen.png"
+            alt="&amp;#64;" style=
+            "display:inline; height:.8em;">@noaa.gov</a>
+          </div>
+        </div>
+
+      </div>
+      <hr>
+    </div>
+
+    <div xmlns="http://www.w3.org/TR/xhtml1/transitional" class=
+    "toc">
+      <p class="subtitle"><b>1. Summary of the tools</b></p>
+       There are six tools available under the directory tools(click
+        the link to see the detailed user guide of each tool):
+
+<pre>
+ <a href=#fregrid                >fregrid                </a>  : regrid data from one mosaic grid to another mosaic grid.
+ <a href=#make_coupler_mosaic    >make_coupler_mosaic    </a>  : make exchange grid between component models.
+ <a href=#make_hgrid             >make_hgrid             </a>  : create horizontal grids.
+ <a href=#make_solo_mosaic       >make_solo_mosaic       </a>  : generate solo mosaic for one componet model.
+ <a href=#make_topog             >make_topog             </a>  : create topography data on model grid for mosaic.
+ <a href=#make_vgrid             >make_vgrid             </a>  : create vertical grid.
+ <a href=#transfer_to_mosaic_grid>transfer_to_mosaic_grid</a>  : transfer previous version grid into mosaic grid. 
+</pre>
+
+ The following are the precompiled executables ( four are parallel
+        version ) to be ready to be used on GFDL Altix (only available
+        to GFDL users).
+<pre>
+   /home/z1l/bin/tools/fregrid*
+   /home/z1l/bin/tools/fregrid_parallel*
+   /home/z1l/bin/tools/make_coupler_mosaic*
+   /home/z1l/bin/tools/make_coupler_mosaic_parallel*
+   /home/z1l/bin/tools/make_hgrid*
+   /home/z1l/bin/tools/make_hgrid_parallel*
+   /home/z1l/bin/tools/make_solo_mosaic*
+   /home/z1l/bin/tools/make_topog*
+   /home/z1l/bin/tools/make_topog_parallel*
+   /home/z1l/bin/tools/make_vgrid*
+   /home/z1l/bin/tools/transfer_to_mosaic_grid
+</pre>
+
+The user guide of each tool also could be obtained through running, <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;>$executable
+
+      <p class="subtitle"><b>2. Check out the code (GFDL user only)</b></p>        
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        cvs co -r branch_name shared/mosaic tools
+   
+
+      <p class="subtitle"><b>3. compile the code the get the executable.</b></p>      
+        There is Makefile(and Makefile_mpi for make_hgrid,
+        make_coupler_mosaic, fregrid, make_topog)
+       in directory tools/$subtool/ ($subtool will be one of fregrid,
+        make_coupler_mosaic, make_hgrid, make_solo_mosaic, make_topog,
+        make_vgrid, transfer_to_mosaic_grid). go to the subdirectory
+        and configure those Makefile and then compile you will get the
+        executable. I think no configuration is needed if you plan to
+        run on Altix in GFDL).
+
+      <p class="subtitle"><b>4. One example to generate grid for coupled model ( atmos is C48, ocean is tripolar grid similiar to om3 grid, land is N45 grid).</b></p>   
+<pre>
+    1) <b>generate C48 grid and solo mosaic for atmos model</b>
+       /home/z1l/bin/tools/make_hgrid --grid_type gnomonic_ed --nlon 96
+       /home/z1l/bin/tools/make_solo_mosaic --num_tiles 6 --dir ./ --mosaic C48_mosaic
+
+    2) <b>generate tripolar grid and mosaic for ocean model</b>
+       /home/z1l/bin/tools/make_hgrid --grid_type tripolar_grid --nxbnd 2 --nybnd 7
+         --xbnd -280,80 --ybnd -82,-30,-10,0,10,30,90 --nlon 720 --nlat 104,48,40,40,48,120
+         --grid_name tripolar_grid --center c_cell
+       /home/z1l/bin/tools/make_solo_mosaic --num_tiles 1 --dir ./ --mosaic tripolar_mosaic
+         --tile_file tripolar_grid.nc --periodx 360
+
+    3) <b>generate N45 grid and mosaic for land model</b>
+       /home/z1l/bin/tools/make_hgrid --grid_type regular_lonlat_grid --nxbnd 2 --nybnd 2
+         --xbnd 0,360 --ybnd -90,90 --nlon 288 --nlat 180 --grid_name N45_grid
+       /home/z1l/bin/tools/make_solo_mosaic --num_tiles 1 --dir ./ --mosaic N45_mosaic
+         --tile_file N45_grid.nc --periodx 360
+
+    4) <b>generate topography for ocean mosaic.</b>
+       mpirun -np 10 /home/z1l/bin/tools/make_topog_parallel --mosaic ./tripolar_mosaic.nc
+       --topog_file /archive/fms/mom4/input_data/OCCAM_p5degree.nc --topog_field TOPO
+       --scale_factor -1 --output topog.nc
+
+    5) <b>make exchange grid information between component model grids.</b>
+       mpirun -np 10 /home/z1l/bin/tools/make_coupler_mosaic_parallel --atmos_mosaic ./C48_mosaic.nc
+         --land_mosaic ./N45_mosaic.nc --ocean_mosaic ./tripolar_mosaic.nc --ocean_topog ./topog.nc
+</pre>
+
+      <p class="subtitle"><b>5. Use fregrid to remap data from C48
+            onto N45 using second order conservative
+            interpolation. (use parallel version for higher
+            resolution).</b></p>
+        <pre>
+ /home/z1l/bin/tools/fregrid --input_mosaic ./C48_mosaic.nc --input_dir /home/z1l/bin/tools/test/input/
+   --input_file 19800101.atmos_daily --scalar_field zsurf,temp,t_surf
+   --output_mosaic ./N45_mosaic.nc --interp_method conserve_order2
+   --output_file 19800101.atmos_daily.N45.order2 --check_conserve
+</pre>
+        
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "fregrid"></a>fregrid</h2>
+          </div>
+        </div>
+      </div>
+<pre>
+  fregrid --input_mosaic input_mosaic --input_file input_file                         
+          [--scalar_field scalar_fld] [--u_field u_fld]  [--v_field v_fld]            
+          [--output_mosaic output_mosaic] [--lonBegin #decimal] [--lonEnd #decimal]   
+          [--latBegin #decimal] [--latEnd #decimal] [--nlon #integer]                 
+          [--nlat #integer] [--KlevelBegin #integer] [--KlevelEnd #integer]           
+          [--LstepBegin #integer] [--LstepEnd #integer]                               
+          [--output_file output_file] [--input_dir input_dir]                         
+          [--output_dir output_dir] [--remap_file remap_file]                         
+          [--interp_method method] [--grid_type grid_type] [--test_case test_case]    
+          [--symmetry] [--target_grid] [--finer_step #] [--fill_missing]              
+          [--center_y] [--check_conserve]                                             
+fregrid remap data (scalar or vector) from input_mosaic onto output_mosaic (The       
+target grid also could be specified through lonBegin, lonEnd, latBegin, latEnd, nlon  
+and nlat). Currently only T-cell scalar regridding and AGRID vector regridding (only  
+bilinear interpolation is implemented for cubic grid vector interpolation). The       
+interpolation algorithm used is controlled by --interp_method with default            
+'conserve_order1'. Currently only 'conserve_order1', 'conserve_order2' and 'bilinear' 
+remapping scheme are implemented. 'bilinear' is only used to remap data from cubic    
+grid to latlon grid. We will add more scheme in the future if needed. fregrid expects 
+NetCDF format input. scalar_field and/or u_field/v_field must be specified. u_fld and 
+v_fld must be paired together.    
+                                                                                      
+fregrid takes the following flags:                                                    
+                                                                                      
+REQUIRED:                                                                             
+                                                                                      
+--input_mosaic  input_mosaic  specify the input mosaic information. This file         
+                              contains list of tile files which specify the grid      
+                              information for each tile.                              
+                                                                                      
+OPTIONAL FLAGS                                                                        
+                                                                                      
+--input_file    input_file    specify the input file name. The suffix '.nc' can be    
+                              omitted. The suffix 'tile#' should not present for      
+                              multiple-tile files. The number of files must be 1 for  
+                              scalar regridding and can be 1 or 2 for vector          
+                              regridding. File path should not be includes.           
+                                                                                      
+--scalar_field    scalar_fld  specify the scalar field name to be regridded. The      
+                              multiple entry field names are seperated by comma.      
+                                                                                      
+--u_field         u_fld       specify the vector field u-componentname to be          
+                              regridded. The multiple entry field names are seperated 
+                              by comma. u_field must be paired together with v_field. 
+                                                                                      
+--v_field         v_fld       specify the vector field v-componentname to be          
+                              regridded. The multiple entry field names are seperated 
+                              by comma. v_field must be paired together with u_field. 
+                                                                                      
+--output_mosaic output_mosaic specify the output mosaic information. This file        
+                              contains list of tile files which specify the grid      
+                              information for each tile. If output_mosaic is not      
+                              specified, nlon and nlat must be specified.             
+                                                                                      
+--lonBegin  #decimal          specify the starting longitude(in degree) of the        
+                              geographical region of the target grid on which the     
+                              output is desired. The default value is 0.              
+                                                                                      
+--lonEnd   #decimal           specify the ending longitude(in degree) of the          
+                              geographical region of the target grid on which the     
+                              output is desired. The default value is 360.            
+                                                                                      
+--latBegin  #decimal          specify the starting latitude(in degree) of the         
+                              geographical region of the target grid on which the     
+                              output is desired. The default value is -90.            
+                                                                                      
+--latEnd   #decimal           specify the ending latitude(in degree) of the           
+                              geographical region of the target grid on which the     
+                              output is desired. The default value is 90.             
+
+--nlon #integer               specify number of grid box cells in x-direction for a   
+                              regular lat-lon grid.                                   
+                                                                                      
+--nlat #integer               specify number of grid box cells in y-direction for a   
+                              regular lat-lon grid.                                   
+                                                                                      
+--KlevelBegin #integer        specify begin index of the k-level (depth axis) that    
+                              to be regridded.                                        
+                                                                                      
+--KlevelEnd #integer          specify end index of the k-level (depth axis) that      
+                              to be regridded.                                        
+                                                                                      
+--LstepBegin #integer         specify the begin index of L-step (time axis) that      
+                              to be regridded.                                        
+                                                                                      
+--LstepEnd #integer           specify the end index of L-step (time axis) that        
+                              to be regridded.                                        
+                                                                                      
+--output_file   output_file   specify the output file name. If not presented,         
+                              output_file will take the value of input_file. The      
+                              suffix '.nc' can be omitted. The suffix 'tile#' should  
+                              not present for multiple-tile files. The number of      
+                              files must be 1 for scalar regridding and can be 1 or 2 
+                              for vector regridding. File path should not be includes.
+                                                                                      
+--input_dir     input_dir     specify the path that stores input_file. If not         
+                              presented, the input file is assumed to be stored in    
+                              current diretory.                                       
+                                                                                      
+--output_dir   output_dir     specify the path that will store output file. If not    
+                              presented, the output file will be stored in current    
+                              diretory.                                               
+                                                                                      
+--remap_file   remap_file     specify the file name that saves remapping information. 
+                              If remap_file is specified and the file does not exist, 
+                              remapping information will be calculated ans stored in  
+                              remap_file. If remap_file is specified and the file     
+                              exists, remapping information will be read from         
+                              remap_file.                                             
+                                                                                      
+--interp_method interp_method specify the remapping algorithm to be used. Default is  
+                              'conserve_order1'. Currently only 'conserve_order1',    
+                              'conserve_order2' and 'bilinear' remapping scheme are   
+                              implemented in this tool. The bilinear scheme can only  
+                              be used to remap data from cubic grid to regular latlon 
+                              grid. When interp_method is 'bilinear', nlon and nlat   
+                              must be specified and the output data in y-direction    
+                              will be located at the center of cell or bound of the   
+                              cell depending on the setting of y_center.              
+                                                                                      
+--test_case test_case         specify the test function to be used for testing.       
+                                                                                      
+--grid_type     grid_type     specify the vector field grid location. default is      
+                              AGRID and only AGRID is implemented yet.                
+                                                                                      
+--symmetry                    indicate the grid is symmetry or not.                   
+                                                                                      
+--target_grid                 use input cell area instead of calculating based on     
+                              exchange grid area. default is off.                     
+                                                                                      
+---finer_step #integer        This is used only for bilinear interpolation. Set       
+                              finer_step to a positive integer to reduce noise in     
+                              interpolation and get a relatively smooth output. The   
+                              default value is 0. When finer_step is greater than 0,  
+                              fregrid will first remap data from source grid onto a   
+                              finer grid with resolution that is power of 2 of        
+                              destination grid resolution using bilinear              
+                              interpolation, then using volume averaging to remap     
+                              data from finer grid onto destination grid.             
+                                                                                      
+--center_y                    output latitude will locate at cell center, i.e., the   
+                              starting latitude will be -89 when nlat = 90. when      
+                              center_y is not set, starting latitude will be -90. for 
+                              bilinear interpolation. For conservative interpolation, 
+                              center_y is assumed.                                    
+                                                                                      
+--check_conserve              check the conservation of conservative interpolation.   
+                              The area sum will be printed out for input and output   
+                              mosaic.                                                 
+                                                                                      
+  fregrid --input_mosaic input_mosaic.nc --output_mosaic output_mosaic.nc             
+          --input_dir input_dir --input_file input_file --scalar_field temp,salt
+         </pre> 
+          
+
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "make_coupler_mosaic"></a>make_coupler_mosaic</h2>
+          </div>
+        </div>
+      </div>
+<pre>
+  make_coupler_mosaic --atmos_mosaic atmos_mosaic.nc --ocean_mosaic ocean_mosaic.nc 
+              --ocean_topog ocean_topog.nc [--land_mosaic land_mosaic.nc] 
+              [--sea_level #]  [--interp_method #] [--mosaic_name mosaic_name] 
+              [--check ]                                                       
+ 
+make_coupler_mosaic generates three exchange grids for the FMS coupler. The output 
+file includes exchange grid files for fluxes between atmosphere and surface (sea ice 
+and land), exchange grid files for runoff between land and sea ice. There might be more 
+than one exchange grid files between two model solo mosaic because there might be 
+multiple tiles in a solo mosaic. All the exchange grid information are between model 
+grid, not between supergrid. We assume the refinement ratio between model grid and 
+supergrid is 2. Currently we only output the exchange grid on T-cell. 
+Besides generate the exchange grid files, make_coupler_mosaic also generate the 
+coupler mosaic file (the file name will be mosaic_name.nc) which contains the atmos, 
+land and ocean mosaic path, ocean mosaic topog path and exchange grid file path. 
+make_coupler_mosaic expects NetCDF format input.
+ 
+make_coupler_mosaic takes the following flags:
+
+REQUIRED:
+
+--atmos_mosaic atmos_mosaic.nc specify the atmosphere mosaic information. This file
+                               contains list of tile files which specify the grid 
+                               information for each tile. Each grid is required to be 
+                               regular lon/lat grid. The file name can not be 'mosaic.nc' 
+
+--ocean_mosaic ocean_mosaic.nc specify the ocean mosaic information. This file
+                               contains list of tile files which specify the grid 
+                               information for each tile. The file name can not be 'mosaic.nc' 
+ 
+--ocean_topog ocean_topog.nc   specify the topography information for ocean mosaic.
+                               The field name of the topography is depth_tile# or depth when 
+                               ntiles = 1, The topography data is positive down.
+ 
+OPTIONAL FLAGS
+
+--land_mosaic land_mosaic.nc   specify the land mosaic information. This file
+                               contains list of tile files which specify the grid 
+                               information for each tile. Each grid is required to be 
+                               regular lon/lat grid. When land_mosaic is not specified,
+                               atmosphere mosaic will be used to specify land mosaic.
+                               The file name can not be 'mosaic.nc'.
+ 
+--interp_order #               specify the order of conservative interplation. Its value 
+                               can be 1 ( linear order ) or 2 ( second order ) with default 
+                               value 2.                                                     
+                                                                                            
+--sea_level #                  specify the sea level ( in meters ) and its value will be used
+                               to determine land/sea mask. When topography of  
+                               a grid cell is less than sea level, this grid cell will be land,
+                               otherwise it will be ocean. Default value is 0
+ 
+--mosaic_name mosaic_name      coupler mosaic name. The output coupler mosaic file will be 
+                               mosaic_name.nc. default value is 'mosaic'. 
+ 
+--check                        check the tiling error
+
+A sample call to make_coupler_mosaic that makes exchange grids for atmosphere, land and ocean 
+mosaic (atmosphere and land are coincident) is: 
+
+  make_coupler_mosaic --atmos_mosaic atmos_mosaic.nc --ocean_mosaic ocean_mosaic.nc 
+                  --ocean_topog ocean_topog.nc
+        
+</pre> 
+
+
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "make_hgrid"></a>make_hgrid</h2>
+          </div>
+        </div>
+      </div>
+<pre>
+   make_hgrid --grid_type grid_type --my_grid_file my_grid_file                  
+                  --nxbnds nxbnds --nybnds nybnds                                
+                  --xbnds x(1),...,x(nxbnds) --ybnds y(1),...,y(nybnds)          
+                  --nlon nlon(1),...nlon(nxbnds-1)                               
+                  --nlat nlat(1),...nlat(nybnds-1)                               
+                  --lat_join lat_join --num_lon num_lon --nratio nratio          
+                  --simple_dx simple_dx --simple_dy simple_dy                    
+                  --ndivx ndivx --ndivy ndivy --grid_name gridname               
+                  --center center                                                
+                                                                                 
+   NOTE: This program can generate different types of horizontal grid. The       
+         output data is on supergrid ( model grid size x refinement(=2) ).       
+         For 'cubic_grid', six grid files which contain the grid information     
+         for each tile will be generate, otherwise one file will be generated    
+         you can specify the grid type through --grid_type. The value of         
+         grid_type can be 'from_file', 'spectral_grid', 'spherical_grid',        
+         'conformal_cubic_grid', 'gnomonic_ed' or 'simple_cartesian_grid',       
+         with default value 'spherical_grid'. --nlon and --nlat                  
+         must be specified to indicate supergrid size ( for cubic_grid,          
+         --nlat is not needed because nlat has the same value as nlon.           
+         --ndivx and --ndivy are optional arguments with default value 1.        
+         Besides --nlon, --nlat, --ndivx and --ndivy, other optional and         
+         requirement arguments for each type are,                                
+                                                                                 
+   1. 'from_file':              --my_grid_file must be specified. The grid    
+                                specified in my_grid_file should be super grid   
+                                vertex.                                          
+   2. 'spectral_grid':          no other optional or required arguments.         
+   3. 'regular_lonlat_grid':    --nxbnds, --nybnds --xbnds, --ybnds, must be     
+                                specified to define the grid bounds.             
+   4. 'tripolar_grid':          --nxbnds, --nybnds, --xbnds, --ybnds, must be    
+                                specified to define the grid bounds. --lat_join  
+                                is optional with default value 65.               
+   5  'conformal_cubic_grid':   --nratio is optional argument.                   
+   6  'gnomonic_ed'          :  equal distance gnomonic cubic grid.              
+   6. 'simple_cartesian_grid':  --xbnds, --ybnds must be specified to define     
+                                the grid bounds location and grid size. number   
+                                of bounds must be 2 in both and x and            
+                                y-direction. --simple_dx and --simple_dy must be 
+                                specified to specify uniform cell length.        
+                                                                                 
+   make_hgrid take the following flags                                           
+                                                                                 
+   --grid_type grid_type      specify type of topography. See above for          
+                              grid type option.                                                                                                                   
+   --my_grid_file file        when this flag is present, the program will read   
+                              grid information from 'my_grid_file'. The file     
+                              format can be ascii file or netcdf file. Multiple  
+                              file entry are allowed but the number should be    
+                              less than MAXBOUNDS.                                
+                                                                                 
+   --nxbnds nxbnds            Specify number of zonal regions for varying        
+                              resolution.                                        
+                                                                                 
+   --nybnds nybnds            Specify number of meridinal regions for varying    
+                              resolution.                                        
+                                                                                 
+   --xbnds x(1),.,x(nxbnds)   Specify boundaries for defining zonal regions of   
+                              varying resolution. When --tripolar is present,    
+                              x also defines the longitude of the two new poles. 
+                              nxbnds must be 2 and lon_start = x(1),             
+                              lon_end = x(nxbnds) are longitude of the two       
+                              new poles.                                         
+                                                                                 
+   --ybnds y(1),.,y(nybnds)   Specify boundaries for defining meridional         
+                              regions of varying resolution                      
+                                                                                 
+   --nlon nlon(1),..,nlon(nxbnds-1) Number of model grid points(supergrid) for   
+                                    each zonal regions of varying resolution.    
+                                                                                 
+   --nlat nlat(1),..,nlat(nybnds-1) Number of model grid points(supergid) for    
+                                    each meridinal regions of varying resolution.
+                                                                                 
+   --lat_join lat_join        Specify latitude for joining spherical and rotated 
+                              bipolar grid. Default value is 65 degree.          
+                                                                                 
+   --nratio nratio            Speicify the refinement ratio when calculating     
+                              cell length and area of supergrid.                 
+                                                                                 
+   --simple_dx dimple_dx      Specify the uniform cell length in x-direction for 
+                              simple cartesian grid.                             
+                                                                                 
+   --simple_dy dimple_dy      Specify the uniform cell length in y-direction for 
+                              simple cartesian grid.                             
+                                                                                 
+   --ndivx ndivx              Specify number division in x-direction for each    
+                              face, default value is 1.                          
+                                                                                 
+   --ndivy ndivy              Specify number division in y-direction for each    
+                              face, default value is 1.                          
+                                                                                 
+   --grid_name grid_name      Specify the grid name. The output grid file name   
+                              will be grid_name.nc if there is one tile and      
+                              grid_name.tile#.nc if there is more than one tile. 
+                              The default value will be horizontal_grid.         
+                                                                                 
+   --center center            Specify the center location of grid. The valid     
+                              entry will be 'none', 't_cell' or 'c_cell' with    
+                              default value 'none'. The grid refinement is       
+                              assumed to be 2 in x and y-direction when center   
+                              is not 'none'. 'c_cell' should be used for the grid
+                              used in MOM4.                                      
+                                                                                 
+   Example                                                                       
+                                                                                 
+                                                                                 
+   1. generating regular lon-lat grid (supergrid size 60x20)                     
+      > make_hgrid --grid_type regular_lonlat_grid --nxbnd 2 --nybnd 2           
+        --xbnd 0,30 --ybnd 50,60  --nlon 60 --nlat 20                            
+                                                                                 
+   2. generating tripolar grid with various grid resolution and C-cell centered  
+      > make_hgrid --grid_type tripolar_grid --nxbnd 2 --nybnd 7 --xbnd -280,80  
+                   --ybnd -82,-30,-10,0,10,30,90 --nlon 720                      
+                   --nlat 104,48,40,40,48,120 --grid_name om3_grid               
+                   --center c_cell  --periodx 360                                
+                                                                                 
+   3. generating simple cartesian grid(supergrid size 20x20)                     
+      > make_hgrid --grid_type simple_cartesian_grid --xbnd 0,30 --ybnd 50,60    
+                   --nlon 20 --nlat 20  --simple_dx 1000 --simple_dy 1000        
+                                                                                 
+   4. generating conformal cubic grid. (supergrid size 60x60 for each tile)      
+      > make_hgrid --grid_type conformal_cubic_grid --nlon 60 --nratio 2         
+                                                                                 
+   5. generating gnomonic cubic grid with equal_dist_face_edge                   
+      > make_hgrid --grid_type gnomonic_ed --nlon 60                             
+                                                                                 
+   7. generating spectral grid. (supergrid size 128x64)                          
+      > make_hgrid --grid_type spectral_grid --nlon 128 --nlat 64                
+                                                                                 
+   7. Through    user-defined grids                                              
+      > make_hgrid --grid_type from_file --my_grid_file my_grid_file          
+                   --nlon 4 --nlat 4                                             
+                                                                                 
+       contents of sample my_grid_file                                           
+         The first line of my_grid_file will be text ( will be ignored)          
+         followed by nlon+1 lines of real value of x-direction supergrid bound   
+         location. Then another line of text ( will be ignored), followed by     
+         nlat+1 lines of real value of y-direction supergrid bound location.     
+                                                                                 
+         For example:                                                            
+                                                                                 
+            x-grid                                                               
+            0.0                                                                  
+            5.0                                                                  
+            10.0                                                                 
+            15.0                                                                 
+            20.0                                                                 
+            y-grid                                                               
+            -10                                                                  
+            10                                                                   
+            20                                                                   
+            30                                                                   
+            40                           
+</pre> 
+
+
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "make_solo_mosaic"></a>make_solo_mosaic</h2>
+          </div>
+        </div>
+      </div>
+<pre>
+ make_solo_mosaic --num_tiles ntiles --dir directory [--mosaic_name mosaic_name] 
+                 [--tile_file tile_file] [--periodx #] [--periody #]             
+                                                                                 
+make_solo_mosaic generates Mosaic information between tiles. The mosaic          
+information includes: list of tile files, list of contact region                 
+specified by index, contact type.                                                
+                                                                                 
+make_solo_mosaic takes the following flags:                                      
+                                                                                 
+REQUIRED:                                                                        
+                                                                                 
+--num_tiles ntiles     Number of tiles in the mosaic.                            
+                                                                                 
+--dir directory        The directory that contains all the tile grid file.       
+                                                                                 
+OPTIONAL FLAGS                                                                   
+                                                                                 
+--mosaic_name name     mosaic name. The output file will be mosaic_name.nc.      
+                       default is 'mosaic'.                                      
+                                                                                 
+--tile_file tile_file  Grid file name of all tiles in the mosaic. The file name  
+                       should be relative file name ( exclude the absolute       
+                       file path). The absolute file path will be dir/tile_file. 
+                       If this option is not specified, the tile_file will be    
+                       'horizontal_grid.tile#.nc'                                
+                                                                                 
+--periodx #             Specify the period in x-direction of mosaic. Default     
+                        value is 0 (not periodic).                               
+                                                                                 
+--periody #             Specify the period in y-direction of mosaic. Default     
+                        value is 0 (not periodic).                               
+        
+</pre>
+
+
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "make_topog"></a>make_topog</h2>
+          </div>
+        </div>
+      </div>
+<pre>
+   make_topog --mosaic mosaic_file [--topog_type topog_type]  [x_refine #] [y_refine #]  
+              [--basin_depth #] [--bottom_depth #] [--min_depth #]                       
+              [--topog_file topog_file]  [--topog_field topog_field]                     
+              [--scale_factor #] [--num_filter_pass #] [--gauss_amp #]                   
+              [--gauss_scale #] [--slope_x #] [--slope_y #] [--bowl_south #]             
+              [--bowl_north #] [--bowl_west #] [--bowl_east #]                           
+              [--fill_first_row] [--filter_topog] [--round_shallow]                      
+              [--fill_shallow] [--deepen_shallow] [--smooth_topo_allow_deepening]        
+              [--output output_file [--help]                                             
+                                                                                         
+   make_topog can generate topography for any Mosaic. The output file                    
+   will contains the topography for each tile in the Mosaic. The field name in           
+   the output topography file will be depth_tile# and it is positive down.               
+   The topography data will be defined on model grid, the model grid size will be        
+   supergrid grid size divided by refinement (x_refine, y_refine, default is 2).         
+   --mosaic is a required option and all other options are optional, but                 
+   some options are required depending on the choice of topog_type.                      
+   Below specify the option (required or non-required) needed for every kind             
+   of topog_type. when topog_type (--topog_type) is                                      
+                                                                                         
+     1. 'realistic':          --topog_file and --topog_field must be specified,          
+                              --bottom_depth, --min_depth, --scale_factor,               
+                              --num_filter_pass, --flat_bottom                           
+                              --fill_first_row --adjust_topo --filter_topog              
+                              --round_shallow] --fill_shallow --deepen_shallow]          
+                              --smooth_topo_allow_deepening are optional arguments.      
+     2.  'rectangular_basin': --basin_depth are optional arguments. Set basin_depth      
+                                to 0 to get all land topography.                         
+     3.  'gaussian':          --bottom_depth, --min_depth --gauss_amp, --gauss_scale,    
+                              --slope_x, --slope_y are optional arguments.               
+     4.. 'bowl':              --bottom_depth, --min_depth, --bowl_south, --bowl_north,   
+                              --bowl_west, --bowl_east are optional arguments.           
+     5. 'idealized':          --bottom_depth, --min_depth are optional arguments.        
+                                                                                         
+   generate_mosaic_topo take the following flags                                         
+                                                                                         
+   --mosaic mosaic_file          Specify the mosaic file where topography data located.  
+                                                                                         
+   --topog_type topog_type       Specify type of topography. Its value can be            
+                                 'realistic', 'rectangular_basin', 'gaussian', 'bowl'    
+                                 or 'idealized'. The default value is 'realistic'.       
+                                                                                         
+   --x_refine #                  specify the refinement ratio of model grid vs supergrid 
+                                 ins x-directin. default value 2.                        
+                                                                                         
+   --y_refine #                  specify the refinement ratio of model grid vs supergrid 
+                                 ins y-directin. default value 2.                        
+                                                                                         
+   --basin_depth #               Specify the basin depth when topog_type is              
+                                 'rectangular_basin'. Default value is 5000 meter.       
+                                                                                         
+   --topog_file topog_file       Specify name of topograhy file (e.g. scripps,           
+                                 navy_topo, ...)                                         
+                                                                                         
+   --topog_field topog_field     Specify name of topography field name in topog_file.    
+                                                                                         
+   --bottom_depth #              Specify maximum depth (or bottom depth) of ocean.       
+                                 default value is 5000 meter.                            
+                                                                                         
+   --min_depth #                 Specify minimum depth of ocean.                         
+                                 default value is 10 meter.                              
+                                                                                         
+   --scale_factor #              Specify scaling factor for topography data (e.g. -1 to  
+                                 flip sign or 0.01 to convert from centimeters).         
+                                 default value is 1.                                     
+                                                                                         
+   --num_filter_pass #           Specify number of passes of spatial filter              
+                                 default value is 1.                                     
+                                                                                         
+   --gauss_amp #                 specify height of gaussian bump as percentage of ocean  
+                                 depth. default value is 0.5.                            
+                                                                                         
+   --gauss_scale #               Specify width of gaussian bump as percentag e of        
+                                 basin width. Default value is 0.25.                     
+                                                                                         
+   --slope_x #                   Specify rise of the ocean floor to the east for         
+                                 the gaussian bump. Default value is 0.                  
+                                                                                         
+   --slope_y #                   Specify rise of the ocean floor to the north for        
+                                 the gaussian bump. Default value is 0.                  
+                                                                                         
+   --bowl_south #                Specify southern boundary of Winton bowl.               
+                                 Default value is 60.                                    
+                                                                                         
+   --bowl_north #                Specify northern boundary of Winton bowl.               
+                                 Default value is 70.                                    
+                                                                                         
+   --bowl_west #                 Specify western boundary of Winton bowl.                
+                                 Default value is 0.                                     
+                                                                                         
+   --bowl_east #                 Specify eastern boundary of Winton bowl.                
+                                 Default value is 20.                                    
+                                                                                         
+   --fill_first_row              when specified, make first row of ocean model all       
+                                 land points for ice model.                              
+                                                                                         
+   --filter_topog                When specified, apply filter to topography.             
+                                                                                         
+   --round_shallow               When specified, Make cells land if depth is less        
+                                 than 1/2 mimumim depth, otherwise make ocean.           
+                                                                                         
+   --fill_shallow                When specified, Make cells less than minimum            
+                                 depth land.                                             
+                                                                                         
+   --deepen_shallow              When specified, Make cells less than minimum            
+                                 depth equal to minimum depth.                           
+                                                                                         
+   --smooth_topo_allow_deepening when specified, allow filter to deepen cells.           
+                                                                                         
+   --output output_file          The created netcdf file that contains mosaic            
+                                 topography. Default value is 'topog.nc'                 
+   --help                        Print out this message and then exit.                   
+                                                                                         
+   Example                                                                               
+                                                                                         
+   1. Generate 'realistic' topography                                                    
+   > make_topog --mosaic mosaic.nc --topog_type realistic                                
+                           --topog_file /archive/fms/mom4/input_data/OCCAM_p5degree.nc   
+                              --topog_field TOPO --scale_factor -1                       
+                                                                                         
+   2. Generate 'rectangular_basin' topography (with uniform topography 200 meters).      
+   > make_topog --mosaic mosaic.nc --topog_type  rectangular_basin            
+                           --basin_depth 200                                             
+        
+</pre>
+
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "make_vgrid"></a>make_vgrid</h2>
+          </div>
+        </div>
+      </div>
+<pre>
+   make_vgrid --nbnds nbnds --bnds z(1),...,z(nbnds) --nz nz                     
+              [--grid_name gridname]    [--center center]                        
+                                                                                 
+   NOTE: This program call be used to make vertical grid for FMS model.          
+         It uses cubic-spline algorithm to calculate the grid cell location.     
+         The output netcdf will contains information on supergrid with grid      
+         size equal model grid size multipling refinement ( always 2 ).          
+         make_vgrid takes the following flags                                    
+                                                                                 
+   Required Flags:                                                               
+                                                                                 
+   --nbnds nbnds             Specify number of vertical regions for varying      
+                             resolution.                                         
+                                                                                 
+   --bnds z(1),.,z(nbnds)    Specify boundaries for defining vertical regions of 
+                             varying resolution.                                 
+                                                                                 
+   --nz nz(1),..,nz(nbnds-1) Number of model grid points for each vertical       
+                             regions of varying resolution.                                                                                                        
+   Optional Flags:                                                               
+                                                                                 
+ --grid_name gridname        Specify the grid name. The output grid file name    
+                             will be grid_name.nc. The default value is          
+                             vertical_grid.                                      
+                                                                                 
+ --center   center           Specify the center location of grid. The valid      
+                             entry will be 'none', 't_cell' or 'c_cell' with     
+                             default value 'none'. The grid refinement is        
+                             assumed to be 2 in x and y-direction when center    
+                             is not 'none'. 'c_cell' should be used for the grid 
+                             used in MOM4.                                       
+                                                                                 
+                                                                                 
+   Example                                                                       
+                                                                                 
+                                                                                 
+ make_vgrid --nbnds 3 --bnds 10,200,1000 --nz 10,20                             
+       will make a grid file with 60 supergrid cells, 30 model grid cells        
+       with refinement is 2.                                                     
+        
+</pre>         
+
+
+       <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "transfer_to_mosaic_grid"></a>transfer_to_mosaic_grid</h2>
+          </div>
+        </div>          
+      </div>
+
+        
+<pre>
+ transfer_to_mosaic_grid --input_file input_file                             
+                                                                             
+ transfer_to_mosaic_grid transfers previous version grid file (The grid file 
+ has field x_T.y_T ) into a mosaic grid. The input file could be a ocean     
+ only grid or a coupled grid.                                                
+                                                                             
+ transfer_to_mosaic_grid takes the following flags:                          
+                                                                             
+REQUIRED:                                                                    
+                                                                             
+--input_file input_file  The file name of previous version grid.             
+       
+</pre>        
+        
+</body>
+</html>

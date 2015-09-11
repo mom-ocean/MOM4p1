@@ -1,0 +1,217 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module ocean_time_filter_mod</title>
+<link type="text/css" href="http://data1.gfdl.noaa.gov/~fms/style/docbook.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module ocean_time_filter_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Stephen.Griffies@noaa.gov">   Stephen M. Griffies </a>,&nbsp;
+    <a href="mailto:Matthew.Harrison@noaa.gov">   Matt Harrison </a>
+<br>
+<b>Reviewers:&nbsp;</b>
+<br>
+<b>Change History:&nbsp;</b><a href="http://cobweb.gfdl.noaa.gov/fms-cgi-bin/viewcvs/FMS/ocean/mom4p1/ocean_param/sources">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   Perform Robert-Asselin time filter when using leap-frog based
+   time stepping scheme along with GEOPOTENTIAL vertical coordinate. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   Module to perform Robert-Asselin time filter on prognostic fields.
+   This time filter is only applicable when using the older leap-frog
+   based time stepping scheme AND when vertical coordinate is GEOPOTENTIAL. 
+   The leap-frog time stepping scheme is not recommended. 
+   It remaines in mom4 for legacy purposes only. </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>          constants_mod<br>       diag_manager_mod<br>                fms_mod<br>        mpp_domains_mod<br>                mpp_mod<br>      ocean_domains_mod<br>    ocean_operators_mod<br>   ocean_parameters_mod<br>        ocean_types_mod<br>ocean_velocity_diag_mod<br>    ocean_workspace_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#ocean_time_filter_init">ocean_time_filter_init</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#time_filter">time_filter</a>:</dt>
+<dd></dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="ocean_time_filter_init"></a>
+<h4>ocean_time_filter_init</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initialize the time filter module. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="time_filter"></a>
+<h4>time_filter</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   When threelevel time tendency is used, perform Robert-Asselin time 
+   filtering on velocity and tracer.
+   <br>
+<br>
+   Also perform time filter on surface height by replacing eta_t(tau)
+   with eta_t_bar(tau).
+   <br>
+<br>
+   This scheme is only implemented for vertical_coordinate='geopotential'.
+   Other vertical coordinates must use the default TWO_LEVEL tendency.
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<!-- END PUBLIC TYPES --><a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<hr>
+<h4>NAMELIST</h4>
+<div>
+<b>&amp;ocean_time_filter_nml</b>
+<br>
+<br>
+<div>
+<dl>
+<dt>
+<tt>use_this_module</tt>
+</dt>
+<dl>   Must be true to use this module.  Default is false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>robert_asselin_param</tt>
+</dt>
+<dl>   Parameter setting the strength of the time filtering applied via the 
+   Robert-Asselin filter when using threelevel_time_filter=.true.
+   Typically taken as robert ~ 0.05 for global models. Notably, however,
+   this value may not be sufficient to suppress time step noise in regions
+   of high frequency variability, such as along the equator. <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>velocity_change_diag_step</tt>
+</dt>
+<dl>   perform velocity_change_check every n timesteps (1 == every_tstep). <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>velocity_change_check</tt>
+</dt>
+<dl>   For checking to see whether the abs(vel(tau)-vel(tam1))
+   is greater than velocity_delta_max.  If so, then we likely have 
+   problems with leap-frog noise. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>velocity_change_max</tt>
+</dt>
+<dl>   For checking to see whether the abs(vel(tau)-vel(taum1)) &gt;velocity_change_max.
+   If so, then will bring the model down if have problems in too many places. <br>
+<span class="type">[real, units: meter/sec]</span>
+</dl>
+<dt>
+<tt>velocity_change_max_num</tt>
+</dt>
+<dl>   Maximum number of points allowed where abs(vel(tau)-vel(taum1)) &gt;velocity_change_max. <br>
+<span class="type">[integer]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END NAMELIST -->
+<a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

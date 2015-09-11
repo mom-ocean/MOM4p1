@@ -1,0 +1,324 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module ocean_mixdownslope_mod</title>
+<link type="text/css" href="http://data1.gfdl.noaa.gov/~fms/style/docbook.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module ocean_mixdownslope_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Stephen.Griffies@noaa.gov">   S.M. Griffies </a>
+<br>
+<b>Reviewers:&nbsp;</b>
+<br>
+<b>Change History:&nbsp;</b><a href="http://cobweb.gfdl.noaa.gov/fms-cgi-bin/viewcvs/FMS/ocean/mom4p1/ocean_param/mixing">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   Mixing of tracer between dense shallow parcel and 
+   deeper parcels downslope. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   Mixing of tracer properties as dense shallow parcel is discharged
+   into deeper water to approach the parcel's depth of neutral buoyancy.
+   This module can be characterized as a mixture of the approach from
+   Campin and Goosse (1999) and slope convection. </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>       constants_mod<br>    diag_manager_mod<br>             fms_mod<br>     mpp_domains_mod<br>             mpp_mod<br>   ocean_density_mod<br>   ocean_domains_mod<br>ocean_parameters_mod<br>     ocean_types_mod<br>      ocean_util_mod<br> ocean_workspace_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#ocean_mixdownslope_init">ocean_mixdownslope_init</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#mixdownslope">mixdownslope</a>:</dt>
+<dd></dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="ocean_mixdownslope_init"></a>
+<h4>ocean_mixdownslope_init</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initial set up for mixing of tracers into the abyss next to topography. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="mixdownslope"></a>
+<h4>mixdownslope</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute thickness and density weighted tracer tendency [tracer*rho*m/s]
+   due to exchange of tracer properties in regions where density-driven
+   downslope transport is favorable. 
+   <br>
+<br>
+   Allow for exchanges to occur over horizontally 
+   distant points, so long as the dense shallow parcel finds that it 
+   will sit on the bottom of the horizontally adjacent columns.  Doing
+   so requires a search algorithm, which requires some if-test logic
+   as well as extended halos.  Note that the halos cannot be extended
+   to larger than the size of the computational domain on a processor.
+   This restriction limits the extent that we can search horizontally.
+   <br>
+<br>
+   The rates for the exchange are functions of the topographic slope
+   and the density differences between parcels.  
+   <br>
+<br>
+   This scheme can be characterized as a slope convection based on 
+   logic incorporated into the overflow and overexchange schemes. 
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<!-- END PUBLIC TYPES --><a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<hr>
+<h4>NAMELIST</h4>
+<div>
+<b>&amp;ocean_mixdownslope_nml</b>
+<br>
+<br>
+<div>
+<dl>
+<dt>
+<tt>use_this_module</tt>
+</dt>
+<dl>   For using this module.  Default use_this_module=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>debug_this_module</tt>
+</dt>
+<dl>   For debugging <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>do_bitwise_exact_sum</tt>
+</dt>
+<dl>   Set true to do bitwise exact global sum. When it is false, the global
+   sum will be non-bitwise_exact, but will significantly increase efficiency. 
+   The default value is false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>mixdownslope_npts</tt>
+</dt>
+<dl>   Number of horizontally distant points used in search downslope. 
+   Note: it is not possible to have 
+   mixdownslope_npts greater than or equal to the computational domain
+   extents, as this would require updates across multiple processors. 
+   Default mixdownslope_npts=1. <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>mixdownslope_frac_central</tt>
+</dt>
+<dl>   Fraction of the central cell that participates in downslope mixing
+   in any particular direction.  Default mixdownslope_frac_central=0.25 <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>mixdownslope_weight_far</tt>
+</dt>
+<dl>   To place more weight on points further from central point.  This may 
+   be done to enhance properties getting downslope.  Default is 
+   mixdownslope_weight_far=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>mixdownslope_width</tt>
+</dt>
+<dl>   Width of the re-weighting function used to emphasize points further 
+   along in the search for exchange points.  Default mixdownslope_width=1. <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>read_mixdownslope_mask</tt>
+</dt>
+<dl>   For reading in a mask that selects regions of the domain 
+   where mixdownslope is allowed to function (mask=1) or not 
+   to function (mask=0). Default read_mixdownslope_mask=.false., 
+   whereby mixdownslope_mask is set to tmask(k=1). <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>mixdownslope_mask_gfdl</tt>
+</dt>
+<dl>   For modifying the mixdownslope mask based on reading in 
+   the GFDL regional mask. Default mixdownslope_mask_gfdl=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END NAMELIST -->
+<a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<a name="REFERENCES"></a>
+<hr>
+<h4>REFERENCES</h4>
+<!-- BEGIN REFERENCES -->
+<div>
+<ol>
+<li>   Campin and Goosse (1999): Parameterization of density-driven downsloping flow 
+   for a coarse-resolution model in z-coordinate", Tellus 51A, pages 412-430 </li>
+<li>   S.M. Griffies, Elements of mom4p1 (2006)
+   NOAA/Geophysical Fluid Dynamics Laboratory </li>
+</ol>
+</div>
+<br>
+<!-- END REFERENCES -->
+<a name="COMPILER SPECIFICS"></a>
+<hr>
+<h4>COMPILER SPECIFICS</h4>
+<!-- BEGIN COMPILER SPECIFICS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END COMPILER SPECIFICS -->
+<a name="PRECOMPILER OPTIONS"></a>
+<hr>
+<h4>PRECOMPILER OPTIONS</h4>
+<!-- BEGIN PRECOMPILER OPTIONS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END PRECOMPILER OPTIONS -->
+<a name="LOADER OPTIONS"></a>
+<hr>
+<h4>LOADER OPTIONS</h4>
+<!-- BEGIN LOADER -->
+<div>None.<br>
+<br>
+</div>
+<!-- END LOADER OPTIONS -->
+<a name="TEST PROGRAM"></a>
+<hr>
+<h4>TEST PROGRAM</h4>
+<!-- BEGIN TEST PROGRAM -->
+<div>None.<br>
+</div>
+<br>
+<!-- END TEST PROGRAM -->
+<a name="KNOWN BUGS"></a>
+<hr>
+<h4>KNOWN BUGS</h4>
+<!-- BEGIN KNOWN BUGS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END KNOWN BUGS -->
+<a name="NOTES"></a>
+<hr>
+<h4>NOTES</h4>
+<!-- BEGIN NOTES -->
+<div>None.<br>
+</div>
+<br>
+<!-- END NOTES -->
+<a name="FUTURE PLANS"></a>
+<hr>
+<h4>FUTURE PLANS</h4>
+<!-- BEGIN FUTURE PLANS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END FUTURE PLANS -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

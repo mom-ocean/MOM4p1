@@ -1,0 +1,433 @@
+<HTML>
+<TITLE>module bgrid_core_mod</TITLE>
+<BODY BGCOLOR="#AABBCC" TEXT="#332211" >
+
+<DIV ALIGN="CENTER"> <FONT SIZE=-2>
+<A HREF="#INTERFACE">PUBLIC INTERFACE</A> / 
+<A HREF="#DATA_TYPES">DATA</A> / 
+<A HREF="#ROUTINES">ROUTINES</A> / 
+<A HREF="#ERRORS">ERRORS</A> / 
+<A HREF="#REFERENCES">REFERENCES</A> / 
+<A HREF="#NOTES">NOTES</A> 
+</FONT>
+<BR><BR></DIV><HR>
+
+
+<H2>module bgrid_core_mod</H2>
+<A NAME="HEADER">
+<PRE>
+     <B>Contact:</B>   B. Wyman
+     <B>Reviewers:</B>
+     <B>Change history:</B> <A HREF="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS
+/atmos/bgrid/model/bgrid_core.f90">WebCVS Log for bgrid_core.f90</A>
+
+</PRE>
+</A><!-- END HEADER -->
+<!--------------------------------------------------------------------->
+<A NAME="OVERVIEW">
+<HR>
+<H4>OVERVIEW</H4>
+<!-- BEGIN OVERVIEW -->
+<PRE>
+
+     The top-level module for the B-grid atmospheric dynamical core.
+     This module controls many of the time integration options while
+     calling other modules to compute individual terms.
+
+</PRE>
+</A><!-- END OVERVIEW -->
+<!--------------------------------------------------------------------->
+<A NAME="DESCRIPTION">
+<!-- BEGIN DESCRIPTION -->
+<PRE>
+     The B-grid dynamical core updates the tendencies of the 
+     prognostic variables, the variables themselves are not modified.
+     The prognostic variables are surface pressure, the zonal and 
+     meridional momentum components, temperature, and optionally an
+     arbitrary number of tracers. The core recognizes the tracer 
+     specific humidity (sphum) when computing virtual temperature.
+
+     This version of the B-grid dynamics use a two time level scheme
+     with time splitting.  The gravity waves are integrated using a
+     forward-backward scheme with a relatively short time step and
+     the advection terms are integrated with a longer time step.
+     Horizontal diffusion is done on the advective time step.
+
+     The B-grid core uses data structures (derived-type variables)
+     to group similar data and passes these data structures between
+     subroutines.  Data structures for the horizontal and vertical
+     constants must be initialized before initializing the B-grid core.
+     The initialization routine returns a data structure that is needed
+     by subsequent calls when updating the prognostic variables tendencies.
+     The prognostic variables are also contained as a data structure.
+
+     Here is a detailed write-up of the finite differencing used in the
+     <A HREF="bgrid_core.tech.ps">B-grid atmospheric dynamical core</A>.
+
+</PRE>
+</A><!-- END DESCRIPTION -->
+<!--------------------------------------------------------------------->
+<A NAME="MODULES_USED">
+<HR>
+<H4>OTHER MODULES USED</H4>
+<!-- BEGIN MODULES_USED -->
+<PRE>
+
+   bgrid_prog_var_mod
+   bgrid_horiz_mod
+   bgrid_vert_mod
+   bgrid_masks_mod
+   bgrid_advection_mod
+   bgrid_horiz_diff_mod
+   bgrid_horiz_adjust_mod
+   bgrid_vert_adjust_mod
+   bgrid_polar_filter_mod
+   bgrid_halo_mod
+   bgrid_sponge_mod
+   fms_mod
+   constants_mod
+   field_manager_mod
+   tracer_manager_mod
+
+</PRE>
+</A><!-- END MODULES_USED -->
+<!--------------------------------------------------------------------->
+<A NAME="INTERFACE">
+<HR>
+<H4>PUBLIC INTERFACE</H4>
+<!-- BEGIN INTERFACE -->
+<PRE>
+
+   <b>use bgrid_core_mod</b> [ ,only: bgrid_dynam_type, 
+                               bgrid_core_init,
+                               update_bgrid_core,
+                               bgrid_core_end    ]
+
+   <a href="#DATA_TYPES">bgrid_dynam_type</a>
+        A data structure (i.e., derived-type variable) that contains
+        grid constants, time step information, and other pre-computed terms
+        that are needed by the dynamical core.  This includes other data 
+        structures and pointers to the physical data, but does not include
+        the prognostic variables.
+
+   <a href="#bgrid_core_init">bgrid_core_init</a>
+        Initializes the B-grid core data structure (bgrid_dynam_type) and
+        other modules used by the core. There is no namelist for bgrid_core_mod,
+        all runtime options are controlled with optional arguments to the
+        initialization subroutine.  This subroutine must be called before
+        calling update_bgrid_core.
+
+   <a href="#update_bgrid_core">update_bgrid_core</a>
+        Called once for every (atmospheric) time step to update only the
+        tendencies of the prognostic variables.  No time differencing is done. 
+
+   <a href="#bgrid_core_end">bgrid_core_end</a>
+        Called at the end of the model run to terminate the module.
+        Currently this call does nothing.
+
+</PRE>
+</A><!-- END INTERFACE -->
+<!--------------------------------------------------------------------->
+<A NAME="DATA_TYPES">
+<HR>
+<H4>PUBLIC DATA</H4>
+<!-- BEGIN DATA_TYPES -->
+<PRE>
+
+<b>type bgrid_dynam_type</b>
+
+-- derived data types contained in bgrid_dynam_type --
+   (see the appropriate module for details)
+
+    Hgrid = horizontal grid constants, initialized by horiz_grid_mod
+              [horiz_grid_type]
+    Vgrid = vertical grid constants, initialized by vert_grid_mod
+              [vert_grid_type]
+    Masks = eta coordinate topography masks and indices,
+            initialized by grid_masks_mod  [grid_mask_type]
+    Pfilt = polar filter constants, initialized by polar_filter_mod
+              [pfilt_control_type]
+
+-- real, dimension(:,:) --
+
+    fis  = geopotential height of the surface (m2/s2)
+    fisl = geopotential height at eta=1. (for eta coord = 0.0,
+    res  = reciprocal of eta at the surface
+
+-- scalars --
+
+    nt_adj = no. of adjustment time steps per advection step [integer]
+    nt_adv = no. of advection  time steps per atmospheric step [integer]
+    dt_adj = adjustment time step in seconds [real]
+
+    fopt        = filtering option [integer]
+    pgf_method  = identifier for pressure gradient algorithm [integer]
+    sphum       = tracer index for specific humidity [integer]
+    coeff_ddamp = coefficient for divergence damping [real]
+    avg_omega   = omega averaging flag [logical]
+    verbose     = verbose flag [integer]
+
+
+ NOTE
+
+   Hgrid, Vgrid, fis, and res are pointers to the arguments passed
+   via the initialization call (bgrid_core_init).
+
+
+</PRE>
+</A><!-- END DATA_TYPES -->
+<!--------------------------------------------------------------------->
+<A NAME="ROUTINES">
+<HR>
+<H4>PUBLIC ROUTINES</H4>
+<!-- BEGIN ROUTINES -->
+<PRE>
+<a name="bgrid_core_init">
+
+<b>call bgrid_core_init</b> ( Dynam, Hgrid, Vgrid, fis, res, dt, ntadj, ntadv
+                  <FONT COLOR="#007700">[, pgf_scheme, filter_option, filter_weight,
+                     ref_lat_filter, ddamp_coeff, avg_omega, verbose ]</FONT>  )
+
+DESCRIPTION
+   Initializes the B-grid core data structure (bgrid_dynam_type) and other
+   modules used.  Runtime options are controlled with optional arguments.
+   This subroutine must be called before calling update_bgrid_core.
+
+INPUT
+   Hgrid      Data structure containing horizontal grid constants (see horiz_grid_mod).
+                 [type(horiz_grid_type)]
+
+   Vgrid     Data structure containing vertical grid constants (see vert_grid_mod).
+                [type(vert_grid_type)]
+
+   fis       Geopotential height of the surface (m2/s2).
+             Should have horizontal indexing consistent with the B-grid core.
+                [real, dimension(:,:)]
+
+   res       Reciprocal of eta at the surface. Used at a switch for sigma vs. eta.
+             For the sigma coordinate, all res = 0.
+             Should have horizontal indexing consistent with the B-grid core.
+                [real, dimension(:,:)]
+
+   dtadv     Time step in seconds for each call to update_bgrid_core.
+             This should be the atmospheric time step.
+                [real]
+
+   ntadj     The number of adjustment time steps for each advective time step.
+                [integer]
+
+   ntadv     The number of advection time steps for each call to update bgrid_core.
+                [integer]
+
+
+INPUT/OUTPUT
+   Dynam      Data structure that contains grid constants, time step information,
+              and other quantities needed by the dynamical core.
+                 [type(bgrid_dynam_type)]
+
+
+OPTIONAL INPUT  (Note: These argument can be modified through a
+                        namelist interface in the bgrid_core_driver_mod)
+
+   pgf_scheme           The pressure gradient force scheme used.
+                        Possible values are: 'default' or 'finite_volume'.
+                           <FONT SIZE=-1 COLOR="#000099">[character, default: pgf_scheme = 'default']</FONT>
+
+   filter_option        Determines how polar filtering is performed.
+                        filter_option = 0,  NO filtering (reduce time step approx 1/10)
+                                      = 1,  obsolete scheme (not recommended)
+                                      = 2,  ddefault scheme (see technical documention)
+                           <FONT SIZE=-1 COLOR="#000099">[integer, default: filter_option = 2]</FONT>
+
+   filter_weight        Weight applied to the polar filter that will
+                        increase (or decrease) the strength of the standard
+                        polar filter response function.
+                        SS(new) = SS(std)**filter_weight,
+                        where SS(std) is the Arakawa and Lamb response function.
+                           <FONT SIZE=-1 COLOR="#000099">[integer, default: filter_weight = 1 ]</FONT>
+
+   ref_lat_filter       The reference latitude at which polar filtering
+                        (in each hemisphere) will begin to be applied.
+                        Setting this argument &gt;= 90. will turn off
+                        polar filtering.
+                           <FONT SIZE=-1 COLOR="#000099">[real, default: ref_lat_filter = 60.]</FONT>
+
+   ddamp_coeff          Coefficient for divergence damping.
+                        Use ddamp_coeff &gt; 0 for second-order, and
+                        use ddamp_coeff &lt; 0 for fourth-order.
+                        If ddamp_coeff = 0 then no divergence damping is done.
+                           <FONT SIZE=-1 COLOR="#000099">[real, default: ddamp_coeff = 0.]</FONT>
+
+   avg_omega            Flag that determines whether the returned omega diagnostic
+                        is averaged over all adjustment time steps.  If avg_omega=FALSE
+                        then the value of omega for the last adjustment step is returned.
+                           <FONT SIZE=-1 COLOR="#000099">[logical, default: avg_omega = FALSE]</FONT>
+
+   verbose              Flag that control additional printed output.
+                        Currently, this option is not being used.
+                          <FONT SIZE=-1 COLOR="#000099">[integer, default: verbose = 0]</FONT>
+
+
+NOTES
+
+    fis and res should be dimension by the size of the global grid,
+    the number of longitude points by number of latitude points.
+    <b>The declaration of fis and res must have the target attribute
+    and the storage must be static.</b>
+
+
+---------------------------------------------------------------
+<a name="update_bgrid_core">
+
+<b>call update_bgrid_core</b> ( Var, Var_dt, Dynam, omega, div, mfew, mfns )
+
+  INPUT
+     Var     Data structure that contains the B-grid prognostic variables.
+                [prog_var_type, see prog_var_mod]
+
+  INPUT/OUTPUT
+     Var_dt  Data structure that contains the TENDENCIES of the B-grid
+             prognostic variables.
+                [prog_var_type]
+
+     Dynam   Data structure returned by a previous call to bgrid_core_init.
+                [type(bgrid_dynam_type)]
+
+  OUTPUT
+     omega   The omega diagnostic (from the thermodynamic equation) in
+             pascals per second.  See the description of optional argument
+             "avg_omega" in interface bgrid_core_init.
+                [real, dimension(ilb:,jlb:,:)]
+
+     div     The average divergence in 1/seconds.
+             This quantity is the actual mass divergence after
+             polar filtering. It has been divded by the layer mass
+             and averaged over all adjustment time steps.
+                [real, dimension(ilb:,jlb:,:)]
+
+     mfew    The average zonal mass flux in Pascals-meters^2/second.
+             It is located on the east and west faces of a temperature
+             grid box and has been averaged over all adjustment time steps.
+                [real, dimension(ilb:,jlb:,:)]
+
+     mfns    The average meridional mass flux in Pascals-meters^2/second.
+             It is located on the south and north faces of a temperature
+             grid box and has been averaged over all adjustment time steps.
+                [real, dimension(ilb:,jlb:,:)]
+
+  NOTES
+     Arrays omega, div, mfew, mfns should have horizontal dimensions
+     that are consistent with the B-grid dynamical core.
+
+---------------------------------------------------------------
+<a name="bgrid_core_end">
+
+<b>call bgrid_core_end</b> ( Dynam )
+
+  DESCRIPTION
+     This interface currently does nothing.
+     It is provided for possible future use.
+
+  INPUT/OUTPUT
+     Dynam   Data structure returned by a previous call to bgrid_core_init.
+                [type(bgrid_dynam_type)]
+
+</PRE>
+</A><!-- END ROUTINES -->
+<!-- ------------------------------------------------------------------>
+<A NAME="ERRORS">
+<HR>
+<H4>ERROR MESSAGES</H4>
+<!-- BEGIN ERRORS -->
+<PRE>
+
+<b>FATAL ERRORS in bgrid_core_init</b>
+
+    <b>input argument ntadj must be &gt;= 1</b>
+        If you were using the namelist interface &amp;bgrid_core_driver_nml
+        then check the namelist variable corresponding to this variable.
+
+    <b>input argument ntadv must be &gt;= 1</b>
+        If you were using the namelist interface &amp;bgrid_core_driver_nml
+        then check the namelist variable corresponding to this variable.
+
+    <b>input argument dt must be &gt; 0.</b>
+        The model time step usually is set at the highest program level.
+        Check the namelist for the main program.
+
+    <b>invalid PGF scheme</b>
+        The optional argument for "pgf_scheme" must be set to one of the
+        following: 'DEFAULT', 'FINITE_VOLUME', or 'SIMMONS_BURRIDGE'.
+        The default scheme is Simmons and Burridge.
+
+</PRE>
+</A><!-- END ERRORS -->
+<!-- ------------------------------------------------------------------>
+<A NAME="REFERENCES">
+<HR>
+<H4>REFERENCES</H4>
+<!-- BEGIN REFERENCES -->
+<PRE>
+
+     Here is a detailed write-up of the finite differencing used in the
+     <A HREF="bgrid_core.tech.ps">B-grid atmospheric dynamical core</A>.
+
+</PRE>
+</A><!-- END REFERENCES -->
+<!-- ------------------------------------------------------------------>
+<A NAME="BUGS">
+<HR>
+<H4>KNOWN BUGS</H4>
+<!-- BEGIN BUGS -->
+<PRE>
+
+  There are no known bugs.
+
+</PRE>
+</A><!-- END BUGS -->
+<!-- ------------------------------------------------------------------>
+<A NAME="NOTES">
+<HR>
+<H4>NOTES</H4>
+<!-- BEGIN NOTES -->
+<PRE>
+
+ internal option:
+ ---------------
+
+    alpha_implicit   determines how the coriolis and press grad force
+                     terms are solved
+                         = 0.5  trapezoidal implicit
+                         = 1.0        fully implicit
+                     [real, default: alpha_implicit = 0.5]
+
+
+  Eta/Step-Mountain Coordinate (UNSUPPORTED)
+  ----------------------------
+  The B-grid model can be run with either "sigma" (terrain following)
+  coordinates or "eta" (the step-mountain coordinate).  In the sigma
+  coordinate system, the coordinate surfaces follow the topography,
+  there is always the same number of model levels above ground at all
+  grid boxes.  In the eta coordinate system, the coordinate surfaces
+  are nearly horizontal, model grid boxes will be beneath the topography.
+  The step-mountain topography can be thought of as "building blocks".
+  The model levels below the topography are masked out.
+
+</PRE>
+</A><!-- END NOTES -->
+<!-- ------------------------------------------------------------------>
+<A NAME="PLANS">
+<HR>
+<H4>FUTURE PLANS</H4>
+<!-- BEGIN PLANS -->
+<PRE>
+
+  None.
+
+</PRE>
+</A><!-- END PLANS -->
+<!-- ------------------------------------------------------------------>
+
+<HR>
+</BODY>
+</HTML>

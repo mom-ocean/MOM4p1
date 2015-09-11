@@ -1,0 +1,14 @@
+         source /opt/modules/default/init/tcsh
+         module purge
+         module load ifort.11.0.074
+         module load icc.11.0.074
+         module load idb.11.0.034
+         module load scsl-1.5.1.0
+         module load mpt-1.18
+         module load totalview_840-0
+         module load histx
+         module load netcdf-3.6.2v2
+#         module load netcdf-4.0.1
+#        module use -a /home/fms/local/modulefiles
+#        module load fms.local.12
+         setenv NC_BLKSZ 64K 

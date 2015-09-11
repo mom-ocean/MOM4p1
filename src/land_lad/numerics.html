@@ -1,0 +1,284 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module numerics_mod</title>
+<link type="text/css" href="http://www.gfdl.noaa.gov/~fms/style/doc.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module numerics_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Chris.Milly@noaa.gov">   Christopher Milly </a>
+<br>
+<b>Reviewers:&nbsp;</b><a href="mailto:Elena.Shevliakova@noaa.gov">   Elena Shevliakova </a>,&nbsp;
+    <a href="mailto:Sergey.Malyshev@noaa.gov">   Sergey Malyshev </a>
+<br>
+<b>Change History:&nbsp;</b><a href="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS/land/lad">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   A collection of useful general-purpose numerical routines, including
+   a bisect function and linear interpolation routines. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div></div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>fms_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#lin_int">lin_int</a>:</dt>
+<dd>   Linear interpolation. </dd>
+<dt>
+<a href="#numerics_init">numerics_init</a>:</dt>
+<dd>   Initializes the numerics module. </dd>
+<dt>
+<a href="#bisect">bisect</a>:</dt>
+<dd>   Finds a position of point in array of bounds. </dd>
+<dt>
+<a href="#my_error">my_error</a>:</dt>
+<dd>   Reports error, including file name and line. </dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="lin_int"></a>
+<h4>lin_int</h4>
+<table cellspacing="0" CELLPADDING="2" BORDER="2">
+<tr>
+<td>
+<pre>subroutine lin_int(data, xx, x, res)
+
+  real, intent(in) :: data(:)    ! data to interpolate
+  real, intent(in) :: xx(:)      ! coord. corresponding to data
+  real, intent(in) :: x          ! coord to interpolate to
+  real, intent(inout) :: res     ! result of interpolation</pre>
+</td>
+</tr>
+<tr>
+<td>
+<pre>subroutine lin_int(data, xx, x, res)
+
+  real, intent(in) :: data(:,:)    ! data to interpolate
+  real, intent(in) :: xx(:)        ! coord. corresponding to data
+  real, intent(in) :: x            ! coord to interpolate to
+  real, intent(inout) :: res(:)    ! result of interpolation</pre>
+</td>
+</tr>
+<tr>
+<td>
+<pre>subroutine lin_int(data, tt, t, res)
+
+  real, intent(in) :: data(:,:,:)  ! data to interpolate
+  real, intent(in) :: tt(:)        ! time moments corresponding to data points
+  real, intent(in) :: t            ! time to interpolate to
+  real, intent(inout) :: res(:,:)  ! result</pre>
+</td>
+</tr>
+<tr>
+<td>
+<pre>subroutine lin_int(data, xx, x, res, mask)
+
+  real, intent(in) :: data(:,:)    ! data to interpolate
+  real, intent(in) :: xx(:)        ! coord. corresponding to data
+  real, intent(in) :: x            ! coord to interpolate to
+  real, intent(inout) :: res(:)    ! result of interpolation
+  logical, intent(in) :: mask(:)   ! valid data mask</pre>
+</td>
+</tr>
+<tr>
+<td>
+<pre>subroutine lin_int(data, tt, t, res, mask)
+
+  real, intent(in) :: data(:,:,:)  ! data to interpolate
+  real, intent(in) :: tt(:)        ! time moments corresponding to data points
+  real, intent(in) :: t            ! time to interpolate to
+  real, intent(inout) :: res(:,:)  ! result
+  logical, intent(in) :: mask(:,:) ! interpolation mask</pre>
+</td>
+</tr>
+</table>
+<br>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Linear interpolation. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="numerics_init"></a>
+<h4>numerics_init</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initializes the numerics module. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="bisect"></a>
+<h4>bisect</h4>
+<pre>function bisect(xx, x1, periodic)
+
+  real, intent(in)              :: xx(:)     ! array of boundaries
+  real, intent(in)              :: x1        ! point to locate
+  logical, intent(in), optional :: periodic  ! if present and true, the data
+                                             ! domain is assumed to be periodic</pre>
+<pre>value= <b>bisect</b> ( xx, x1, periodic )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Finds a position of point in array of bounds. Returns i, so that x is
+   between xx(i) and xx(i+1). </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="my_error"></a>
+<h4>my_error</h4>
+<pre>subroutine my_error(mod_name, message, mode, file, line)
+
+  character(len=*), intent(in) :: mod_name
+  character(len=*), intent(in) :: message
+  integer,          intent(in) :: mode
+  character(len=*), intent(in) :: file
+  integer,          intent(in) :: line</pre>
+<pre>
+<b>call my_error </b>(mod_name, message, mode, file, line)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Reports error, including file name and line. </dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<!-- END PUBLIC TYPES --><a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<!-- END NAMELIST --><a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>
+<dl>
+<dt>
+<b>FATAL in bisect</b>
+</dt>
+<dd>
+<span class="errmsg">Periodic bisect: period equal to zero</span>
+</dd>
+<dd>   Period is equal to zero, [ (xx(n)-xx(1)) / = 0 ] </dd>
+<dt>
+<b>FATAL in lin_int</b>
+</dt>
+<dd>
+<span class="errmsg">Coordinate is out of range</span>
+</dd>
+<dd>   Coordinate corresponding to data is out of range. </dd>
+<dt>
+<b>FATAL in lin_int</b>
+</dt>
+<dd>
+<span class="errmsg">Coordinate is out of range</span>
+</dd>
+<dd>   Time moments corresponding to data points is out of range. </dd>
+<dt>
+<b>FATAL in lin_int</b>
+</dt>
+<dd>
+<span class="errmsg">Coordinate is out of range</span>
+</dd>
+<dd>   Coordinate corresponding to data is out of range. </dd>
+<dt>
+<b>FATAL in lin_int</b>
+</dt>
+<dd>
+<span class="errmsg">Coordinate is out of range</span>
+</dd>
+<dd>   Time moments corresponding to data points is out of range. </dd>
+</dl>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

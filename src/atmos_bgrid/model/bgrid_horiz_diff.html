@@ -1,0 +1,310 @@
+<HTML>
+<TITLE>module bgrid_horiz_diff_mod</TITLE>
+<BODY BGCOLOR="#AABBCC" TEXT="#332211" >
+
+<DIV ALIGN="CENTER"> <FONT SIZE=-2>
+<A HREF="#INTERFACE">PUBLIC INTERFACE</A> / 
+<A HREF="#ROUTINES">ROUTINES</A> / 
+<A HREF="#NAMELIST">NAMELIST</A> / 
+<A HREF="#ERRORS">ERRORS</A> / 
+<A HREF="#NOTES">NOTES</A> 
+</FONT>
+<BR><BR></DIV><HR>
+
+<H2>module bgrid_horiz_diff_mod</H2>
+<A NAME="HEADER">
+<PRE>
+     <B>Contact:</B>   B. Wyman
+     <B>Reviewers:</B>
+     <B>Change history:</B> <A HREF="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS
+/atmos/bgrid/model/bgrid_horiz_diff.f90">WebCVS Log for bgrid_horiz_diff.f90</A>
+
+</PRE>
+</A><!-- END HEADER -->
+<!------------------------------------------------------------------ -->
+<A NAME="OVERVIEW">
+<HR>
+<H4>OVERVIEW</H4>
+<!-- BEGIN OVERVIEW -->
+<PRE>
+
+    B-grid dynamical core module that performs linear horizontal mixing.
+
+</PRE>
+</A><!-- END OVERVIEW -->
+<!--------------------------------------------------------------------->
+<A NAME="DESCRIPTION">
+<!-- BEGIN DESCRIPTION -->
+<PRE>
+    This module has the following features:
+      - horizontal mixing of temperature, prognostic tracers, and momentum
+      - horizontal mixing achieved using 5-pt Shapiro filter,
+        higher-order mixing achieved by re-applying lower-order results
+      - full control of coefficients and accuracy through namelist input
+        and tracer manager (field table)
+
+</PRE>
+</A><!-- END DESCRIPTION -->
+<!--------------------------------------------------------------------->
+<A NAME="MODULES_USED">
+<HR>
+<H4>OTHER MODULES USED</H4>
+<!-- BEGIN MODULES_USED -->
+<PRE>
+
+   bgrid_horiz_mod
+   bgrid_masks_mod
+   bgrid_prog_var_mod
+   bgrid_halo_mod
+   bgrid_change_grid_mod
+   fms_mod
+   constants_mod
+   field_manager_mod
+   tracer_manager_mod
+
+</PRE>
+</A><!-- END MODULES_USED -->
+<!--------------------------------------------------------------------->
+<A NAME="INTERFACE">
+<HR>
+<H4>PUBLIC INTERFACE</H4>
+<!-- BEGIN INTERFACE -->
+<PRE>
+
+   <b>use bgrid_horiz_diff_mod</b> [ ,only: horiz_diff_init,
+                                     horiz_diff  ]
+
+   <a href="#horiz_diff_init">horiz_diff_init</a>
+        Mandatory initialization routine for bgrid_horiz_diff_mod.
+        Initializes horizontal damping control parameters.
+
+   <a href="#horiz_diff">horiz_diff</a>
+        Updates prognostic variable tendencies with
+        horizontal damping tendencies.
+
+   Other user interface options:
+     1) A namelist interface called <a href="#NAMELIST">bgrid_horiz_diff_nml</a> is read
+        from file <b>input.nml</b>.
+     2) Parameters for individual tracers may be set in the tracer "field_table".
+
+</PRE>
+</A><!-- END INTERFACE -->
+<!--------------------------------------------------------------------->
+<A NAME="ROUTINES">
+<HR>
+<H4>PUBLIC ROUTINES</H4>
+<!-- BEGIN ROUTINES -->
+<PRE>
+<a name="horiz_diff_init">
+
+<b>call horiz_diff_init</b> ( Hgrid )
+
+DESCRIPTION
+  Initializes the horizontal damping module.
+  This routine reads the bgrid_horiz_diff_nml namelist,
+  queries the tracer manager for damping scheme options, and then
+  defines damping control parameters (stored internally).
+  This routine must be called before calling subroutine horiz_diff.
+
+INPUT
+   Hgrid    Data structure containing horizontal grid constants.
+               <FONT SIZE=-1 COLOR="#000099">[horiz_grid_type]</FONT>
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+<a name="horiz_diff">
+
+<b>call horiz_diff</b> (  Hgrid, Masks, nplev, dt, dpde, pres,
+                    Var, Var_dt )
+
+DESCRIPTION
+   This routine computes horizontal damping tendencies using
+   the prognostic variables at the next time level. The routine
+   returns updated prognostic variable tendencies, while leaving
+   the prognostic variables unmodified. The initialization routine
+   must be called first.
+
+INPUT
+   Masks      grid masking constants  <FONT SIZE=-1 COLOR="#000099">[grid_mask_type]</FONT>
+   nplev      number of "pure" pressure levels at the top of the model
+                 <FONT SIZE=-1 COLOR="#000099">[integer]</FONT>
+   dt         adjustment time step <FONT SIZE=-1 COLOR="#000099">[real]</FONT>
+   dpde       current pressure thickness of model layers
+                 <FONT SIZE=-1 COLOR="#000099">[real, dimension(Hgrid%ilb:,Hgrid%jlb:,:)]</FONT>
+   pres       pressure at model levels (i.e., mean of model layers)
+                 <FONT SIZE=-1 COLOR="#000099">[real, dimension(Hgrid%ilb:,Hgrid%jlb:,:)]</FONT>
+   Var        prognostic variables at the end of the last dynamics time step
+                 <FONT SIZE=-1 COLOR="#000099">[prog_var_type]</FONT>
+
+INPUT/OUTPUT
+   Hgrid      horizontal grid constants <FONT SIZE=-1 COLOR="#000099">[horiz_grid_type]</FONT>
+   Var_dt     prognostic variable tendencies,
+              accumulated since the variables were updated in Var
+                 <FONT SIZE=-1 COLOR="#000099">[prog_var_type]</FONT>
+
+NOTES
+   The damping is applied to "current" prognostic fields that have
+   been updated with their time tendencies.  
+   For example,  temp(current) = Var % t + dt * Var_dt % t.
+              
+</PRE>
+</A><!-- END ROUTINES -->
+<!------------------------------------------------------------------ -->
+<A NAME="NAMELIST">
+<HR>
+<H4>NAMELIST</H4>
+<!-- BEGIN NAMELIST -->
+<PRE>
+
+ <b>&bgrid_horiz_diff_nml</b>
+
+  damp_scheme_wind    The horizontal damping scheme.
+  damp_scheme_temp    Determines how horizontal damping coefficients vary with latitude.
+                      Possible values are:
+                       damp_scheme__ = 0 -- No damping
+                                     = 1 -- Coefficients are isotropic and uniform
+                                            with latitude
+                                     = 2 -- Coefficients are isotropic and increase
+                                            poleward of "reflat" as a function of
+                                            deq**2/d**2, where deq and d are the 
+                                            diagonal grid distances at the equator and
+                                            in the current grid box. Equatorward of
+                                            "reflat" coefficients are the same as scheme 1.
+                                     = 3 -- Coefficients are isotropic and increase
+                                            poleward of "reflat" as a function of
+                                            dxeq**2/dx**2, where dxeq and dx are the
+                                            x-axis grid distances at the equator and
+                                            in the current grid box. Equatorward of
+                                            "reflat" coefficients are the same as scheme 1.
+                                     = 4 -- Coefficients are non-isotropic,
+                                            x-axis coefficients use scheme 2, and
+                                            y-axis coefficients use scheme 1.
+                                     = 5 -- Coefficients are non-isotropic,
+                                            x-axis coefficients use scheme 3, and
+                                            y-axis coefficients use scheme 1.
+                      NOTES: Schemes 2-5 provide increased damping in higher latitudes.
+                             For the non-isotropic schemes (4 &amp; 5), the x-axis
+                             coefficients are never less than the y-axis coefficients.
+                             Momentum is controlled using "damp_scheme_wind".
+                             Temperature and tracers are controlled using
+                             "damp_scheme_temp".
+                          <FONT SIZE=-1 COLOR="#000099">[integer, default: damp_scheme___ = 1]</FONT>
+
+  reflat              Latitude cutoff (in degrees) at which increased damping
+                      in high latitudes is applied.  Equatorward of this latitude 
+                      uniform damping (scheme=1) is applied, while poleward of this
+                      latitude enhanced damping (scheme 2-5) is applied.
+                      This variable is only used when damp_scheme_wind &gt; 1 or
+                      damp_scheme_temp &gt; 1.
+                          <FONT SIZE=-1 COLOR="#000099">[real, default: reflat = 85.]</FONT>
+
+  damp_order_wind     Damping order for momentum, temperature, and the default for
+  damp_order_temp     all prognostic tracers.  Only positive, even numbers are allowed.
+  damp_order_tracer   Very little testing has been done with other than fourth order.
+                          <FONT SIZE=-1 COLOR="#000099">[integer, default: damp_order___ = 4]</FONT>
+
+  damp_coeff_wind      Damping coefficients for momentum, temperature, and the default
+  damp_coeff_temp      for all prognostic tracers. Coefficients are normalized by their
+  damp_coeff_tracer    maximum value, and must be in the range:  0 &lt;= coeff  &lt;= 1.
+                          <FONT SIZE=-1 COLOR="#000099">[real, default: damp_coeff___ = 0.35]</FONT>
+
+  slope_corr_wind      The topographic slope correction coefficients for momentum,
+  slope_corr_temp      temperature, and the default for all prognostic tracers.
+  slope_corr_tracer    Values must be in the range: 0.0 (no correction) to 1.0 (full correction).
+                       The array of size 4 corresponds to coefficients for model levels
+                        (/ 1:nlev-3, nlev-2, nlev-1, nlev /).
+                          <FONT SIZE=-1 COLOR="#000099">[real, dimension(4), default: slope_corr___ = (/0,0,0,0/)]</FONT>
+
+</PRE>
+</A><!-- END NAMELIST -->
+<!------------------------------------------------------------------ -->
+<A NAME="FIELD_TABLE">
+<HR>
+<H4>FIELD_TABLE OPTIONS</H4>
+<!-- BEGIN FIELD_TABLE -->
+
+<p>Methods:
+<ul><li><i>diff_horiz</i>
+</ul>
+
+<p>Schemes:
+<ul><li><i>linear</i> -- linear damping turned on
+    <li><i>none</i> -- turns off damping
+</ul>
+
+<p>Parameters:
+<ul><li><i>coeff</i> [real] -- same as damp_coeff_tracer
+    <li><i>order</i> [integer] -- same as damp_order_tracer
+    <li><i>slope</i> [real, dimension(4)] -- same as slope_corr_tracer
+</ul>
+
+<p>Examples:
+<PRE>
+      'diff_horiz', 'linear', 'coeff=.20,order=2,slope=1.,1.,1.,0.5'
+      'diff_horiz', 'none',   'coeff=0.'
+</PRE>
+
+</A><!-- END FIELD_TABLE -->
+<!------------------------------------------------------------------ -->
+<A NAME="ERRORS">
+<HR>
+<H4>ERROR MESSAGES</H4>
+<!-- BEGIN ERRORS -->
+<PRE>
+
+FATAL errors in bgrid_horiz_diff_mod
+
+   input array has the wrong dimensions.
+      The horizontal dimensions of input data does not agree with
+      the horizontal indexing in the "Hgrid" data structure.
+
+   invalid damping scheme
+      The namelist value must be in the range: 0 &lt;= damp_scheme &lt;= 5.
+
+   invalid damping method, .....
+      You have specified an invalid "diff_horiz" method in the field_table.
+      The valid methods are: "LINEAR" or "NONE".
+
+   invalid damping order
+      The damping order must be a positive, even number (0,2,4,....).
+      Check your input values in the namelist and field_table.
+
+   invalid damping coeff
+      Damping coefficients must be in the range: 0. &lt;= coeff &lt;= 1.
+      Check your input values in the namelist and field_table.
+
+   invalid slope correction coeff
+      Slope correction coefficients must be in the range: 0. &lt;= coeff &lt;= 1.
+      Check your input values in the namelist and field_table.
+
+</PRE>
+</A><!-- END ERRORS -->
+<!------------------------------------------------------------------ -->
+<A NAME="NOTES">
+<HR>
+<H4>NOTES</H4>
+<!-- BEGIN NOTES -->
+<PRE>
+
+    * The second-order damping operator is positive-definite.
+    * A damping order &gt; 2 is not positive-definite and may produce
+      small negative values with sharp gradients.
+
+</PRE>
+</A><!-- END NOTES -->
+<!------------------------------------------------------------------ -->
+<A NAME="PLANS">
+<HR>
+<H4>FUTURE PLANS</H4>
+<!-- BEGIN PLANS -->
+<PRE>
+
+     None.
+
+</PRE>
+</A><!-- END PLANS -->
+<!------------------------------------------------------------------ -->
+
+<HR>
+</BODY>
+</HTML>

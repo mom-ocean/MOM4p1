@@ -1,0 +1,450 @@
+<html>
+<title>B-grid Dynamical Core Supplementary Documentation</title>
+<body bgcolor="white">
+<div align="center">
+<h1>B-grid Dynamical Core:
+    Supplementary Documentation</h1>
+</div>
+<p><i>
+   This document is intended as an informal source of additional information for the
+   B-grid dynamical core.  The primary documentation is still the "Atmospheric 
+   Dynamical Core User's Guide", the web-based module documentation, and
+   the technical description on <a href="bgrid.pdf">
+   "Finite-differencing used by the B-grid dynamical core"</a>.
+   Users who want to simply run the model "as is" should refer to the "User's Guide"
+   or the "quickstart guide" which can be found on the 
+   <a href="http://www.gfdl.noaa.gov/~fms">FMS homepage</a>.
+</i></p>
+<hr>
+
+<h2>1 &nbsp; Source code</h2>
+<h3>1.1 &nbsp; Source code directories</h3>
+
+<p>When the source code is "checked out" of the CVS repository a directory called
+   <b>atmos_bgrid</b> is created. The atmos_bgrid directory contains the following 
+   sub-directories.
+
+<pre>
+   atmos_bgrid/
+        |
+        +---- documentation/ Contains this document and the technical description on
+        |                    "Finite-differencing used by the B-grid dynamical core".
+        |
+        +---- driver/  Contains sub-directories with drivers for various types
+        |              of atmospheric models. There is currently directories
+        |              for "coupled" models (this includes AMIP-type models) and
+        |              "solo" models (for standalone dynamical cores running 
+        |              the Held-Suarez benchmark).
+        |
+        +---- model/   Contains the dynamical core modules.
+        |              The modules in this directory can be considered a package
+        |              and are not intended for individual use.
+        |
+        +---- tools/   Contains tools specific to the dynamical core.
+                       The modules in this directory may be useful in other
+                       B-grid core applications such as pre- or post-processing.
+</pre>
+
+
+<h3>1.2 &nbsp; Summary of individual modules</h3>
+
+<p>This is a complete list of all B-grid core modules.
+   Depending on what model is "checked-out" (coupled versus solo)
+   determines which driver modules will be present.</p>
+
+<dl>
+<dt><a href="../driver/solo/atmosphere.f90">driver/solo/atmosphere.f90</a> &nbsp;
+    <a href="../driver/solo/atmosphere.html"><img border=0 src="text.xbm"></a>
+<dd> Atmospheric driver for (dry) B-grid dynamical core using
+     forcing from the Held-Suarez benchmark.
+
+<dt><a href="../driver/coupled/atmosphere.f90">driver/coupled/atmosphere.f90</a> &nbsp;
+    <a href="../driver/coupled/atmosphere.html"><img border=0 src="text.xbm"></a>
+<dd> Atmospheric driver for the B-grid dynamical core and
+     modular column physics.
+
+<dt><a href="../driver/coupled/bgrid_physics.f90">driver/coupled/bgrid_physics.f90</a> &nbsp;
+    <a href="../driver/coupled/bgrid_physics.html"><img border=0 src="text.xbm"></a>
+<dd> B-grid dynamical core interface to the FMS modular column physics.
+
+<dt><a href="../model/bgrid_advection.f90">model/bgrid_advection.f90</a> &nbsp;
+    <a href="../model/bgrid_advection.html"><img border=0 src="text.xbm"></a>
+<dd> Computes tendencies of vertical and horizontal advection for temperature, 
+     prognostic tracers, and momentum. The tracer advection may be followed
+     by a borrowing scheme to reduce or eliminate negative tracer values.
+
+<dt><a href="../model/bgrid_conserve_energy.f90">model/bgrid_conserve_energy.f90</a>
+<dd> Enforces energy conservation by computing a correction term 
+     to the temperature equation.
+
+<dt><a href="../model/bgrid_core.f90">model/bgrid_core.f90</a> &nbsp;
+    <a href="../model/bgrid_core.html"><img border=0 src="text.xbm"></a>
+<dd> The top-level module for the GFDL global atmospheric B-grid dynamical core.
+     This module controls many of the time integration options while
+     calling other modules to compute individual terms.
+
+<dt><a href="../model/bgrid_core_driver.f90">model/bgrid_core_driver.f90</a> &nbsp;
+    <a href="../model/bgrid_core_driver.html"><img border=0 src="text.xbm"></a>
+<dd> Driver module for running the FMS B-grid dynamical core.
+     Provides high-level interfaces that allow easy initialization, 
+     integration, and diagnostics.
+
+<dt><a href="../model/bgrid_horiz_adjust.f90">model/bgrid_horiz_adjust.f90</a>
+<dd>This modules has interfaces for computing various 
+    horizontal adjustment processes.
+
+<dt><a href="../model/bgrid_horiz_diff.f90">model/bgrid_horiz_diff.f90</a> &nbsp;
+    <a href="../model/bgrid_horiz_diff.html"><img border=0 src="text.xbm"></a>
+<dd>Computes tendencies for linear horizontal mixing.
+
+<dt><a href="../model/bgrid_sponge.f90">model/bgrid_sponge.f90</a> &nbsp;
+    <a href="../model/bgrid_sponge.html"><img border=0 src="text.xbm"></a>
+<dd>Eddy damping of prognostic fields at the top level of the model.
+
+<dt><a href="../model/bgrid_vert_adjust.f90">model/bgrid_vert_adjust.f90</a>
+<dd>This modules has interfaces for computing various 
+    vertical adjustment processes.
+
+<dt><a href="../tools/bgrid_change_grid.f90">tools/bgrid_change_grid.f90</a> &nbsp;
+    <a href="../tools/bgrid_change_grid.html"><img border=0 src="text.xbm"></a>
+<dd> Provides interfaces to interpolate data between the 
+     four basic sub-grid locations on B-grid.
+
+<dt><a href="../tools/bgrid_cold_start.f90">tools/bgrid_cold_start.f90</a> &nbsp;
+    <a href="../tools/bgrid_cold_start.html"><img border=0 src="text.xbm"></a>
+<dd> Generates simple initial conditions for the B-grid dynamics core.
+
+<dt><a href="../tools/bgrid_diagnostics.f90">tools/bgrid_diagnostics.f90</a> &nbsp;
+    <a href="../tools/bgrid_diagnostics.html"><img border=0 src="text.xbm"></a>
+<dd> Handles the archiving of B-grid prognostic variables and
+     other miscellaneous diagnostics fields to NetCDF files.
+
+<dt><a href="../tools/bgrid_halo.f90">tools/bgrid_halo.f90</a> &nbsp;
+    <a href="../tools/bgrid_halo.html"><img border=0 src="text.xbm"></a>
+<dd> Provides an interface for updating the B-grid dynamical core
+     halo rows and columns, including the polar halo rows.
+
+<dt><a href="../tools/bgrid_horiz.f90">tools/bgrid_horiz.f90</a> &nbsp;
+    <a href="../tools/bgrid_horiz.html"><img border=0 src="text.xbm"></a>
+<dd> Initializes horizontal grid constants needed by the B-grid dynamical core
+     and determines the domain decomposition for running on distributed
+     memory machines.
+
+<dt><a href="../tools/bgrid_integrals.f90">tools/bgrid_integrals.f90</a> &nbsp;
+    <a href="../tools/bgrid_integrals.html"><img border=0 src="text.xbm"></a>
+<dd> Computes and prints global integrals of various quantities
+     for the B-grid dynamical core.
+
+<dt><a href="../tools/bgrid_masks.f90">tools/bgrid_masks.f90</a> &nbsp;
+    <a href="../tools/bgrid_masks.html"><img border=0 src="text.xbm"></a>
+<dd> Provides a data structure for three-dimensional masks used
+     to define the step-mountain/eta coordinate topography.
+
+<dt><a href="../tools/bgrid_polar_filter.f90">tools/bgrid_polar_filter.f90</a> &nbsp;
+    <a href="../tools/bgrid_polar_filter.html"><img border=0 src="text.xbm"></a>
+<dd> Provides polar filtering routines for the B-grid dynamical core.
+
+<dt><a href="../tools/bgrid_prog_var.f90">tools/bgrid_prog_var.f90</a> &nbsp;
+    <a href="../tools/bgrid_prog_var.html"><img border=0 src="text.xbm"></a>
+<dd> Allocates memory for B-grid core prognostics variables
+     and provides several routines for handling these variables.
+     This module is also responsible for reading and writing the 
+     restart file for the B-grid prognostic variables and tracers.
+
+<dt><a href="../tools/bgrid_vert.f90">tools/bgrid_vert.f90</a> &nbsp;
+    <a href="../tools/bgrid_vert.html"><img border=0 src="text.xbm"></a>
+<dd> Allocates memory and initializes vertical grid constants. There are
+     several interfaces for computing various pressure and height quantities.
+</dl>
+
+
+<hr>
+<h2>2 &nbsp; Time differencing</h2>
+
+<p>The B-grid core uses a split time differencing scheme.
+   There are 3 time steps that are used. The shortest time step for gravity waves
+   is called the <i>adjustment time step</i>. Advection and horizontal mixing terms 
+   are solved on the <i>advection time step</i>. The physical forcing, diagnostics,
+   and the calculation of updated prognostic variables is done on the <i>atmospheric time step</i>.
+   This figure depicts the relationship between these time steps.</p>
+<img src="time_steps.jpg">
+   
+<p>The advection and adjustment time steps are set as multiples of the atmospheric
+    time step. The following namelist variables are used to set the time steps.</p>
+<pre>
+ &amp;main_nml  dt_atmos = 1800 /
+ &amp;bgrid_core_driver_nml  num_adjust_dt = 3,  num_advec_dt  = 3 /
+</pre>
+<p>For this example the atmospheric, advection, and adjustment time steps would
+   be 1800, 600, and 300 seconds, respectively. These are typical time steps
+   used with a resolution of 144 longitudes by 90 latitudes. 
+   <i>A model with this resolution is also referred to as a N45 model since there
+       are 45 latitudes rows between the equator and pole.</i></p>
+
+<p>Here is a flow chart for the B-grid dynamical core.
+   The center boxes represent terms that are solved on the adjustment time step.
+   Terms in the right column are applied on the advection time. The left column
+   is computed on the atmospheric time step.<br>
+ <img src="flowchart.jpg">
+
+<hr>
+<h2>3 &nbsp; Data</h2>
+
+<h3>3.1 &nbsp; Data structures</h3>
+
+<p>The B-grid core makes extensive use of data structures (Fortran 90 derived-types).
+   The data structures group related data and greatly reduce the number of arguments
+   passed between Fortran subroutines.  Unless specifically stated, the data defined
+   within a data structure is public (it may be directly accessed).
+   The data structures names defined in the B-grid core all end with <i>_type</i>.
+   All data structures are initialized by calling a constructor routine and may
+   be terminated by calling a destructor routine (if it exists).
+
+<p>Here is a summary of important data structures defined in the B-grid core.
+
+<dl>
+<dt><a href="../tools/bgrid_horiz.html#DATA_TYPES"><b><tt>horiz_grid_type</tt></b></a>
+<dd>horizontal grid constants for all sub-grids
+    <br>defined by module bgrid_horiz_mod
+
+<dt><a href="../tools/bgrid_horiz.html#DATA_TYPES"><b><tt>bgrid_type</tt></b></a>
+<dd>sub-type (component) of horiz_grid_type<br>
+    horizontal grid constants for one sub-grid (such as the temperature grid)
+    <br>defined by module bgrid_horiz_mod
+
+<dt><a href="../tools/bgrid_vert.html#DATA_TYPES"><b><tt>vert_grid_type</tt></b></a>
+<dd>vertical grid constants
+    <br>defined by module bgrid_vert_mod
+
+<dt><a href="../tools/bgrid_masks.html#DATA TYPES"><b><tt>grid_mask_type</tt></b></a>
+<dd>Contains the 3d step-mountain topography masks
+    and 2d indexing for the lowest model level
+    <br>defined by module bgrid_masks_mod
+
+<dt><a href="../tools/bgrid_prog_var.html#DATA_TYPES"><b><tt>prog_var_type</tt></b></a>
+<dd>Contains horizontal and vertical grid indices, 
+    and the prognostic variables for
+    surface pressure, momentum, temperature, and tracers
+    <br>defined by module bgrid_prog_var_mod
+
+<dt><a href="../tools/bgrid_polar_filter.html#DATA_TYPES"><b><tt>pfilt_control_type</tt></b></a>
+<dd>Contains constants needed by the polar filtering interfaces.
+    The contents of this structure are private.
+    <br>defined by module bgrid_polar_filter_mod
+
+<dt><a href="../model/bgrid_core.html#DATA_TYPES"><b><tt>bgrid_dynam_type</tt></b></a>
+<dd>Contains grid constants, time step information, and other pre-computed terms
+    that are needed by the dynamical core.  This includes other data 
+    structures and pointers to the physical data, but does not include
+    the prognostic variables.
+    <br>defined by module bgrid_core_mod
+
+</dl>
+
+<h3>3.2 &nbsp; Memory Allocation</h3>
+<p> Memory for the B-grid dynamical core is <i>dynamically</i> allocated at run time
+    (as opposed to fixing the memory requirements prior to compilation).
+    The memory required is determined from the model resolution in the initial condition
+    restart file. When the restart file does not exist the model will try to
+    create a simple initial condition (a flow at rest). In this case, the model resolution
+    is read from the cold start namelist (<a href="../tools/bgrid_cold_start.f90#NAMELIST">bgrid_cold_start_nml</a>).
+    The model fails if neither the B-grid restart file or the cold start resolution
+    have been provided.</p> 
+
+<h3>3.3 &nbsp; Data Sets</h3>
+<p>A limited number of input files are required when running the solo dynamical core.
+   The following (input) files and directories must be present in the directory
+   where you are running the model.</p>
+<dl>
+<dt><b><tt>input.nml</tt></b>
+<dd>A collection of all the namelist records needed by the model.
+    This includes namelists for the main program, infrastructure, 
+    and atmospheric physics (if applicable). Since most (if not all)
+    namelist variables have default values it is not necessary to have
+    all namelist records in this file.
+
+<dt><b><tt>diag_table</tt></b>
+<dd>Table of diagnostic fields that will be written periodically to NetCDF files.
+    Refer to documentation on the <a href="../../shared/diag_manager/diag_manager.html">diagnostics manager</a>
+    for more details.
+
+<dt><b><tt>field_table</tt></b>
+<dd>Table of declared tracers and what options will be applied to each tracer.
+    Refer to documentation on the <a href="../../shared/field_manager/field_manager.html">field</a>
+    and <a href="../../shared/tracer_manager/tracer_manager.html">tracer managers</a> for more details.
+
+<dt>Sub-directories: <b><tt>INPUT</tt></b> and <b><tt>RESTART</tt></b><br>
+<dd>The INPUT sub-directory may contain the input restart files 
+    (otherwise a cold start is attempted). The RESTART sub-directory is where
+    the model will write the output restart files.
+</dl>
+
+<p>If you are running full atmospheric model (with physics) a large number of
+   input files will be required. These files will reside in the <b><tt>INPUT</tt></b>
+   sub-directory.</p>
+
+<h3>3.4 &nbsp; Restart files</h3>
+
+<p>Restart files may be written as NetCDF files or as NATIVE files (using unformatted Fortran writes).
+A namelist switch controls which output format is used, the default is NATIVE format.
+The switch is set with the following variable:</p>
+<pre>
+ &amp;bgrid_core_driver_nml    restart_output_format = 'netcdf'  /
+ &amp;bgrid_core_driver_nml    restart_output_format = 'native'  /
+</pre>
+<p>When the NetCDF output option is used it is recommended that a single fileset
+be used to write the restart files. This option is set with the following namelist variable:</p>
+<pre>
+ &amp;fms_io_nml  threading_write = 'single', fileset_write = 'single'/
+</pre>
+<p>For input restart files the model can read either the NetCDF or NATIVE format.
+   The model will look for both file types, there is no need to set a namelist variable.</p>
+
+<p>NetCDF restart files are written using simplified metadata. 
+   For example, indices are used for axis data and there are no meaningful attributes.
+   All variables are defined with 4 dimensions (dim_1,dim_2,dim_3,time).
+   A one-dimensional field only uses the first dimension (dim_1) and sets the
+   size of the other dimensions to one. 
+   All variables are written as double (64-bit) precision.</p>
+
+<p>For a model resolution of 144 longitudes x 90 latitudes x 20 levels,
+   the following axes and variables might be defined in the restart file
+   called <i>RESTART/bgrid_prog_var.res.nc</i>.</p>
+<pre>
+dimensions:
+       xaxis_1 = 21 ;
+       xaxis_2 = 144 ;
+       yaxis_1 = 1 ;
+       yaxis_2 = 90 ;
+       yaxis_3 = 89 ;
+       zaxis_1 = 1 ;
+       zaxis_2 = 20 ;
+       Time = UNLIMITED ; // (1 currently)
+variables:
+	double eta(Time, zaxis_1, yaxis_1, xaxis_1) ;
+		eta:long_name = "eta" ;
+		eta:units = "none" ;
+	double peta(Time, zaxis_1, yaxis_1, xaxis_1) ;
+		peta:long_name = "peta" ;
+		peta:units = "none" ;
+	double ps(Time, zaxis_1, yaxis_2, xaxis_2) ;
+		ps:long_name = "ps" ;
+		ps:units = "none" ;
+	double pssl(Time, zaxis_1, yaxis_2, xaxis_2) ;
+		pssl:long_name = "pssl" ;
+		pssl:units = "none" ;
+	double res(Time, zaxis_1, yaxis_2, xaxis_2) ;
+		res:long_name = "res" ;
+		res:units = "none" ;
+	double fis(Time, zaxis_1, yaxis_2, xaxis_2) ;
+		fis:long_name = "fis" ;
+		fis:units = "none" ;
+	double u(Time, zaxis_2, yaxis_3, xaxis_2) ;
+		u:long_name = "u" ;
+		u:units = "none" ;
+	double v(Time, zaxis_2, yaxis_3, xaxis_2) ;
+		v:long_name = "v" ;
+		v:units = "none" ;
+	double t(Time, zaxis_2, yaxis_2, xaxis_2) ;
+		t:long_name = "t" ;
+		t:units = "none" ;
+</pre>
+<p>Here is a brief definition of the variables, units, and array sizes
+   for a model resolution of <i>nlon</i> by <i>nlat</i> by <i>nlev</i>.</p>
+<dl>
+<dt>eta
+<dd>sometimes referred to as b(k), it is used to compute pressure at half model levels;
+    p(i,j,k) = peta(k) + ps(i,j) * eta(k)
+    <br>[dimension(nlev+1)]
+<dt>peta
+<dd>used to compute pressure at half model levels; p(i,j,k) = peta(k) + ps(i,j) * eta(k)
+    <br>[dimension(nlev+1)]
+<dt>ps
+<dd>surface pressure in Pascals <br>[dimension(nlon,nlat)]
+<dt>pssl
+<dd>pressure at eta=1, equivalent to pssl = ps * res,
+    pssl=ps for the sigma/pressure hybrid coordinate
+    <br>[dimension(nlon,nlat)]
+<dt>res
+<dd>reciprocal of "eta" at the Earth's surface, res=1 for the sigma/pressure hybrid coordinate
+    <br>[dimension(nlon,nlat)]
+<dt>fis
+<dd>geopotential height in meters squared per second squared <br>[dimension(nlon,nlat)]
+<dt>u
+<dd>zonal wind component in meters per second <br>[dimension(nlon,nlat,nlev)]
+<dt>v
+<dd>meridional wind component in meters per second <br>[dimension(nlon,nlat,nlev)]
+<dt>t
+<dd>temperature in degrees Kelvin <br>[dimension(nlon,nlat,nlev)]
+</dl>
+
+
+<hr>
+<h2>4 &nbsp; The horizontal grid</h2>
+
+<h3>4.1 &nbsp; The global grid</h3>
+
+<p>For all model grids, array indexing increases from west to east, south to north,
+   and top to bottom.</p>
+
+<p>The global temperature grid is aligned so that grid box edges line up with
+   the equator and the poles. For a global grid with 144 x 90 points, the west and south edges
+   of the first grid box start at 0&deg; (longitude) and 90&deg;S.
+   The last grid box has east and north edges at 0&deg; (longitude) and 90&deg;N.
+   The following figure depicts key features of a global temperature grid with this resolution.</p>
+ <img src="global_temp_grid.jpg">
+
+<p>The global velocity grid is shifted by one-half of a grid box to the north and east
+     of a temperature grid box. The global velocity grid has one less latitude row
+     than the global temperature grid.
+     For a global grid with 144 x 89 points, the west and south edges of the first grid box start at
+     1.25&deg;E and 89&deg;S. The last grid box has east and north edges at 1.25&deg;E and 89&deg;N.
+     The latitude rows that would be centered at the poles are not considered part
+     of the computation domain.
+     The following figure depicts key features of a global velocity grid at this resolution.</p>
+ <img src="global_vel_grid.jpg">
+
+<h3>4.1 &nbsp; Domain decomposition</h3>
+
+<p>Domain decomposition (or layout) for multiple processor jobs is done in the X-Y (longitude-latitude) plane.
+   The following namelist variable specifies that the global grid be decomposed 3 times
+   along the X-axis and 2 times along the Y-axis (6 processors must be used).
+<pre>
+ &amp;bgrid_core_driver_nml    layout = 3,2  /
+</pre>
+   More information about how to specify the domain layout can be found in the 
+   <a href="../model/bgrid_core_driver.html#NAMELIST">online namelist documentation</a>.</p>
+
+<p>The following figure depicts the domain decomposition and displays some of the terminology.</p>
+ <img src="decomposition.jpg">
+<p>The <i>compute</i> domain and <i>data</i> domain are defined locally on each processor.
+   The compute domain is the computational grid where valid model results are computed.
+   The data domain is the compute domain plus additional rows and columns
+   to assist in horizontal differencing. The B-grid core uses only <b>one</b> halo row.
+   Higher order differencing is accomplished by doing additional <i>halo updates</i>.</p>
+
+<h3>4.2 &nbsp; Polar row indexing</h3>
+
+<p>As previous stated, the global velocity grid has one less latitude row 
+   than the temperature grid. To simplify array structures the B-grid core allocates
+   the same size arrays for both temperature and velocity fields. 
+   As a result the northernmost latitude row in the velocity grid is not used.</p>
+
+<p>The alignment of the temperature and velocity grids in the vicinity of the south pole
+   is relatively straightforward. The velocity grid cell with the same <i>i,j</i> indices
+   is located to the northeast of a temperature cell. The halo row for the velocity grid
+   is located on the pole with the velocity set to zero. </p>
+ <img src="south_pole.jpg">
+
+<p>Here is the same figure for the north pole. Note that the northernmost latitude row
+   in the velocity grid is not used.</p>
+ <img src="north_pole.jpg">
+
+<hr>
+
+</body>
+</html>
+
+
+
+

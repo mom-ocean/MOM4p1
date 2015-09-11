@@ -1,0 +1,449 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module vegetation_mod</title>
+<link type="text/css" href="http://www.gfdl.noaa.gov/~fms/style/doc.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module vegetation_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Chris.Milly@noaa.gov">   Christopher Milly </a>
+<br>
+<b>Reviewers:&nbsp;</b><a href="mailto:Elena.Shevliakova@noaa.gov">   Elena Shevliakova </a>,&nbsp;
+    <a href="mailto:Sergey.Malyshev@noaa.gov">   Sergey Malyshev </a>
+<br>
+<b>Change History:&nbsp;</b><a href="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS/land/lad/vegetation">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   Module containing processes relating to vegetation. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   Vegetation type describing vegetation characteristics is defined.
+   Vegetation data is allocated and the initial value for canopy air
+   humidity is set up. Updates vegetation and boundary data on the slow
+   and fast time-scales. Deallocates vegetation data, empties memory and
+   cleans up, if necessary. </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>  time_manager_mod<br>   mpp_domains_mod<br>    land_types_mod<br>          soil_mod<br>     constants_mod<br>           fms_mod<br>        fms_io_mod<br>sat_vapor_pres_mod<br> field_manager_mod<br>tracer_manager_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#vegetation_init">vegetation_init</a>:</dt>
+<dd>   Initializes vegetation data. </dd>
+<dt>
+<a href="#vegetation_end">vegetation_end</a>:</dt>
+<dd>   Deallocates vegetation data; empty memory and do clean-up, if
+   necessary. </dd>
+<dt>
+<a href="#update_vegetation_slow">update_vegetation_slow</a>:</dt>
+<dd>   Slow time-scale vegetation update. </dd>
+<dt>
+<a href="#update_vegetation_fast_down">update_vegetation_fast_down</a>:</dt>
+<dd>   Fast time-scale vegetation update given soil data inputs. </dd>
+<dt>
+<a href="#update_vegetation_fast_up">update_vegetation_fast_up</a>:</dt>
+<dd>   Fast time-scale vegetation update given soil data inputs. </dd>
+<dt>
+<a href="#update_vegetation_bnd_fast">update_vegetation_bnd_fast</a>:</dt>
+<dd>   Updates vegetation boundary data on the fast time-scale. </dd>
+<dt>
+<a href="#update_vegetation_bnd_slow">update_vegetation_bnd_slow</a>:</dt>
+<dd>   Updates vegetation boundary data on the slow time-scale. </dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="vegetation_init"></a>
+<h4>vegetation_init</h4>
+<pre>subroutine vegetation_init &amp;
+     ( veg, gblon, gblat, garea, gfrac, time, dt_fast, dt_slow, domain, &amp;
+     frac, mask, id_lon, id_lat )
+
+  type(vegetation_type),intent(inout) :: veg        ! state of a particular
+                                                    ! realization to initialize
+  real,                 intent(in)    :: gblon(:)   ! longitude bounds of the
+                                                    ! grid cells
+  real,                 intent(in)    :: gblat(:)   ! latitude bounds of the
+                                                    ! grid cells
+  real,                 intent(in)    :: garea(:,:) ! grid cell area 
+  real,                 intent(in)    :: gfrac(:,:) ! fraction of grid cell
+                                                    ! covered by land 
+  type(time_type),      intent(in)    :: time       ! current time
+  type(time_type),      intent(in)    :: dt_fast    ! fast time step
+  type(time_type),      intent(in)    :: dt_slow    ! slow time step
+  type(domain2d),       intent(in)    :: domain     ! our domain
+  real,                 intent(in)    :: frac(:,:,:)! fractional area of tiles
+  logical,              intent(in)    :: mask(:,:,:)! land mask
+  integer,              intent(in)    :: id_lon     ! ID of X (longitude) diag
+                                                    ! axis
+  integer,              intent(in)    :: id_lat     ! ID of Y (latitude) diag
+                                                    ! axis</pre>
+<pre>
+<b>call vegetation_init </b>&amp; ( veg, gblon, gblat, garea, gfrac, time, dt_fast, dt_slow, domain, &amp; frac, mask, id_lon, id_lat )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Allocates vegetation data and sets up initial value for canopy air
+   humidity. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="vegetation_end"></a>
+<h4>vegetation_end</h4>
+<pre>subroutine vegetation_end ( veg )
+
+  type(vegetation_type), intent(inout) :: veg ! data to finish using</pre>
+<pre>
+<b>call vegetation_end </b>( veg )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Deallocates vegetation data; empty memory and do clean-up, if
+   necessary. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_vegetation_slow"></a>
+<h4>update_vegetation_slow</h4>
+<pre>subroutine update_vegetation_slow ( veg )
+
+  type(vegetation_type), intent(inout) :: veg ! data to update</pre>
+<pre>
+<b>call update_vegetation_slow </b>( veg )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Slow time-scale vegetation update. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_vegetation_fast_down"></a>
+<h4>update_vegetation_fast_down</h4>
+<pre>subroutine update_vegetation_fast_down( veg, soil, evap, dedq, drag_q, psurf, evap1, dedt)
+
+  type(vegetation_type), intent(inout) :: veg            ! data to update
+  type(soil_type),       intent(in)    :: soil           ! soil data inputs
+  real, intent(in)  :: &amp;
+       evap   (veg%is:veg%ie,veg%js:veg%je,veg%n_tiles),&amp;! evaporation from the
+                                                         ! surface into the atm
+       drag_q (:,:,:),&amp;                                  ! drag coefficient
+       dedq   (:,:,:),&amp;                                  ! derivative of evap
+                                                         ! over q_ca
+       psurf  (veg%is:veg%ie,veg%js:veg%je,veg%n_tiles)  ! surface pressure
+
+  real, intent(out) :: &amp;
+       dedt   (:,:,:), &amp;                                 ! derivative of evap
+                                                         ! over T
+       evap1  (veg%is:veg%ie,veg%js:veg%je,veg%n_tiles)  ! evaporation from
+                                                         ! stomatal into sfc</pre>
+<pre>
+<b>call update_vegetation_fast_down </b>( veg, soil, evap, dedq, drag_q, psurf, evap1, dedt)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Fast time-scale vegetation update given soil data inputs. Calculates
+   water availability for evapotranspiration. Calculates saturated specific
+   humidity at the surface and its derivative over the surface temperature.
+   Air density is calculated here using surface q and T; in principle we
+   should use canopy q and T, but surface values are the only ones we have
+   available in this particular implementation. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_vegetation_fast_up"></a>
+<h4>update_vegetation_fast_up</h4>
+<pre>subroutine update_vegetation_fast_up( veg, soil, drag_q, evap, dedq )
+
+  type(vegetation_type), intent(inout) :: veg  ! data to update
+  type(soil_type),       intent(in)    :: soil ! soil data inputs
+  real, intent(in)  :: &amp;
+       drag_q (:,:,:),  &amp;  ! drag coefficient for atmosphere (above vegetation)
+       evap   (:,:,:),  &amp;  ! evaporation from surface into the atmosphere
+       dedq   (:,:,:)      ! derivative of evap over q_ca</pre>
+<pre>
+<b>call update_vegetation_fast_up </b>( veg, soil, drag_q, evap, dedq )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Fast time-scale vegetation update given soil data inputs. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_vegetation_bnd_fast"></a>
+<h4>update_vegetation_bnd_fast</h4>
+<pre>subroutine update_vegetation_bnd_fast ( veg, bnd )
+
+  type(vegetation_type), intent(in)    :: veg ! vegetation data
+  type(land_data_type),  intent(inout) :: bnd ! boundary data</pre>
+<pre>
+<b>call update_vegetation_bnd_fast </b>( veg, bnd )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Updates vegetation boundary data on the fast time-scale. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="update_vegetation_bnd_slow"></a>
+<h4>update_vegetation_bnd_slow</h4>
+<pre>subroutine update_vegetation_bnd_slow ( veg, bnd )
+
+  type(vegetation_type), intent(in)    :: veg ! vegetation data
+  type(land_data_type),  intent(inout) :: bnd ! boundary data</pre>
+<pre>
+<b>call update_vegetation_bnd_slow </b>( veg, bnd )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Updates vegetation boundary data on the slow time-scale. </dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<hr>
+<h4>PUBLIC TYPES</h4>
+<div>
+<b>vegetation_type</b>
+<br>
+<br>
+<div>
+<dl>   Private data type describing vegetation characteristics. <br>
+<br>
+<dt>
+<tt>domain</tt>
+</dt>
+<dl>   Computational domain <br>
+<span class="type">[domain2d, dimension2]</span>
+</dl>
+<dt>
+<tt>dt</tt>
+</dt>
+<dl>   Fast time step <br>
+<span class="type">[real, units: s]</span>
+</dl>
+<dt>
+<tt>is</tt>
+</dt>
+<dl>   Computational domain bounds <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>ie</tt>
+</dt>
+<dl>   Computational domain bounds <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>js</tt>
+</dt>
+<dl>   Computational domain bounds <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>je</tt>
+</dt>
+<dl>   Computational domain bounds <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>n_tiles</tt>
+</dt>
+<dl>   Number of tiles <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>mask</tt>
+</dt>
+<dl>   Land mask <br>
+<span class="type">[logical, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>bonedry</tt>
+</dt>
+<dl>   True if the "bone dry" conditions occur (evaporation during time step
+   is larger than the available water) <br>
+<span class="type">[logical, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>q_ca</tt>
+</dt>
+<dl>   Specific humidity of canopy air <br>
+<span class="type">[real, pointer, dimension3, units: kg/kg]</span>
+</dl>
+<dt>
+<tt>t_surf</tt>
+</dt>
+<dl>   Soil surface temperature <br>
+<span class="type">[real, pointer, dimension3, units: K]</span>
+</dl>
+<dt>
+<tt>evap</tt>
+</dt>
+<dl>   Explicit estimate of the water vapor flux <br>
+<span class="type">[real, pointer, dimension3, units: kg/m2/s]</span>
+</dl>
+<dt>
+<tt>c_surf</tt>
+</dt>
+<dl>   Conductance between surface and canopy air <br>
+<span class="type">[real, pointer, dimension3, units: kg/m2/s]</span>
+</dl>
+<dt>
+<tt>dqsatdt</tt>
+</dt>
+<dl>   Derivative of sat. humidity over T surface <br>
+<span class="type">[real, pointer, dimension3, units: kg/kg/degK]</span>
+</dl>
+<dt>
+<tt>e_q</tt>
+</dt>
+<dl>   Implicit scheme coefficient <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>f_q</tt>
+</dt>
+<dl>   Implicit scheme coefficient <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>beta</tt>
+</dt>
+<dl>   Water availability for evaporation <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END PUBLIC TYPES -->
+<a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<hr>
+<h4>NAMELIST</h4>
+<div>
+<b>&amp;vegetation_nml</b>
+<br>
+<br>
+<div>
+<dl>
+<dt>
+<tt>klev</tt>
+</dt>
+<dl>   Soil level at which to specify frozen-soil factor for modifying beta. <br>
+<span class="type">[integer, default: 0]</span>
+</dl>
+<dt>
+<tt>do_netcdf_restart</tt>
+</dt>
+<dl>   Do netcdf restart. <br>
+<span class="type">[logical, default: .true.]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END NAMELIST -->
+<a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

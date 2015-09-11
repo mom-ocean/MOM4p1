@@ -1,0 +1,424 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module land_types_mod</title>
+<link type="text/css" href="http://www.gfdl.noaa.gov/~fms/style/doc.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module land_types_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Chris.Milly@noaa.gov">   Christopher Milly </a>
+<br>
+<b>Reviewers:&nbsp;</b><a href="mailto:Elena.Shevliakova@noaa.gov">   Elena Shevliakova </a>,&nbsp;
+    <a href="mailto:Sergey.Malyshev@noaa.gov">   Sergey Malyshev </a>
+<br>
+<b>Change History:&nbsp;</b><a href="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS/land/lad">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   Initializes land data types and allocates boundary data. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   This module defines two derived types. atmos_land_boundary_type represents
+   data passed from the atmosphere to the surface and the derivatives of the
+   fluxes. Data describing the land is land_data_type. This module contains
+   routines for initializing land type data and allocating and deallocating
+   data for the specified domain and number of tiles. </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>mpp_domains_mod<br>        fms_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#land_types_init">land_types_init</a>:</dt>
+<dd>   Initializes the land types. </dd>
+<dt>
+<a href="#allocate_boundary_data">allocate_boundary_data</a>:</dt>
+<dd>   Allocates the boundary data. </dd>
+<dt>
+<a href="#deallocate_boundary_data">deallocate_boundary_data</a>:</dt>
+<dd>   Deallocates the boundary data. </dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="land_types_init"></a>
+<h4>land_types_init</h4>
+<pre>subroutine land_types_init()</pre>
+<pre>
+<b>call land_types_init </b>()</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initializes the land types module and writes the CVS version
+   and tagname </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="allocate_boundary_data"></a>
+<h4>allocate_boundary_data</h4>
+<pre>subroutine allocate_boundary_data (a2l, bnd, domain, n_tiles, n_tracers)
+  type(atmos_land_boundary_type), intent(inout) :: a2l
+  type(land_data_type), intent(inout) :: bnd     ! data to allocate
+  type(domain2d),       intent(in)  :: domain  ! domain to allocate for
+  integer,              intent(in)  :: n_tiles ! number of tiles
+  integer,              intent(in)  :: n_tracers ! number of tracers</pre>
+<pre>
+<b>call allocate_boundary_data </b>(bnd, domain, n_tiles)</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Allocates data for the specified domain and number of tiles. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="deallocate_boundary_data"></a>
+<h4>deallocate_boundary_data</h4>
+<pre>subroutine deallocate_boundary_data ( a2l, bnd )
+  type(atmos_land_boundary_type), intent(inout) :: a2l
+  type(land_data_type), intent(inout) :: bnd  ! data to deallocate</pre>
+<pre>
+<b>call deallocate_boundary_data </b>( bnd )</pre>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Deallocates the boundary data.
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<hr>
+<h4>PUBLIC TYPES</h4>
+<div>
+<b>atmos_land_boundary_type</b>
+<br>
+<br>
+<div>
+<dl>   Data passed from the atmosphere to the surface and derivatives
+   of the fluxes. This data is provided by the flux_exchange. <br>
+<br>
+<dt>
+<tt>t_flux</tt>
+</dt>
+<dl>   Sensible heat flux <br>
+<span class="type">[real, pointer, dimension3, units: W/m2]</span>
+</dl>
+<dt>
+<tt>q_flux</tt>
+</dt>
+<dl>   Water vapor flux <br>
+<span class="type">[real, pointer, dimension3, units: kg/m2/s]</span>
+</dl>
+<dt>
+<tt>lw_flux</tt>
+</dt>
+<dl>   Net longwave flux <br>
+<span class="type">[real, pointer, dimension3, units: W/m2]</span>
+</dl>
+<dt>
+<tt>sw_flux</tt>
+</dt>
+<dl>   Net shortwave flux <br>
+<span class="type">[real, pointer, dimension3, units: W/m2]</span>
+</dl>
+<dt>
+<tt>sw_flux_down_vis_dir</tt>
+</dt>
+<dl>   Downward visible band direct shortwave flux <br>
+<span class="type">[real, pointer, dimension3, units: W/m2]</span>
+</dl>
+<dt>
+<tt>sw_flux_down_total_dir</tt>
+</dt>
+<dl>   Total direct downward shortwave flux <br>
+<span class="type">[real, pointer, dimension3, units: W/m2]</span>
+</dl>
+<dt>
+<tt>sw_flux_down_vis_dif</tt>
+</dt>
+<dl>   Downward visible diffuse shortwave flux <br>
+<span class="type">[real, pointer, dimension3, units: W/m2]</span>
+</dl>
+<dt>
+<tt>sw_flux_down_total_diff</tt>
+</dt>
+<dl>   Total downward diffuse shortwave flux <br>
+<span class="type">[real, pointer, dimension3, units: W/m2]</span>
+</dl>
+<dt>
+<tt>lprec</tt>
+</dt>
+<dl>   Liquid precipitation <br>
+<span class="type">[real, pointer, dimension3, units: kg/m2/s]</span>
+</dl>
+<dt>
+<tt>fprec</tt>
+</dt>
+<dl>   Solid precipitation (snowfall) <br>
+<span class="type">[real, pointer, dimension3, units: kg/m2/s]</span>
+</dl>
+<dt>
+<tt>dhdt</tt>
+</dt>
+<dl>   Derivative of sensible heat over land surface temperature <br>
+<span class="type">[real, pointer, dimension3, units: W/m2/K]</span>
+</dl>
+<dt>
+<tt>dedt</tt>
+</dt>
+<dl>   Derivative of evaporation over land surface temperature <br>
+<span class="type">[real, pointer, dimension3, units: kg/m2/s/K]</span>
+</dl>
+<dt>
+<tt>dedq</tt>
+</dt>
+<dl>   Derivative of evaporation over near-surface specific humidity <br>
+<span class="type">[real, pointer, dimension3, units: kg/m2/s]</span>
+</dl>
+<dt>
+<tt>drdt</tt>
+</dt>
+<dl>   Derivative of LW radiation over land surface temperature <br>
+<span class="type">[real, pointer, dimension3, units: W/m2/K]</span>
+</dl>
+<dt>
+<tt>drag_q</tt>
+</dt>
+<dl>   Product of drag coefficient for water vapor by wind <br>
+<span class="type">[real, pointer, dimension3, units: m/s]</span>
+</dl>
+<dt>
+<tt>p_surf</tt>
+</dt>
+<dl>   Surface pressure <br>
+<span class="type">[real, pointer, dimension3, units: N/m2]</span>
+</dl>
+<dt>
+<tt>xtype</tt>
+</dt>
+<dl>   REGRID, REDIST or DIRECT <br>
+<span class="type">[integer]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<div>
+<b>land_data_type</b>
+<br>
+<br>
+<div>
+<dl>   Data describing the land. <br>
+<br>
+<dt>
+<tt>domain</tt>
+</dt>
+<dl>   The computational domain <br>
+<span class="type">[domain2d, dimension2]</span>
+</dl>
+<dt>
+<tt>tile_size</tt>
+</dt>
+<dl>   Fractional coverage of cell by tile, dimensionless <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>t_surf</tt>
+</dt>
+<dl>   Ground surface temperature <br>
+<span class="type">[real, pointer, dimension3, units: K]</span>
+</dl>
+<dt>
+<tt>t_ca</tt>
+</dt>
+<dl>   Canopy air temperature <br>
+<span class="type">[real, pointer, dimension3, units: K]</span>
+</dl>
+<dt>
+<tt>q_ca</tt>
+</dt>
+<dl>   Canopy air specific humidity <br>
+<span class="type">[real, pointer, dimension3, units: kg/kg]</span>
+</dl>
+<dt>
+<tt>albedo</tt>
+</dt>
+<dl>   Snow-adjusted land albedo <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>albedo_vis_dir</tt>
+</dt>
+<dl>   Snow-adjusted land albedo for direct visible <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>albedo_nir_dir</tt>
+</dt>
+<dl>   Snow-adjusted land albedo for direct nir <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>albedo_vis_dif</tt>
+</dt>
+<dl>   Snow-adjusted land albedo for diffuse visible <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>albedo_nir_dif</tt>
+</dt>
+<dl>   Snow-adjusted land albedo for diffuse nir <br>
+<span class="type">[real, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>rough_mom</tt>
+</dt>
+<dl>   Momentum roughness length <br>
+<span class="type">[real, pointer, dimension3, units: m]</span>
+</dl>
+<dt>
+<tt>rough_heat</tt>
+</dt>
+<dl>   Roughness length for tracers (heat and water) <br>
+<span class="type">[real, pointer, dimension3, units: m]</span>
+</dl>
+<dt>
+<tt>rough_scale</tt>
+</dt>
+<dl>   Roughness length for topographic momentum drag coefficient scaling <br>
+<span class="type">[real, pointer, dimension3, units: m]</span>
+</dl>
+<dt>
+<tt>discharge</tt>
+</dt>
+<dl>   Outflow of fresh water from river mouths into the ocean (per unit area
+   of the ocean part of the grid cell) <br>
+<span class="type">[real, pointer, dimension2, units: kg/m2/s]</span>
+</dl>
+<dt>
+<tt>discharge_snow</tt>
+</dt>
+<dl>   Snow analogue of discharge <br>
+<span class="type">[real, pointer, dimension2, units: kg/m2/s]</span>
+</dl>
+<dt>
+<tt>mask</tt>
+</dt>
+<dl>   Land mask; true if land <br>
+<span class="type">[logical, pointer, dimension3]</span>
+</dl>
+<dt>
+<tt>maskmap</tt>
+</dt>
+<dl>   A pointer to an array indicating which logical processors are actually used for
+   the ocean code. The other logical processors would be all land points and
+   are not assigned to actual processors. This need not be assigned if all logical
+   processors are used. This variable is dummy and need not to be set, 
+   but it is needed to pass compilation. <br>
+<span class="type">[logical, pointer, dimension2]</span>
+</dl>
+<dt>
+<tt>axes(2)</tt>
+</dt>
+<dl>   Axes IDs for diagnostics <br>
+<span class="type">[integer, dimension2]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END PUBLIC TYPES -->
+<a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<!-- END NAMELIST --><a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

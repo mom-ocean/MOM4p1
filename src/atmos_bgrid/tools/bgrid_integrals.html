@@ -1,0 +1,346 @@
+<HTML>
+<TITLE>module bgrid_integrals</TITLE>
+<BODY BGCOLOR="#AABBCC" TEXT="#332211" >
+
+<DIV ALIGN="CENTER"> <FONT SIZE=-2>
+<A HREF="#INTERFACE">PUBLIC INTERFACE</A> / 
+<A HREF="#ROUTINES">ROUTINES</A> / 
+<A HREF="#NAMELIST">NAMELIST</A> / 
+<A HREF="#ERRORS">ERRORS</A> / 
+<A HREF="#NOTES">NOTES</A> 
+</FONT>
+<BR><BR></DIV><HR>
+
+
+<H2>module bgrid_integrals</H2>
+<A NAME="HEADER">
+<PRE>
+     <B>Contact:</B>   B. Wyman
+     <B>Reviewers:</B>
+     <B>Change history:</B> <A HREF="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS
+/atmos/bgrid/tools/bgrid_integrals.f90">WebCVS Log for bgrid_integrals.f90</A>
+
+</PRE>
+</A><!-- END HEADER -->
+<!--------------------------------------------------------------------->
+<A NAME="OVERVIEW">
+<HR>
+<H4>OVERVIEW</H4>
+<!-- BEGIN OVERVIEW -->
+<PRE>
+
+     Computes and prints global integrals of various quantities
+     for the B-grid dynamical core.
+</PRE>
+</A><!-- END OVERVIEW -->
+<!--------------------------------------------------------------------->
+<A NAME="DESCRIPTION">
+<!-- BEGIN DESCRIPTION -->
+<PRE>
+
+     Global integrals of the following quantities (except wind speed)
+     are computed and output as ascii to either standard output or
+     a user supplied file name:
+
+        time                 (n)
+        surface pressure     (ps)
+        temperature          (tavg)
+        minimum temperature  (tmin)
+        maximum wind speed   (vmax)
+        kinetic energy       (ke)
+        total energy         (te)
+        enstrophy            (ens)
+        tracers (up to 4)      
+
+     Notes:
+
+        1) All quantities are instantaneous global averages,
+           EXCEPT tmin and vmax which are determined over the
+           output interval.
+        2) Global averages are area and pressure weighted, then
+           normalized by the global average pressure (see notes below).
+        3) A header record is output before the data, the header record
+           names are in parentheses.
+
+</PRE>
+</A><!-- END DESCRIPTION -->
+<!--------------------------------------------------------------------->
+<A NAME="MODULES_USED">
+<HR>
+<H4>OTHER MODULES USED</H4>
+<!-- BEGIN MODULES_USED -->
+<PRE>
+
+    bgrid_change_grid_mod
+    bgrid_horiz_mod
+    bgrid_vert_mod
+    bgrid_masks_mod
+    bgrid_prog_var_mod
+    time_manager_mod
+    fms_mod
+    constants_mod
+    mpp_mod
+    mpp_io_mod
+    mpp_domains_mod
+    field_manager_mod
+    tracer_manager_mod
+
+</PRE>
+</A><!-- END MODULES_USED -->
+<!--------------------------------------------------------------------->
+<A NAME="INTERFACE">
+<HR>
+<H4>PUBLIC INTERFACE</H4>
+<!-- BEGIN INTERFACE -->
+<PRE>
+
+   <b>use bgrid_integrals_mod</b> [, only: bgrid_integrals_init,
+                                       bgrid_integrals,
+                                       bgrid_integrals_end ]
+
+   <a href="#bgrid_integrals_init">bgrid_integrals_init</a>
+        The initialization routine that must be called once before
+        calling bgrid_integrals.
+
+   <a href="#bgrid_integrals">bgrid_integrals</a>
+         Routine that computes and writes integrals to the desired output file.
+         It is called every time step.  An internal alarm determines whether
+         the integrals should be computed and written.
+
+   <a href="#bgrid_integrals_end">bgrid_integrals_end</a>
+         Called outside the timeloop at the end of an integration.
+         Closes all open IO units.
+
+   Notes:
+
+     1) Namelist <a href="#NAMELIST">&bgrid_integrals_nml</a> controls the output frequency of 
+        B-grid global integrals.
+
+     2) If integrals are written at the end of a model run, then when
+
+</PRE>
+</A><!-- END INTERFACE -->
+<!--------------------------------------------------------------------->
+<A NAME="ROUTINES">
+<HR>
+<H4>PUBLIC ROUTINES</H4>
+<!-- BEGIN ROUTINES -->
+<PRE>
+<a name="bgrid_integrals_init">
+
+<b>call bgrid_integrals_init</b> ( Time_init, Time )
+
+ INPUT
+
+   Time_init    Base time for the experiment.
+                The base time will be subtracted from any given time
+                before that time is output/written.  [time_type]
+
+   Time         The current time, must always be greater or equal to Time_init.
+                [time_type]
+
+ NOTES
+
+   Time_init is saved internally by this module as the base time.
+   The base time will be subtracted from all input Time values.
+
+------------------------------------------------------------------------
+<a name="bgrid_integrals">
+
+<b>call bgrid_integrals</b> ( Time, Hgrid, Vgrid, Var, Masks )
+
+ INPUT
+
+   Time         The current time, must always be greater or equal to Time_init.
+                   [time_type]
+
+   Hgrid        Data structure containing horizontal grid constants
+                for the B-grid dynamical core.   [horiz_grid_type]
+
+   Vgrid        Data structure containing vertical grid constants
+                for the B-grid dynamical core.     [vert_grid_type]
+
+   Var          Data structure containing the prognostic variables
+                for the B-grid dynamical core.        [prog_var_type]
+
+   Masks        Data structure containing the grid box masks for
+                the eta coordinate.   [grid_mask_type]
+
+
+ NOTES
+
+   1) If it is not time to output integrals, bgrid_integrals will only
+      determine minimum temperature and maximum velocity.  Integrals are
+      computed only when they will be written to standard output or
+      the requested file name.
+
+------------------------------------------------------------------------
+<a name="bgrid_integrals_end">
+
+<b>call bgrid_integrals_end</b>
+
+</PRE>
+</A><!-- END ROUTINES -->
+<!--------------------------------------------------------------------->
+<A NAME="NAMELIST">
+<HR>
+<H4>NAMELIST</H4>
+<!-- BEGIN NAMELIST -->
+<PRE>
+
+<b>&bgrid_integrals_nml</b>
+
+ file_name  = optional file name for output (max length of 32 chars);
+              if no name is specified then standard output
+              will be used (this is the default)
+                 [character, default: filename  = ' ']
+
+ time_units = specifies the time units used for time,
+              the following values are valid character strings
+                 time_units = 'seconds'
+                            = 'minutes'
+                            = 'hours'   (default)
+                            = 'days'
+
+ output_interval = The time interval, expressed in units of "time_units",
+                   for global b-grid integral diagnostics.  
+                   If output_interval = 0, then no diagnostics will be generated.
+                       [real, default: output_interval = 0.0]
+
+ chksum_file_name = Optional file name for global integral output in
+                    hexadecimal format. If this file name is set, then
+                    both the hexadecimal output and standard integral
+                    output will be computed using bit-reproducible summations.
+                    If chksum_file_name is not specified, integrals may not
+                    reproduce on multiple processors.
+                    The standard output file is written regardless 
+                    of chksum_file_name.
+                      [character, default: chksum_file_name = ' ']
+
+ tracer_file_name = Optional file name for global integrals of all tracers.
+                    Use this file when more than four tracer integrals are needed.
+                    Up to 99 tracer integrals can be output in this file.
+                      [character, default: tracer_file_name = ' ']
+
+ trsout           = Tracer names to be output in the standard integral file. 
+                    Only up to 4 names can be specified. For more tracer integrals
+                    use the "tracer_file_name" option above.
+                    A default has been set for the standard atmospheric model runs.
+                      [character, dimension(4), 
+                       default: 'sphum  ','liq_wat','ice_wat','cld_amt']
+
+</PRE>
+</A><!-- END NAMELIST -->
+<!--------------------------------------------------------------------->
+<A NAME="ERRORS">
+<HR>
+<H4>ERROR MESSAGES</H4>
+<!-- BEGIN ERRORS -->
+<PRE>
+
+<b>FATAL Errors in bgrid_integrals_mod</b>
+
+    <b>must call bgrid_integrals_init</b>
+        The initialization routine must be called before calling
+        bgrid_integrals.
+
+    <b>wsum=0</b>
+        A global weighted average has a weight sum of zero.
+        This version of the code should not produce this error.
+
+<b>NOTES in bgrid_integrals_mod</b>
+
+    <b>checksum integrals of zonal and eddy KE will not be exact
+    with x-axis decomposition</b>
+        These quantities are not computed correctly for 2D domain
+        decomposition. See the bugs section.
+
+    <b>end of the output period did not coincide with the end of the model run</b>
+        You will not see integral output at the end of model run.
+        Similarly, when you restart the model, integrals will not be
+        output at the start of the run, but rather at the interval
+        specified in the namelist.
+
+</PRE>
+</A><!-- END ERRORS -->
+<!--------------------------------------------------------------------->
+<A NAME="BUGS">
+<HR>
+<H4>KNOWN BUGS</H4>
+<!-- BEGIN BUGS -->
+<PRE>
+
+   The minimum temperature (tmin) and maximum wind speed (vmax)
+   are determined over the output interval. Since there is no restart
+   information saved by this module, when the model restart the first
+   integrals printed will have incomplete values for tmin and vmax.
+
+   An internal option replaces minimum temperature and maximum wind speed
+   with zonal and eddy kinetic energy (for backward compatibility).
+   However, with domain decomposition along the x-axis these kinetic 
+   energy fields will not be computed correctly.  (The zonal means are
+   not computed correctly.)  A message is printed to alert the user.
+
+</A><!-- END BUGS -->
+<!--------------------------------------------------------------------->
+<A NAME="NOTES">
+<HR>
+<H4>NOTES</H4>
+<!-- BEGIN NOTES -->
+<PRE>
+
+ FORMULAS USED FOR COMPUTING INTEGRAL QUANTITIES
+
+   1) pressure
+
+                sum { dp dA }
+        p_avg = ------------- 
+                  sum {dA}
+
+   2) temperature and tracers
+
+                 sum { T dp dA }
+        t_avg = -----------------
+                sum {dA}  p_avg
+
+   3)  kinetic energy
+
+                 0.5 * sum { V**2 dp dA }
+        ke_avg = ------------------------
+                   sum {dA}  p_avg
+
+        where V =  u  or  v   for total kinetic energy
+                = [u] or [v]  for zonal mean kinetic energy
+                =  u* or  v*  for eddy kinetic energy
+
+                  [ ]  = zonal mean
+                  ( )* = deviation from the zonal mean
+
+   4) enstrophy
+
+                   sum { R**2 dp dA }
+        ens_avg = --------------------
+                   sum {dA}  p_avg
+
+        R = relative vorticity
+
+</PRE>
+</A><!-- END NOTES -->
+<!--------------------------------------------------------------------->
+<A NAME="PLANS">
+<HR>
+<H4>FUTURE PLANS</H4>
+<!-- BEGIN PLANS -->
+<PRE>
+
+    1) Netcdf capabilities?
+    2) Switch to a very general diagnostics handler?
+       (combine bgrid_integrals_mod and bgrid_diagnostics_mod)
+
+</PRE>
+</A><!-- END PLANS -->
+<!--------------------------------------------------------------------->
+
+<HR>
+</BODY>
+</HTML>

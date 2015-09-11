@@ -1,0 +1,432 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module ocean_util_mod</title>
+<link type="text/css" href="http://data1.gfdl.noaa.gov/~fms/style/docbook.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module ocean_util_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Ronald.Pacanowski@noaa.gov">   Ron Pacanowski </a>,&nbsp;
+    <a href="mailto:Matthew.Harrison@noaa.gov">   Matt Harrison </a>
+<br>
+<b>Reviewers:&nbsp;</b><a href="mailto:Stephen.Griffies@noaa.gov">   S. M. Griffies </a>
+<br>
+<b>Change History:&nbsp;</b><a href="http://cobweb.gfdl.noaa.gov/fms-cgi-bin/viewcvs/FMS/ocean/mom4p1/ocean_core">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   This module contains many routines of use for mom4. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   A utility module for mom4. </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>    constants_mod<br>  mpp_domains_mod<br>          mpp_mod<br> time_manager_mod<br>ocean_domains_mod<br>  ocean_types_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#ocean_util_init">ocean_util_init</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#invtri">invtri</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#invtri_bmf">invtri_bmf</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#invtri_bmf_v1">invtri_bmf_v1</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#iplot">iplot</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#matrix">matrix</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#write_timestamp">write_timestamp</a>:</dt>
+<dd></dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="ocean_util_init"></a>
+<h4>ocean_util_init</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initialize mom4 utilities. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="invtri"></a>
+<h4>invtri</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Solve the vertical diffusion equation implicitly using the
+   method of inverting a tridiagonal matrix as described in
+   Numerical Recipes in Fortran, The art of Scientific Computing,
+   Second Edition, Press, Teukolsky, Vetterling, Flannery, 1992
+   pages 42,43.
+   <br>
+<br>
+   This routine assumes that the variables are defined at grid points,
+   and the top and bottom b.c. are flux conditions.
+   <br>
+<br>
+   inputs:
+   <br>
+<br>
+   z         = right hand side terms
+   <br>
+<br>
+   nk        = number of vertical levels
+   <br>
+<br>
+   topbc     = top boundary condition
+   <br>
+<br>
+   botbc     = bottom boundary condition
+   <br>
+<br>
+   dcb       = vertical mixing coeff at base of cell
+   <br>
+<br>
+   tdt       = timestep over which do implicit update
+   <br>
+<br>
+   kmz       = level indicator
+   <br>
+<br>
+   mask      = land/sea mask
+   <br>
+<br>
+   outputs:
+   <br>
+<br>
+   z         = returned solution
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="invtri_bmf"></a>
+<h4>invtri_bmf</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Solve the vertical diffusion equation implicitly using the
+   method of inverting a tridiagonal matrix as described in
+   Numerical Recipes in Fortran, The art of Scientific Computing,
+   Second Edition, Press, Teukolsky, Vetterling, Flannery, 1992
+   pages 42,43.
+   <br>
+<br>
+   This routine assumes that the variables are defined at grid points,
+   and the top b.c. is a flux condition.  The bottom b.c. is assumed
+   to be a bottom drag which is implemented implicitly, thus allowing
+   for large values of the bottom drag coefficient. 
+   <br>
+<br>
+   NOTE: This routine is generally only called when doing the bmf 
+   implicitly in time.  The original invtri is used for explicit
+   bmf.  It differs from invtri only in the presence of a mask(i,j,kp1)
+   multiplying unity in the definition of the coefficient b(i,k). 
+   <br>
+<br>
+   NOTE: This routine is under development (SMG. Nov 2008)
+   <br>
+<br>
+   inputs:
+   <br>
+<br>
+   z         = right hand side terms
+   <br>
+<br>
+   nk        = number of vertical levels
+   <br>
+<br>
+   topbc     = top boundary condition
+   <br>
+<br>
+   botbc     = bottom boundary condition
+   <br>
+<br>
+   dcb       = vertical mixing coeff at base of cell
+   <br>
+<br>
+   tdt       = timestep over which do implicit update
+   <br>
+<br>
+   kmz       = level indicator
+   <br>
+<br>
+   mask      = land/sea mask
+   <br>
+<br>
+   outputs:
+   <br>
+<br>
+   z         = returned solution
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="invtri_bmf_v1"></a>
+<h4>invtri_bmf_v1</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Solve the vertical friction equation implicitly using the
+   method of inverting a tridiagonal matrix as described in
+   Numerical Recipes in Fortran, The art of Scientific Computing,
+   Second Edition, Press, Teukolsky, Vetterling, Flannery, 1992
+   pages 42,43.
+   <br>
+<br>
+   This routine assumes that the variables are defined at grid points,
+   and the top b.c. is a flux condition.  The bottom b.c. is assumed
+   to be a bottom drag which is implemented implicitly, thus allowing
+   for large values of the bottom drag coefficient. 
+   <br>
+<br>
+   NOTE: This routine is generally only called when doing the bmf 
+   implicitly in time.  The original invtri is used for explicit
+   bmf.  
+   <br>
+<br>
+   NOTE: This routine is under development, and is presently not 
+   used. (SMG. Nov 2008)
+   <br>
+<br>
+   inputs:
+   <br>
+<br>
+   z         = right hand side terms
+   <br>
+<br>
+   nk        = number of vertical levels
+   <br>
+<br>
+   topbc     = top boundary condition
+   <br>
+<br>
+   botbc     = time explicit bottom boundary condition (zero in this routine, since bmf is implicit) 
+   <br>
+<br>
+   gamma     = botttom drag factor scaling the u(taup1) contribution to bottom drag 
+   <br>
+<br>
+   dcb       = vertical mixing coeff at base of cell
+   <br>
+<br>
+   tdt       = timestep over which do implicit update
+   <br>
+<br>
+   kmz       = level indicator
+   <br>
+<br>
+   mask      = land/sea mask
+   <br>
+<br>
+   outputs:
+   <br>
+<br>
+   z         = returned solution
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="iplot"></a>
+<h4>iplot</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   map integer array "iarray" into characters for printing with
+   format (a1) to provide a contour map of the integer field.
+   note: max number of unique characters = 80
+   <br>
+<br>
+   inputs:
+   <br>
+<br>
+   iarray = integer array to be plotted
+   <br>
+<br>
+   is     = starting index along inner dimension of "iarray"
+   <br>
+<br>
+   ie     = ending index along inner dimension of "iarray"
+   <br>
+<br>
+   js     = starting index along outer dimension of "iarray"
+   <br>
+<br>
+   je     = ending index along outer dimension of "iarray"
+   <br>
+<br>
+   output: prints contour map of "iarray"
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="matrix"></a>
+<h4>matrix</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   matrix is a general two-dimensional array printing routine,
+   input:
+   <br>
+<br>
+   array = the array to be printed
+   <br>
+<br>
+   istrt = the 1st element of the 1st dimension to be printed
+   <br>
+<br>
+   im    = the last element of the 1st dimension to be printed
+   <br>
+<br>
+   jstrt = the 1st element of the 2nd dimension to be printed
+   <br>
+<br>
+   jm    = the last element of the 2nd dimension to be printed
+   the 2nd dimension is printed in reverse order if both
+   jstrt and jm are negative
+   <br>
+<br>
+   scale = a scaling factor by which array is divided before
+   printing.  (if this is zero, no scaling is done.)
+   if scale=0, 10 columns are printed across in e format
+   if scale&gt;0, 20 columns are printed across in f format
+   <br>
+<br>
+   output: print "array" as a matrix
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="write_timestamp"></a>
+<h4>write_timestamp</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Write the time stamp. </dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<!-- END PUBLIC TYPES --><a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<!-- END NAMELIST --><a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

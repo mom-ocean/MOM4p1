@@ -1,0 +1,119 @@
+<html>
+<head>
+
+<title>Preprocessing Guide</title>
+<LINK REL=stylesheet HREF="http://www.gfdl.noaa.gov/~fms/style/fms.css" TYPE="text/css">
+</head>
+<body>
+
+<font class=title size=+2>Brief guide to use preprocessing tools.</font><br class=title>
+
+<div class=indent14>
+       We assume that you already got the source code and runscripts. For each tool, source code,
+       html documentation and runscript are under the same subdirectory. Each runscript will
+       compile corresponding source code and run the executable to produce output data sets. 
+<br>
+<br>
+</div>
+
+
+<font class=title size=+2>Steps to produce desired data sets </font><br class=title>
+
+<div class=indent14>
+<ol>
+
+<li>Find the directory of the tool which you want to use from tool directory table. </li>
+<li>Read the documentation of the runscript at the head of each runscript </li>              
+<li>Modify the runscript to be compatible with your machine and compiler. </li>
+<li>Read the html documentation of the source code to understand the namelist variable. </li>
+<li>Configure the namelist option to obtain desired datasets. </li>
+<li>Run it. </li>              
+</ol>
+<br>
+<br>
+</div>
+
+<table cols=3 bgcolor=#ddeaf6 border=0 cellpadding=4 cellspacing=2
+          width=100% align=center>
+<caption> Tool Directory Table </caption>
+<div class=indent14>
+
+<tr>
+<td width=48%>
+<font class=title size=+1>Tool</font>
+</td>
+<td width=27%>
+<font class=title size=+1>path (under preprocessing)</font>
+</td>
+<td width=25%>
+<font class=title size=+1>runscript name</font>
+</td>              
+</tr>
+
+<tr>
+<td><tt>generate grid for ocean model </tt></td>
+<td>generate_grids/ocean </td>
+<td>ocean_grid_generator.csh </td>              
+</tr>
+
+<tr>
+<td><tt>compare topography of two ocean grids </tt></td>
+<td>generate_grids/ocean </td>
+<td>compare_grid.csh </td>              
+</tr>
+
+<tr>
+<td><tt>edit the topography of ocean grid </tt></td>
+<td>generate_grids/ocean </td>
+<td>edit_grid.csh </td>              
+</tr>
+
+<tr>
+<td><tt>generate grid for atmosphere or land model </tt></td>
+<td>generate_grids/atmos </td>
+<td>atmos_grid_generator.csh </td>              
+</tr>
+
+<tr>
+<td><tt>generate exchange grid of component models </tt></td>
+<td>generate_grids/make_xgrids </td>
+<td>make_xgrids.csh </td>              
+</tr>
+
+<tr>
+<td><tt>generate idealized boundary condition </tt></td>
+<td>mom4_prep/idealized_bc </td>
+<td>idealized_bc.csh  </td>              
+</tr>
+
+<tr>
+<td><tt>generate idealized initial condition </tt></td>
+<td>mom4_prep/idealized_ic  </td>
+<td> idealized_ic.csh</td>              
+</tr>
+
+<tr>
+<td><tt>Remap 2-D field from any grid to any grid </tt></td>
+<td> regrid_2D</td>
+<td>regrid_2d.csh  </td>              
+</tr>
+
+<tr>
+<td><tt>Remap 3-D field from any grid to any grid </tt></td>
+<td>regrid_3D </td>
+<td>regrid_3d.csh </td>              
+</tr>
+
+
+</div>
+</table>
+<br>
+
+<hr>
+<div class=footer>
+Send comments/questions to <A HREF="mailto:Zhi.Liang@noaa.gov">Zhi Liang</A>
+</div>
+<br><br>
+
+</body>
+</html>

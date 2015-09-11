@@ -1,0 +1,825 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module ocean_sbc_mod</title>
+<link type="text/css" href="http://data1.gfdl.noaa.gov/~fms/style/docbook.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module ocean_sbc_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Matthew.Harrison@noaa.gov">   M.J. Harrison </a>
+<br>
+<b>Reviewers:&nbsp;</b><a href="mailto:Tony.Rosati@noaa.gov">   A. Rosati </a>,&nbsp;
+    <a href="mailto:Stephen.Griffies@noaa.gov">   S. M. Griffies </a>,&nbsp;
+    <a href="mailto:V.Balaji@noaa.gov">   V. Balaji </a>
+<br>
+<b>Change History:&nbsp;</b><a href="http://cobweb.gfdl.noaa.gov/fms-cgi-bin/viewcvs/FMS/ocean/mom4p1/ocean_core">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   Set up the surface boundary conditions for mom4. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   This module sets up the surface boundary conditions for the model. 
+   Also fill Ocean_sfc derived-type used to pass information to other 
+   component models.
+   <br>
+<br>
+   The surface temperature should be the surface insitu temperature,
+   which is the same as the surface potential temperature.  When the 
+   model prognostic temperature variable is conservative temperature, 
+   then the surface potential temperature is carried in T_diag(index_diag_temp).
+   The resulting heat flux is potential enthalpy, which is the correct 
+   field to be forcing the T_prog(index_temp) field when the prognostic
+   temperature field is the conservative temperature.   
+   <br>
+<br> 
+</div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>           constants_mod<br>        diag_manager_mod<br>                 fms_mod<br>              fms_io_mod<br>         mpp_domains_mod<br>                 mpp_mod<br>time_interp_external_mod<br>        time_manager_mod<br>       ocean_domains_mod<br>    ocean_parameters_mod<br>   ocean_riverspread_mod<br>           ocean_tpm_mod<br>         ocean_types_mod<br>     ocean_workspace_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#ocean_sbc_init">ocean_sbc_init</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#initialize_ocean_sfc">initialize_ocean_sfc</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#sum_ocean_sfc">sum_ocean_sfc</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#zero_ocean_sfc">zero_ocean_sfc</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#avg_ocean_sfc">avg_ocean_sfc</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#ocean_sfc_restart">ocean_sfc_restart</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#ocean_sfc_end">ocean_sfc_end</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#get_ocean_sbc">get_ocean_sbc</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#flux_adjust">flux_adjust</a>:</dt>
+<dd></dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="ocean_sbc_init"></a>
+<h4>ocean_sbc_init</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initialize the ocean sbc module </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="initialize_ocean_sfc"></a>
+<h4>initialize_ocean_sfc</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initialize the ocean surface type, which passes information between ocean 
+   and other component models. 
+   <br>
+<br>
+   Note that ocean model sst passed to the atmosphere must be the surface
+   potential temperature (which is equated to surface in situ temperature).
+   If the ocean prognostic temperature variable is conservative temperature,
+   then the sst is carried in T_diag(index_diag_temp).  If the prognostic 
+   temperature is potential temperature, then the sst is carried in 
+   T_prog(index_temp). 
+   <br>
+<br>
+   Ocean_sfc%t_surf  = time averaged sst (Kelvin) passed to atmosphere/ice model
+   Ocean_sfc%s_surf  = time averaged sss (psu) passed to atmosphere/ice models
+   Ocean_sfc%u_surf  = time averaged u-current (m/sec) passed to atmosphere/ice models
+   Ocean_sfc%v_surf  = time averaged v-current (m/sec)  passed to atmosphere/ice models 
+   Ocean_sfc%sea_lev = time averaged ocean free surface height (m) plus patm/(grav*rho0) 
+   Ocean_sfc%frazil  = time accumulated frazil (J/m^2) passed to ice model.  time averaging 
+   not performed, since ice model needs the frazil accumulated over the 
+   ocean time steps.  Note that Ocean_sfc%frazil is accumulated, whereas 
+   T_diag%frazil (saved in diagnostic tracer restart file) is instantaneous. 
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="sum_ocean_sfc"></a>
+<h4>sum_ocean_sfc</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Accumulate the ocean_sfc derived type over the course of the 
+   ocean component sub-cycling used when coupling to other models. 
+   <br>
+<br>
+   Note that ocean model sst passed to the atmosphere must be the surface
+   potential temperature (which is equated to surface in situ temperature).
+   If the ocean prognostic temperature variable is conservative temperature,
+   then the sst is carried in T_diag(index_diag_temp).  If the prognostic 
+   temperature is potential temperature, then the sst is carried in 
+   T_prog(index_temp). 
+   <br>
+<br>
+   Note that this routine is called after eta_and_pbot_diagnose,
+   so Thickness%eta is eta_t(taup1).  
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="zero_ocean_sfc"></a>
+<h4>zero_ocean_sfc</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Zero the elements of the Ocean_sfc derived type. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="avg_ocean_sfc"></a>
+<h4>avg_ocean_sfc</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute average of ocean surface quantities.  This is for coupling, 
+   where pass time averaged information from ocean to other component
+   models. Note that Ocean_sfc%frazil is NOT time averaged.  Rather, it 
+   is accumulated from T_diag(index_frazil)%field in subroutine sum_ocean_sfc.
+   Doing so is necessary for heat conservation between ocean and sea 
+   ice systems.  Since it is not time averaged, frazil is not part of 
+   this averaging subroutine.  
+   <br>
+<br>
+   Note that ocean model SST passed to the atmosphere is the surface
+   potential temperature (which is equal to surface in situ temperature).
+   If the ocean prognostic temperature variable is conservative temperature,
+   then the sst is carried in T_diag(index_diag_temp).  If the prognostic 
+   temperature is potential temperature, then the sst is carried in 
+   T_prog(index_temp). 
+   <br>
+<br>
+   Note that if one removes the averaging, then we take only the 
+   latest values of the surface fields.  This approach has been 
+   found useful to stabilize the "concurrent" coupling approach.  
+   <br>
+<br>
+   Note that this routine is called after eta_and_pbot_diagnose,
+   so Thickness%eta is eta_t(taup1).  
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="ocean_sfc_restart"></a>
+<h4>ocean_sfc_restart</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Write out restart files registered through register_restart_file </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="ocean_sfc_end"></a>
+<h4>ocean_sfc_end</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Save information from Ocean_sfc to restarts. Note that it is 
+   important in general to distinguish the time accumulated quantity 
+   Ocean_sfc%frazil, saved here, from the instantaneous quantity 
+   T_diag%frazil, which is saved in the diagnostic tracer restart file. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="get_ocean_sbc"></a>
+<h4>get_ocean_sbc</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Subroutine to get the surface fluxes passed into the ocean from 
+   other component models. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="flux_adjust"></a>
+<h4>flux_adjust</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Subroutine to compute the surface fluxes derived from a 
+   restoring condition and/or correction from an input file. 
+   <br>
+<br>
+   We use a convention whereby a positive 
+   flux enters the ocean:  (+) down convention. 
+   <br>
+<br>
+   When restoring salinity, one may choose to convert this
+   flux to an implied water flux, or keep it a salt flux.
+   The default is to keep it as a salt flux.  Converting to 
+   a water flux will alter the sea level, and so alter the 
+   concentration of other tracers.  
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<!-- END PUBLIC TYPES --><a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<hr>
+<h4>NAMELIST</h4>
+<div>
+<b>&amp;ocean_sbc_nml</b>
+<br>
+<br>
+<div>
+<dl>
+<dt>
+<tt>use_waterflux</tt>
+</dt>
+<dl>   Set to true when wish to use real fresh water flux as opposed to virtual 
+   salt fluxes. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>waterflux_tavg</tt>
+</dt>
+<dl>   Set to true when aiming to suppress the leap-frog computational mode
+   by setting pme and river equal to a time averaged value over the 
+   present and previous time step.  This method requires an extra
+   field in the restart file.  This method is not needed when using
+   the TWO_LEVEL time tendency.  It remains for those who wish to 
+   use the leap-frog THREE_LEVEL time stepping scheme.  
+   Note that it does not lead to simple checks of conservation across
+   model components, since there is a time averaging performed for 
+   the water flux added to the ocean model.  It is generally NOT 
+   recommended.  Default waterflux_tavg=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>temp_restore_tscale</tt>
+</dt>
+<dl>   Time scale in days for restoring temperature within the top model 
+   grid cell. <br>
+<span class="type">[real, units: day]</span>
+</dl>
+<dt>
+<tt>salt_restore_tscale</tt>
+</dt>
+<dl>   Time scale in days for restoring salinity within the top model 
+   grid cell. <br>
+<span class="type">[real, units: day]</span>
+</dl>
+<dt>
+<tt>salt_restore_as_salt_flux</tt>
+</dt>
+<dl>   When running a use_waterflux=.true. model, we may choose to add the 
+   salinity from a restoring condition as a salt flux or convert to 
+   a fresh water flux. The addition of salt does not alter the sea 
+   level nor does it alter the concentration of other tracers, whereas
+   converting to an implied water flux will alter sea level and other
+   concentrations.  So we generally recommend the default   
+   salt_restore_as_salt_flux=.true. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>max_delta_salinity_restore</tt>
+</dt>
+<dl>   When computing the restoring flux for salinity, we can define
+   a maximum absolute value for the difference between salinity(k=1)
+   and the restoring salinity from a dataset.  This approach is useful
+   especially in NAtl western boundary, where poor Gulf Stream separation
+   can lead to large salinity biases.  If restore too much the salinity
+   field, we can spuriously transport large amounts of fresh water to the 
+   subpoloar gyre, thus impacting the overturning circulation too much.  
+   If max_delta_salinity_restore &lt; 0.0, then will NOT provide a max to the 
+   delta salinity; will instead compute an unbounded restoring flux.  
+   Default max_delta_salinity_restore=-0.50. <br>
+<span class="type">[real, units: ppt]</span>
+</dl>
+<dt>
+<tt>read_restore_mask</tt>
+</dt>
+<dl>   For reading in a mask that selects regions of the domain 
+   that are restored (mask=1) or not restored (mask=0).
+   Default  read_restore_mask=.false., whereby restore_mask
+   is set to tmask(k=1). <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>restore_mask_gfdl</tt>
+</dt>
+<dl>   For modifying the restore mask based on reading in 
+   the GFDL regional mask. Default restore_mask_gfdl=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>salinity_ref</tt>
+</dt>
+<dl>   Reference salinity used for converting fresh water flux
+   to salt flux. <br>
+<span class="type">[real, units: psu]</span>
+</dl>
+<dt>
+<tt>salt_restore_under_ice</tt>
+</dt>
+<dl>   Logical indicating whether to restore salinity under sea ice or not.
+   When .false. then will not restore salinity  in regions where we 
+   use a "frazil" condition as a proxy for where sea-ice is present.
+   Do not use sea ice extent from a sea ice model since we generally do 
+   not pass information regarding ice extent between the sea ice model 
+   and the ocean model. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>zero_net_salt_restore</tt>
+</dt>
+<dl>   Logical indicating whether to remove the area mean of the salinity 
+   restore flux so there is a net zero input of salt to the ocean
+   associated with restoring. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>zero_net_salt_correction</tt>
+</dt>
+<dl>   Logical indicating whether to remove the area mean of the salinity 
+   correction flux so there is a net zero input of salt to the ocean
+   associated with salt correction. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>zero_net_water_restore</tt>
+</dt>
+<dl>   Logical indicating whether to remove the area mean of the water 
+   restore flux so there is a net zero input of water to the ocean
+   associated with restoring. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>zero_net_water_correction</tt>
+</dt>
+<dl>   Logical indicating whether to remove the area mean of the water 
+   correction flux so there is a net zero input of water to the ocean
+   associated with water correction. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>zero_net_water_coupler</tt>
+</dt>
+<dl>   Logical indicating whether to remove the area mean of the water 
+   passed through the coupler so there is a net zero input of 
+   fresh water to the ocean associated with p-e+r. Do so by removing 
+   area mean from pme--keep river values unchanged. Note that a choice
+   must be made whether to remove the area mean from rivers or pme.  
+   We choose pme since it is more evenly distributed than rivers.   
+   Also note that we DO NOT include the ice melt in this normalization. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>zero_net_water_couple_restore</tt>
+</dt>
+<dl>   This logical keeps the total water forcing on the ocean+ice system
+   to a global mean of zero at each time step.  We DO NOT include
+   the ice melt in this normalization.  
+   Setting zero_net_water_couple_restore to true may be appropriate when 
+   running an ice-ocean model using a bulk formulae to compute
+   evaporation (e.g., CORE) and when only providing a weak (or zero)
+   salinity restoring.  It is not appropriate when running a coupled
+   ocean-atmosphere model, where the moisture budget should be 
+   conserved without an artificial removal of the global mean. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>land_model_heat_fluxes</tt>
+</dt>
+<dl>   For the case where land model passes through the coupler the heat flux 
+   associated with the liquid runoff and calving land ice fields.
+   This heat flux is computed relative to 0C, and takes the form 
+   heat flux = mass flux of water * temp of water * heat capacity, 
+   where the water can be either liquid or solid.  For many coupled models,
+   the water temperature is assumed to be that of the SST.  But 
+   more complete land models now carry the heat of its water relative to 0C,
+   in which case the ocean model does not need to assume anything about the 
+   heat content of the land water. 
+   Default land_model_heat_fluxes=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>debug_water_fluxes</tt>
+</dt>
+<dl>   Logical for debugging water fluxes. Must be true for any of the 
+   options zero_water_fluxes, zero_calving_fluxes, zero_pme_fluxes
+   or zero_runoff_fluxes to be enabled.  
+   Default debug_water_fluxes=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>zero_water_fluxes</tt>
+</dt>
+<dl>   Logical for debugging to zero the pme, river, and pme_taum1 into 
+   ocean, over-riding any input from Ice_ocean_boundary. 
+   Default zero_water_fluxes=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>zero_calving_fluxes</tt>
+</dt>
+<dl>   Logical for debugging to zero the calving flux passed into the ocean.
+   Default zero_calving_fluxes=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>zero_pme_fluxes</tt>
+</dt>
+<dl>   Logical for debugging to zero the pme flux passed into the ocean.
+   Default zero_pme_fluxes=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>zero_runoff_fluxes</tt>
+</dt>
+<dl>   Logical for debugging to zero the runoff flux passed into the ocean.
+   Default zero_runoff_fluxes=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>zero_river_fluxes</tt>
+</dt>
+<dl>   Logical for debugging to zero the river (calving+runoff) flux passed into the ocean.
+   Default zero_river_fluxes=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>convert_river_to_pme</tt>
+</dt>
+<dl>   Logical for debugging.  Here we add the river water input (calving+runoff)
+   to pme, then set river=calving=runoff=0.0.
+   Default convert_river_to_pme=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>zero_heat_fluxes</tt>
+</dt>
+<dl>   Logical for debugging to set all heat fluxes into the ocean to zero, 
+   over-riding any input from Ice_ocean_boundary.  Default is .false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>zero_surface_stress</tt>
+</dt>
+<dl>   Logical for debugging to zero all surface stress applied to the ocean,
+   over-riding any input from Ice_ocean_boundary.  Default is .false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>rotate_winds</tt>
+</dt>
+<dl>   Set to true when need to rotate the winds onto the ocean model grid.
+   This is needed for cases where the winds are on a spherical grid and 
+   the ocean model uses tripolar=.true.  If generate the wind data on 
+   the ocean model grid, then do not need to rotate, since the rotation 
+   has already been done. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>max_ice_thickness</tt>
+</dt>
+<dl>   When coupling mom4 to an ice model, the sea ice thickness may need
+   to be restricted to prevent vanishing top-level in mom4. Set 
+   max_ice_thickness (meters) &lt; dzt(k=1) to restrict. This truncation 
+   avoids the numerical problem but we loose mass conservation in the coupled
+   sea ice and ocean system. We also alter the pressure felt on the ocean 
+   as applied by the sea ice. Different vertical coordinates are needed 
+   to do the problem more realistically.   
+   <br>
+<br>
+   Note that the problem of vanishing top layer is removed when use
+   either ZSTAR or PSTAR as vertical coordinate. <br>
+<span class="type">[real, units: m]</span>
+</dl>
+<dt>
+<tt>ice_salt_concentration</tt>
+</dt>
+<dl>   The salt concentration of sea ice.  This is taken as a bulk value, and should 
+   be the same as that used by the ice model. Default is ice_salt_concentration=0.005,
+   as that is the value used in the GFDL coupled climate model. <br>
+<span class="type">[real, units: kg salt / kg ice]</span>
+</dl>
+<dt>
+<tt>runoff_salinity</tt>
+</dt>
+<dl>   The salinity of river runoff water. Default is runoff_salinity=0.0. <br>
+<span class="type">[real, units: g salt / kg runoff water (ppt)]</span>
+</dl>
+<dt>
+<tt>runoff_temp_min</tt>
+</dt>
+<dl>   The minimum temperature that river runoff into the ocean is assigned. 
+   Default runoff_temp_min=0.0. <br>
+<span class="type">[real, units: DegC]</span>
+</dl>
+<dt>
+<tt>runoffspread</tt>
+</dt>
+<dl>   Set to true if wish to use the spread_river_horz algorithm to spread 
+   the river runoff flux horizontally over an area into the ocean wider than 
+   set by the coupler.  This option requires the setup of a table for 
+   determining the points over which we spread. 
+   Default runoffspread=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>calvingspread</tt>
+</dt>
+<dl>   Set to true if wish to use the spread_river_horz algorithm to spread 
+   the calving flux horizontally over an area into the ocean wider than 
+   set by the coupler.  This option requires the setup of a table for 
+   determining the points over which we spread. 
+   Default calvingspread=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>avg_sfc_velocity</tt>
+</dt>
+<dl>   If set to true, the u and v fields passed up to the sea ice
+   are averaged over a coupling interval. TRUE by default. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>avg_sfc_temp_salt_eta</tt>
+</dt>
+<dl>   If set to true, the t, s and sea_level fields passed up to the sea ice
+   are averaged over a coupling interval. TRUE by default. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>use_full_patm_for_sea_level</tt>
+</dt>
+<dl>   The option use_full_patm_for_sea_level allows for the passing 
+   of the sea level including the full weight of sea ice back to
+   the ice model.  This approach maintains the max weight on the liquid
+   ocean according to the nml variable max_ice_thickness.  But it does 
+   allow the sea ice to know when there is actually more sea ice than that
+   set by max_ice_thickness.  This option then provides for a negative
+   feedback on the runaway growth of sea ice, since the full pressure acting to 
+   make the ice flow will be correctly felt.  This is a new option, and is not
+   fully tested, So the default is use_full_patm_for_sea_level=.false <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>do_flux_correction</tt>
+</dt>
+<dl>   For applying surface flux correction to to a tracer or wind stress field. 
+   This code is used at GFDL for idealized perturbation experiments, such 
+   as when one wishes to artificially enhance the wind stress to test 
+   model sensitivity.  It is also appropriate for coupled models that 
+   may require a modification to the fluxes arrising from a coupled model,
+   via reading in information from a pre-defined
+   data file, 
+   Default do_flux_correction=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>temp_correction_scale</tt>
+</dt>
+<dl>   A scale multiplying the flux correction for temperature.  
+   Default temp_correction_scale=0.0. <br>
+<span class="type">[real, units: dimensionless]</span>
+</dl>
+<dt>
+<tt>salt_correction_scale</tt>
+</dt>
+<dl>   A scale multiplying the flux correction for salinity.
+   Default salt_correction_scale=0.0. <br>
+<span class="type">[real, units: dimensionless]</span>
+</dl>
+<dt>
+<tt>tau_x_correction_scale</tt>
+</dt>
+<dl>   A scale multiplying the flux correction for tau_x.
+   Default tau_x_correction_scale=0.0. <br>
+<span class="type">[real, units: dimensionless]</span>
+</dl>
+<dt>
+<tt>tau_y_correction_scale</tt>
+</dt>
+<dl>   A scale multiplying the flux correction for tau_y.
+   Default tau_y_correction_scale=0.0. <br>
+<span class="type">[real, units: dimensionless]</span>
+</dl>
+<dt>
+<tt>do_bitwise_exact_sum</tt>
+</dt>
+<dl>   Set true to do bitwise exact global sum. When it is false, the global
+   sum will be non-bitwise_exact, but will significantly increase efficiency.
+   The default value is do_bitwise_exact_sum=.true. in order to ensure answers
+   do not change when alter processors.  But if wish to enhance the efficiency
+   of coupled ocean-ice models that use one of the global normalization options
+   zero_net_salt_restore        =.true.
+   zero_net_salt_correction     =.true.
+   zero_net_water_restore       =.true.
+   zero_net_water_correction    =.true.
+   zero_net_water_coupler       =.true.
+   zero_net_water_couple_restore=.true.
+   then one may wish to consider setting do_bitwise_exact_sum=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END NAMELIST -->
+<a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<a name="REFERENCES"></a>
+<hr>
+<h4>REFERENCES</h4>
+<!-- BEGIN REFERENCES -->
+<div>
+<ol>
+<li>   "Potential enthalpy: A conservative oceanic variable for evaluating
+   heat content and heat fluxes"
+   Trevor J McDougall, Journal of Physical Oceanography, 
+   vol 33, pages 945--963. </li>
+</ol>
+</div>
+<br>
+<!-- END REFERENCES -->
+<a name="COMPILER SPECIFICS"></a>
+<hr>
+<h4>COMPILER SPECIFICS</h4>
+<!-- BEGIN COMPILER SPECIFICS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END COMPILER SPECIFICS -->
+<a name="PRECOMPILER OPTIONS"></a>
+<hr>
+<h4>PRECOMPILER OPTIONS</h4>
+<!-- BEGIN PRECOMPILER OPTIONS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END PRECOMPILER OPTIONS -->
+<a name="LOADER OPTIONS"></a>
+<hr>
+<h4>LOADER OPTIONS</h4>
+<!-- BEGIN LOADER -->
+<div>None.<br>
+<br>
+</div>
+<!-- END LOADER OPTIONS -->
+<a name="TEST PROGRAM"></a>
+<hr>
+<h4>TEST PROGRAM</h4>
+<!-- BEGIN TEST PROGRAM -->
+<div>None.<br>
+</div>
+<br>
+<!-- END TEST PROGRAM -->
+<a name="KNOWN BUGS"></a>
+<hr>
+<h4>KNOWN BUGS</h4>
+<!-- BEGIN KNOWN BUGS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END KNOWN BUGS -->
+<a name="NOTES"></a>
+<hr>
+<h4>NOTES</h4>
+<!-- BEGIN NOTES -->
+<div>None.<br>
+</div>
+<br>
+<!-- END NOTES -->
+<a name="FUTURE PLANS"></a>
+<hr>
+<h4>FUTURE PLANS</h4>
+<!-- BEGIN FUTURE PLANS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END FUTURE PLANS -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

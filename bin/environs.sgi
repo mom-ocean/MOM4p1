@@ -1,0 +1,4 @@
+source /opt/modules/modules/init/csh
+module switch mpt mpt_1900  
+module switch mipspro mipspro_741n
+

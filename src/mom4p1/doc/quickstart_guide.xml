@@ -1,0 +1,274 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                         "/home/arl/lib/docbk/dtd/docbookx.dtd">
+
+<article lang="en">
+
+<articleinfo>
+   <title>MOM4 Quickstart Guide</title>
+
+   <abstract>
+   <para>
+     Brief instructions for running MOM4 experiment
+   </para>
+   </abstract>
+
+   <author>
+     <firstname>Niki</firstname>
+     <surname>Zadeh</surname>
+     <email>Niki.Zadeh@@noaa.gov</email>
+   </author>
+</articleinfo>
+
+<!-- template
+<section id="">
+  <title></title>
+   <para>
+   </para>
+</section>
+-->
+
+<section id="Where to start">
+  <title>Where to start?</title>
+   <para>
+	A good place to start is the "doc" directory, where you
+	will find  "user" guides for the MOM.
+   </para>
+</section>
+    
+<section id="How to get the source code and scripts">
+   <title>How to get the source code and scripts</title>
+   <para>
+     You can get the tar ball for source code by logging into your GFDL GForge account
+     and navigate to the Files section of MOM4p1 project area.    
+     Then you need to untar the tar bundle and cd to the resulting directory.
+     
+     For convenience, this directory will be referred to as the
+     <filename>ROOT</filename> directory. A README file in the
+     <filename>ROOT</filename> directory will tell you the contents of each
+     subdirectory under <filename>ROOT</filename>.
+   </para>
+   <para>
+     In the sections below, <filename>test_case</filename> is a generic name
+     referring to the name of a specific experiment you are working on. Thus,
+     <filename>test_case</filename> in the path
+     <filename>ROOT/exp/test_case</filename> should be replaced by a concrete
+     name (for example <filename>mom4p1_solo</filename>, <filename>mom4p1_cpld</filename>
+     , etc.)
+   </para>
+</section>
+
+
+
+<section id="How to compile and run the MOM4 tests">
+   <title>How to compile and run the MOM4 tests</title>
+   <para>
+     MOM4 requires that NetCDF and MPI libraries be installed on users'
+     platform.
+   </para>
+    <para>
+There are 5 types of test models provided for this release in the exp directory 
+all using the GFDL shared infrastructure (FMS). Each type has a compile and a run script.
+     <orderedlist>
+      <listitem> 
+      Solo     : stand alone MOM4p1 Ocean model.
+      </listitem> 
+      <listitem> 
+      Coupled  : MOM4p1 coupled with GFDL ice model  (besides null versions of atmosphere and land models).
+      </listitem> 
+      <listitem> 
+      EBM      : MOM4p1 coupled with GFDL ice and atmosphere energy balanced model 
+      </listitem> 
+      <listitem> 
+      ICCM     : MOM4p1 coupled with GFDL ice, land and atmosphere in low resolution setup.  
+      </listitem>
+      <listitem> 
+      CM2.1p1  : GFDL CM2.1 model coupled with MOM4p1
+      </listitem>      
+      </orderedlist>
+    </para>
+        
+    <para>
+    
+    To run Solo models:
+
+      <orderedlist> 
+      <listitem>      
+          Ensure that you have the right environment variable for your platform
+            in the file  bin/environs.YOUR_PLATFORM_ID  
+            YOUR_PLATFORM_ID could be any string that identifies your platform. 
+            The file bin/environs.YOUR_PLATFORM_ID gets sourced at the beginning of
+            all compile and run scripts and is there to make sure all compile and 
+            run time library paths are found.
+      </listitem>
+      <listitem> 
+  
+	 cd to exp and run mom4p1_solo_compile.csh first.
+	 
+      </listitem>
+      <listitem> 
+         Modify the 'name' variable in the script 
+            mom4p1_solo_run.csh to be the name of the test you 
+            want to run. A list of available tests is included in the script.
+            Also make sure you have a large enough working directory and
+            made a symbolic link to it called "work" in your top directory. I.e.,
+            > cd mom4p1_pubrel_dec2009
+            > ln -s YOUR_LARGE_WORK_DIR work
+            
+      </listitem>
+      <listitem> 
+          Get the required input data for the test from GFDL ftp site.
+            You can get the info by running the script mom4p1_solo_run.csh
+            and following the instructions.
+	 
+      </listitem>
+      <listitem> 
+      
+	  Run mom4p1_solo_run.csh
+         
+      </listitem>
+      <listitem> 
+          The results go into "work"
+       </listitem>
+       
+       </orderedlist> 
+       
+           </para>
+       
+      <para> 
+        
+To run all other models foo:
+         Do the same steps above to foo_compile.csh and  foo_run.csh
+
+
+            </para>
+ 
+        
+</section>
+<section id="Notes">
+   <title>Notes</title>
+    
+
+  
+      <para> 
+  The scripts have been tested fully only with Intel Fortran compiler on ia64 platform 
+         and partly with pgi and pathscale compilers on x86_64 and 
+         also gfortran4.3 compiler on Core2Duo processor. 
+
+            </para>
+       
+      <para> 
+ 
+    Some of these tests require a large disk space to save the input data.
+         Choose a partition with enough space (1-2 G) to untar the code and data bundels.
+
+            </para>
+       
+      <para> 
+ 
+    If you want to use the same root directory for all three experiments we suggest to
+         compile in the order of increasing complexity: solo -> coupled -> ebm .
+         You may have to remove some of the existing .o and .mod files
+         if you want to compile ebm experiment after the coupled experiment.
+         E.g., you probably have to:   cd ../exec; rm mpp*.o mpp*.mod fms_io*.o fms_io*.mod 
+
+            </para>
+       
+      <para> 
+ 
+    IBM platform users might want to add the following line to the top of the run scripts 
+             setenv LDR_CNTRL MAXDATA=0xD0000000@DSA 
+
+            </para>
+       
+      <para> 
+ 
+
+    The compile scripts provide the basic capability to use static memory allocation 
+         which might be faster on some platforms. In that case you need to adjust the values
+         of domain bounds properly according to the number of processors and layout. 
+
+            </para>
+       
+      <para> 
+     The compile scripts use netcdf3 by default. 
+         If you want to use netcdf4 libraries instead you can do so by deleting the "-Duse_netCDF3"
+         from the CPPs in compile scripts and then recompile.   
+
+	There are 5 types of MOM4 tests provided in the exp directory,
+	both using the GFDL shared infrastructure (FMS) :
+
+ 
+   </para>
+
+ 
+       
+</section>
+
+<section id="How to prepare input data">
+   <title>How to prepare input data</title>
+   <para>
+	The input data needed to run the selected experiments (tests) that
+	are included in this release are available via 
+        <ulink url="ftp://ftp.gfdl.noaa.gov/perm/MOM4/mom4p1_pubrel_dec2009/exp"> anonymous ftp</ulink>.
+   
+      Note that data in <filename>ASCII, HISTORY, RESTART</filename> directories are
+      <emphasis>NOT</emphasis> needed for running experiments. They are the outputs 
+      of the experiments and are provided for the
+      purpose of comparing your results with results produced at GFDL.
+        
+       </para>
+
+     <para>
+        Tools are provided so that users can create data from scratch for their own
+        experiments. For more
+        details refer to <filename>ROOT/src/preprocessing</filename>.
+      </para>
+    
+  </section>
+
+<section id="Examine the output">
+   <title>Examine the output</title>
+   <para>
+     To keep the runscript simple all output files of a model run will be in
+     the work directory. There are three types of output files:
+     <orderedlist>
+      <listitem>
+        ascii file with <filename>.fms.out</filename> extension: the
+        description of the setup of the run and verbose comments printed out
+        during the run.
+      </listitem>
+      <listitem>
+        restart files in <filename>RESTART</filename> directory: the model
+        fields necessary to initialize future runs of the model.
+      </listitem>
+      <listitem>
+        history files with <filename>.nc.tar</filename> extension: output of
+        the model, both averaged over specified time intervals and snapshots.
+      </listitem>
+     </orderedlist>
+   </para>
+   <para>
+     The ascii file contains everything written to the screen during model
+     execution. The total time for model execution as well as the times of
+     separate modules are reported here. All <filename>.tar</filename> files
+     should be decompressed for viewing. The decompress command is:
+     <programlisting>
+       tar -xvf filename.tar
+     </programlisting>
+   </para>
+   <para>
+     Users will see result files in NetCDF format. Postprocessing tools such
+     as Ferret, ncview, grads or matlab can be used to view data in these
+     files.
+   </para>
+   <para>
+     The outputs of the selected experiments are provided on 	
+<ulink url="ftp://ftp.gfdl.noaa.gov/perm/MOM4/mom4p1_pubrel_dec2009/exp">GFDL ftp site</ulink>
+     for the purpose of comparing your results with results produced at GFDL.
+   </para>
+
+</section>
+
+</article>

@@ -1,0 +1,16 @@
+# Makefile for the "mppnccombine" program
+#
+# Written by Hans Vahlenkamp (Hans.Vahlenkamp@noaa.gov)
+# Geophysical Fluid Dynamics Laboratory / NOAA
+# Princeton Forrestal Campus
+# Last updated: 05/15/08
+
+SOURCES = mppnccombine.c
+OBJECTS = mppnccombine.o
+CC = icc
+CFLAGS = -O2 -I/usr/local/netcdf-4.0_hdf/include -I/usr/local/hdf5-1.8.1/include -I/opt/mpt/1.14/include
+LFLAGS = -L/usr/local/netcdf-4.0_hdf/lib -L/usr/local/hdf5-1.8.1/lib -L/opt/mpt/1.14/lib
+LIBS = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lmpi
+
+mppnccombine: $(OBJECTS)
+	$(CC) -o mppnccombine -s $(OBJECTS) $(LFLAGS) $(LIBS)

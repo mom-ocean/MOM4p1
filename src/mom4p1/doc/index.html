@@ -1,0 +1,363 @@
+<html>
+<head>
+  <meta name="generator" content=
+  "HTML Tidy for Linux/x86 (vers 1 September 2005), see www.w3.org">
+  <meta http-equiv="Content-Type" content=
+  "text/html; charset=us-ascii">
+
+  <title>MOM4 Quickstart Guide</title>
+  <link rel="stylesheet" href=
+  "http://data1.gfdl.noaa.gov/~fms/style/docbook_jason.css" type=
+  "text/css">
+  <meta name="generator" content="DocBook XSL Stylesheets V1.64.1">
+  <meta name="description" content=
+  "Brief instructions for running MOM4 experiment">
+</head>
+
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084"
+alink="#0000FF">
+  <div class="article" lang="en">
+    <div class="titlepage">
+      <div>
+        <div>
+          <h1 class="title"><a name="id2561649"></a>MOM4 Quickstart
+          Guide</h1>
+        </div>
+
+        <div>
+          <div class="author">
+            <h3 class="author"><span class="firstname">Niki</span>
+            <span class="surname">Zadeh</span></h3><a href=""
+            onclick=
+            "javascript:window.location='mai'+'lt'+'o:'+'Niki.Zadeh'+'%40'+'@noaa.gov'"
+            onmouseover=
+            "javascript:window.status='send ema'+'il';return true;"
+            onmouseout=
+            "javascript:window.status='';return true;">Niki.Zadeh<img border="0"
+            src=
+            "http://data1.gfdl.noaa.gov/~fms/images/atgreen.png"
+            alt="&amp;#64;" style=
+            "display:inline; height:.8em;">@noaa.gov</a>
+          </div>
+        </div>
+
+        <div>
+          <div class="abstract">
+            <p class="title"><b>Abstract</b></p>
+
+            <p>Brief instructions for running MOM4 experiment</p>
+          </div>
+        </div>
+      </div>
+      <hr>
+    </div>
+
+    <div xmlns="http://www.w3.org/TR/xhtml1/transitional" class=
+    "toc">
+      <p class="subtitle"><b>Table of Contents</b></p>
+
+      <dl>
+        <dt xmlns=""><span class="section"><a href=
+        "#Where%20to%20start">1. Where to start?</a></span></dt>
+
+        <dt xmlns=""><span class="section"><a href=
+        "#How%20to%20get%20the%20source%20code%20and%20scripts">2.
+        How to get the source code and scripts</a></span></dt>
+
+        <dt xmlns=""><span class="section"><a href=
+        "#How%20to%20compile%20and%20run%20the%20MOM4%20tests">3.
+        How to compile and run the MOM4 tests</a></span></dt>
+
+        <dt xmlns=""><span class="section"><a href="#Notes">4.
+        Notes</a></span></dt>
+
+        <dt xmlns=""><span class="section"><a href=
+        "#How%20to%20prepare%20input%20data">5. How to prepare
+        input data</a></span></dt>
+
+        <dt xmlns=""><span class="section"><a href=
+        "#Examine%20the%20output">6. Examine the
+        output</a></span></dt>
+      </dl>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "Where to start"></a>1.&nbsp;Where to start?</h2>
+          </div>
+        </div>
+      </div>
+
+      <p>A good place to start is the "doc" directory, where you
+      will find "user" guides for the MOM.</p>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "How to get the source code and scripts"></a>2.&nbsp;How
+            to get the source code and scripts</h2>
+          </div>
+        </div>
+      </div>
+
+      <p>You can get the tar ball for source code by logging into
+      your GFDL GForge account and navigate to the Files section of
+      MOM4p1 project area. Then you need to untar the tar bundle
+      and cd to the resulting directory. For convenience, this
+      directory will be referred to as the <tt class=
+      "filename">ROOT</tt> directory. A README file in the
+      <tt class="filename">ROOT</tt> directory will tell you the
+      contents of each subdirectory under <tt class=
+      "filename">ROOT</tt>.</p>
+
+      <p>In the sections below, <tt class="filename">test_case</tt>
+      is a generic name referring to the name of a specific
+      experiment you are working on. Thus, <tt class=
+      "filename">test_case</tt> in the path <tt class=
+      "filename">ROOT/exp/test_case</tt> should be replaced by a
+      concrete name (for example <tt class=
+      "filename">mom4p1_solo</tt>, <tt class=
+      "filename">mom4p1_cpld</tt> , etc.)</p>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "How to compile and run the MOM4 tests"></a>3.&nbsp;How
+            to compile and run the MOM4 tests</h2>
+          </div>
+        </div>
+      </div>
+
+      <p>MOM4 requires that NetCDF and MPI libraries be installed
+      on users' platform.</p>
+
+      <p>There are 5 types of test models provided for this release
+      in the exp directory all using the GFDL shared infrastructure
+      (FMS). Each type has a compile and a run script.</p>
+
+      <div class="orderedlist">
+        <ol type="1">
+          <li>Solo : stand alone MOM4p1 Ocean model.</li>
+
+          <li>Coupled : MOM4p1 coupled with GFDL ice model (besides
+          null versions of atmosphere and land models).</li>
+
+          <li>EBM : MOM4p1 coupled with GFDL ice and atmosphere
+          energy balanced model</li>
+
+          <li>ICCM : MOM4p1 coupled with GFDL ice, land and
+          atmosphere in low resolution setup.</li>
+
+          <li>CM2.1p1 : GFDL CM2.1 model coupled with MOM4p1</li>
+        </ol>
+      </div>
+
+      <p>To run Solo models:</p>
+
+      <div class="orderedlist">
+        <ol type="1">
+          <li>Ensure that you have the right environment variable
+          for your platform in the file
+          bin/environs.YOUR_PLATFORM_ID YOUR_PLATFORM_ID could be
+          any string that identifies your platform. The file
+          bin/environs.YOUR_PLATFORM_ID gets sourced at the
+          beginning of all compile and run scripts and is there to
+          make sure all compile and run time library paths are
+          found.</li>
+
+          <li>cd to exp and run mom4p1_solo_compile.csh first.</li>
+
+          <li>Modify the 'name' variable in the script
+          mom4p1_solo_run.csh to be the name of the test you want
+          to run. A list of available tests is included in the
+          script. Also make sure you have a large enough working
+          directory and made a symbolic link to it called "work" in
+          your top directory. I.e., &gt; cd mom4p1_pubrel_dec2009
+          &gt; ln -s YOUR_LARGE_WORK_DIR work</li>
+
+          <li>Get the required input data for the test from GFDL
+          ftp site. You can get the info by running the script
+          mom4p1_solo_run.csh and following the instructions.</li>
+
+          <li>Run mom4p1_solo_run.csh</li>
+
+          <li>The results go into "work"</li>
+        </ol>
+      </div>
+
+      <p>To run all other models foo: Do the same steps above to
+      foo_compile.csh and foo_run.csh</p>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "Notes"></a>4.&nbsp;Notes</h2>
+          </div>
+        </div>
+      </div>
+
+      <p>The scripts have been tested fully only with Intel Fortran
+      compiler on ia64 platform and partly with pgi and pathscale
+      compilers on x86_64 and also gfortran4.3 compiler on Core2Duo
+      processor.</p>
+
+      <p>Some of these tests require a large disk space to save the
+      input data. Choose a partition with enough space (1-2 G) to
+      untar the code and data bundels.</p>
+
+      <p>If you want to use the same root directory for all three
+      experiments we suggest to compile in the order of increasing
+      complexity: solo -&gt; coupled -&gt; ebm . You may have to
+      remove some of the existing .o and .mod files if you want to
+      compile ebm experiment after the coupled experiment. E.g.,
+      you probably have to: cd ../exec; rm mpp*.o mpp*.mod
+      fms_io*.o fms_io*.mod</p>
+
+      <p>IBM platform users might want to add the following line to
+      the top of the run scripts setenv LDR_CNTRL
+      MAXDATA=0xD0000000@DSA</p>
+
+      <p>The compile scripts provide the basic capability to use
+      static memory allocation which might be faster on some
+      platforms. In that case you need to adjust the values of
+      domain bounds properly according to the number of processors
+      and layout.</p>
+
+      <p>The compile scripts use netcdf3 by default. If you want to
+      use netcdf4 libraries instead you can do so by deleting the
+      "-Duse_netCDF3" from the CPPs in compile scripts and then
+      recompile. There are 5 types of MOM4 tests provided in the
+      exp directory, both using the GFDL shared infrastructure
+      (FMS) :</p>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "How to prepare input data"></a>5.&nbsp;How to prepare
+            input data</h2>
+          </div>
+        </div>
+      </div>
+
+      <p>The input data needed to run the selected experiments
+      (tests) that are included in this release are available via
+      <a href=
+      "ftp://ftp.gfdl.noaa.gov/perm/MOM4/mom4p1_pubrel_dec2009/exp"
+      target="_top">anonymous ftp</a>. Note that data in <tt class=
+      "filename">ASCII, HISTORY, RESTART</tt> directories are
+      <span class="emphasis"><em>NOT</em></span> needed for running
+      experiments. They are the outputs of the experiments and are
+      provided for the purpose of comparing your results with
+      results produced at GFDL.</p>
+
+      <p>Tools are provided so that users can create data from
+      scratch for their own experiments. For more details refer to
+      <tt class="filename">ROOT/src/preprocessing</tt>.</p>
+    </div>
+
+    <div class="section" lang="en">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h2 class="title" style="clear: both"><a name=
+            "Examine the output"></a>6.&nbsp;Examine the
+            output</h2>
+          </div>
+        </div>
+      </div>
+
+      <p>To keep the runscript simple all output files of a model
+      run will be in the work directory. There are three types of
+      output files:</p>
+
+      <div class="orderedlist">
+        <ol type="1">
+          <li>ascii file with <tt class="filename">.fms.out</tt>
+          extension: the description of the setup of the run and
+          verbose comments printed out during the run.</li>
+
+          <li>restart files in <tt class="filename">RESTART</tt>
+          directory: the model fields necessary to initialize
+          future runs of the model.</li>
+
+          <li>history files with <tt class="filename">.nc.tar</tt>
+          extension: output of the model, both averaged over
+          specified time intervals and snapshots.</li>
+        </ol>
+      </div>
+
+      <p>The ascii file contains everything written to the screen
+      during model execution. The total time for model execution as
+      well as the times of separate modules are reported here. All
+      <tt class="filename">.tar</tt> files should be decompressed
+      for viewing. The decompress command is:</p>
+      <pre class="programlisting">
+       tar -xvf filename.tar
+     
+</pre>
+
+      <p>Users will see result files in NetCDF format.
+      Postprocessing tools such as Ferret, ncview, grads or matlab
+      can be used to view data in these files.</p>
+
+      <p>The outputs of the selected experiments are provided on
+      <a href=
+      "ftp://ftp.gfdl.noaa.gov/perm/MOM4/mom4p1_pubrel_dec2009/exp"
+      target="_top">GFDL ftp site</a> for the purpose of comparing
+      your results with results produced at GFDL.</p>
+    </div>
+  </div><br>
+  <br>
+
+  <div class="footer" style="position:relative;">
+    <div style="float:right; clear:right; text-align:right;">
+      Document Author: <a href="" onclick=
+      "javascript:window.location='mai'+'lt'+'o:'+'Niki.Zadeh'+'%40'+'@noaa.gov'"
+      onmouseover=
+      "javascript:window.status='send ema'+'il';return true;"
+      onmouseout=
+      "javascript:window.status='';return true;">&nbsp;Niki&nbsp;Zadeh</a><br>
+
+      <a href="quickstart_guide.pdf">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+      &nbsp; &nbsp; &nbsp; Download Document as PDF</a><br>
+
+      <div style=
+      "position:absolute; bottom:0px; float:right; clear:right; text-align:right;">
+      *Links on this page may cause you to leave the GFDL website.
+      The U.S. Government does not endorse any non-Federal websites
+      on this page.
+      </div>
+    </div><a href="http://www.noaa.gov/privacy.html">Privacy
+    Policy</a> | <a href=
+    "http://www.noaa.gov/disclaimer.html">Disclaimer</a><br>
+    <a href="http://www.doc.gov/">US Department of Commerce</a> |
+    <a href="http://www.noaa.gov/">NOAA</a> | <a href=
+    "http://www.oar.noaa.gov/">OAR</a> | <a href=
+    "http://www.gfdl.noaa.gov/">Geophysical Fluid Dynamics
+    Laboratory</a><br>
+    physical address: Princeton Forrestal Campus 201 Forrestal
+    Road, Princeton NJ, 08542-0308<br>
+    mailing address: PO Box 308, Princeton NJ, 08542-0308<br>
+    phone: (609) 452-6500 fax: (609) 987-5063<br>
+    <a href="mailto:oar.gfdl.webmaster-data1@noaa.gov">mailto: web
+    master</a><br>
+    last modified: December 17, 2009
+  </div>
+</body>
+</html>

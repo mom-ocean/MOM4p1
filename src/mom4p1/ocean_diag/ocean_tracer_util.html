@@ -1,0 +1,301 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module ocean_tracer_util_mod</title>
+<link type="text/css" href="http://data1.gfdl.noaa.gov/~fms/style/docbook.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module ocean_tracer_util_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:Ronald.Pacanowski@noaa.gov">   Ron Pacanowski </a>
+<br>
+<b>Reviewers:&nbsp;</b><a href="mailto:Stephen.Griffies@noaa.gov">   S. M. Griffies </a>
+<br>
+<b>Change History:&nbsp;</b><a href="http://cobweb.gfdl.noaa.gov/fms-cgi-bin/viewcvs/FMS/ocean/mom4p1/ocean_diag">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   This module contains many routines of use for tracer diagnostics in mom4. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   Tracer utility module for mom4. Of use for tracer diagnostics. </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>             mpp_mod<br>        platform_mod<br>   ocean_domains_mod<br>ocean_parameters_mod<br>     ocean_types_mod<br>      ocean_util_mod<br> ocean_workspace_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#ocean_tracer_util_init">ocean_tracer_util_init</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#tracer_min_max">tracer_min_max</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#dzt_min_max">dzt_min_max</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#tracer_prog_chksum">tracer_prog_chksum</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#tracer_diag_chksum">tracer_diag_chksum</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#tracer_psom_chksum">tracer_psom_chksum</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#sort_pick_array">sort_pick_array</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#sort_shell_array">sort_shell_array</a>:</dt>
+<dd></dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="ocean_tracer_util_init"></a>
+<h4>ocean_tracer_util_init</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initialize mom4 tracer utilities. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="tracer_min_max"></a>
+<h4>tracer_min_max</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute the global min and max for tracers.  
+   <br>
+<br>
+   Vectorized using maxloc() and minloc() intrinsic functions by 
+   Russell.Fiedler@csiro.au (May 2005).
+   <br>
+<br>
+   Modified by Zhi.Liang@noaa.gov (July 2005)
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="dzt_min_max"></a>
+<h4>dzt_min_max</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute the global min and max for dzt.  
+   <br>
+<br>
+   Modified by Stephen.Griffies@noaa.gov from subroutine tracer_min_max
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="tracer_prog_chksum"></a>
+<h4>tracer_prog_chksum</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute checksums for prognostic tracers </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="tracer_diag_chksum"></a>
+<h4>tracer_diag_chksum</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute checksums for diagnostic tracers </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="tracer_psom_chksum"></a>
+<h4>tracer_psom_chksum</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute checksums for PSOM advection second order moments. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="sort_pick_array"></a>
+<h4>sort_pick_array</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Simplest, and slowest, sorting algorithm from Numerical Recipes.
+   Called "sort_pick" in Numerical Recipes.  
+   <br>
+<br>
+   Input are two arrays, first array defines the ascending sort 
+   and second is a slave to the sort. 
+   <br>
+<br>
+   Typical example is sorting a vector of water parcels lightest
+   to densest, with slave being volume of the parcels.  
+   <br>
+<br>
+   More sophisticated sorting algorithms exist, and may need to 
+   be coded should this method prove too slow. 
+   <br>
+<br>
+   This scheme has order N^2 operations, which is a lot. 
+   <br>
+<br>
+   output has array(1) smallest and a(nsortpts) largest 
+   with corresponding slave array.  
+   <br>
+<br>
+   coded Stephen.Griffies@noaa.gov June 2005
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="sort_shell_array"></a>
+<h4>sort_shell_array</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Shell (or diminishing increment) sort from Numerical Recipes.
+   Called "sort_shell" in Numerical Recipes.  
+   <br>
+<br>
+   Input are two arrays, first array defines the ascending sort 
+   and second is a slave to the sort array. 
+   <br>
+<br>
+   Typical example is sorting a vector of water parcels lightest  
+   to densest, with slave being volume of the parcels.  
+   <br>
+<br>
+   More sophisticated sorting algorithms exist, and may need to 
+   be coded should this method prove too slow. 
+   <br>
+<br>
+   This scheme has order N^(5/4) operations. 
+   <br>
+<br>
+   output has array(1) smallest and a(nsortpts) largest,
+   with corresponding ordering for slave array.  
+   <br>
+<br>
+   coded Stephen.Griffies@noaa.gov June 2005
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<!-- END PUBLIC TYPES --><a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<!-- END NAMELIST --><a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

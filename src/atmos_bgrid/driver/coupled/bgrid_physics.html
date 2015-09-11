@@ -1,0 +1,316 @@
+<HTML>
+<TITLE>module bgrid_physics_mod</TITLE>
+<BODY BGCOLOR="#AABBCC" TEXT="#332211" >
+
+<DIV ALIGN="CENTER"> <FONT SIZE=-2>
+<A HREF="#PUBLIC INTERFACE">PUBLIC INTERFACE</A> / 
+<A HREF="#PUBLIC ROUTINES">ROUTINES</A> / 
+<A HREF="#ERROR MESSAGES">ERRORS</A>
+</FONT>
+<BR><BR></DIV><HR>
+
+
+<H2>module bgrid_physics_mod</H2>
+<A NAME="HEADER">
+<PRE>
+<PRE>
+     <B>Contact:</B>   Bruce Wyman
+     <B>Reviewers:</B>
+     <B>Change history:</B> <A HREF="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS
+/atmos/bgrid/driver/coupled/bgrid_physics.f90">WebCVS Log for coupled/bgrid_physics.f90</A>
+
+</PRE>
+</A><!-- END HEADER -->
+<!--------------------------------------------------------------------->
+<A NAME="OVERVIEW">
+<HR>
+<H4>OVERVIEW</H4>
+<!-- BEGIN OVERVIEW -->
+<PRE>
+
+     B-grid dynamical core interface to the FMS modular column physics.
+</PRE>
+</A><!-- END OVERVIEW -->
+<!--------------------------------------------------------------------->
+<A NAME="DESCRIPTION">
+<!-- BEGIN DESCRIPTION -->
+<PRE>
+     This module passes variables internal to the B-grid
+     dynamical core data structure to the modular physical
+     parameterizations (the physics_driver_mod).
+
+     There is also an option that allows i- and j-row slabbing through the
+     local data arrays passed to the physics routines. This is a very
+     useful feature for saving memory in the physics routines.
+     
+</PRE>
+</A><!-- END DESCRIPTION -->
+<!--------------------------------------------------------------------->
+<A NAME="OTHER MODULES USED">
+<HR>
+<H4>OTHER MODULES USED</H4>
+<!-- BEGIN OTHER MODULES USED -->
+<PRE>
+
+   bgrid_core_driver_mod
+   bgrid_prog_var_mod
+   bgrid_horiz_mod
+   bgrid_vert_mod
+   bgrid_halo_mod
+   bgrid_change_grid_mod
+   physics_driver_mod
+   time_manager_mod
+   fms_mod
+   field_manager_mod
+   tracer_manager_mod
+
+</PRE>
+</A><!-- END OTHER MODULES USED -->
+<!--------------------------------------------------------------------->
+<A NAME="PUBLIC INTERFACE">
+<HR>
+<H4>PUBLIC INTERFACE</H4>
+<!-- BEGIN PUBLIC INTERFACE -->
+<PRE>
+
+  use bgrid_physics_mod [,only: bgrid_physics_init, bgrid_physics_end,
+                                bgrid_physics_down, bgrid_physics_up,
+                                surf_diff_type ]
+
+</PRE>
+</A><!-- END PUBLIC INTERFACE -->
+<!--------------------------------------------------------------------->
+<A NAME="PUBLIC DATA">
+<HR>
+<H4>PUBLIC DATA</H4>
+<!-- BEGIN PUBLIC DATA -->
+<PRE>
+                                                            
+<b>type (surf_diff_type)</b>
+
+     Data structure that contains surface terms computed
+     by the vertical diffusion scheme.  The surface terms are needed
+     for energy conservation in the coupling of component models.
+     See the documentation of the vert_diff module for details on the
+     contents of this variable.
+
+</PRE>
+</A><!-- END PUBLIC DATA -->
+<!--------------------------------------------------------------------->
+<A NAME="PUBLIC ROUTINES">
+<HR>
+<H4>PUBLIC ROUTINES</H4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<PRE>
+
+call bgrid_physics_init (Time_init, Time, Hgrid, Vgrid, Dynam, Var)
+
+Input
+
+    Time_init   base (or initial) time for the experiment  [time_type]
+
+    Time        current time                 [time_type]
+
+    Vgrid       vertical grid constants      [vert_grid_type]
+
+    Dynam       current state of the dynamical core  [bgrid_dynam_type]
+
+Input/Output
+
+    Hgrid       horizontal grid constants    [horiz_grid_type]
+
+    Var         prognostic variables         [prog_var_type]
+
+    Surf_diff   Data structure for surface terms computed by the
+                vertical diffusion scheme. [surf_diff_type]
+
+---------------------------------------------------------------------
+
+call bgrid_physics_end (Time)
+
+Input
+
+    Time        current time [time_type]
+
+---------------------------------------------------------------------
+
+call bgrid_physics_down (window, dt_phys, Time_prev, Time, Time_next,
+                         Hgrid, Vgrid, Dynam, Var, Var_dt,
+                         frac_land, albedo,  rough_vel, t_surf,
+                         u_star,  b_star, q_star, 
+                         dtau_du, dtau_dv, tau_x, tau_y,
+                         flux_sw, flux_sw_dir, flux_sw_dif,
+                         flux_sw_down_vis_dir, flux_sw_down_vis_dif,
+                         flux_sw_down_total_dir, flux_sw_down_total_dif,
+                         flux_sw_vis, flux_sw_vis_dir, flux_sw_vis_dif,
+                         flux_lw, coszen, gust, Surf_diff    )
+
+Input
+
+    window      number of i-rows [window(1)] and the number of
+                j-rows [window(2)] to process on each call 
+                to physics_driver_down, must be &gt; 0
+                   [integer, dimension(2)]
+
+    dt_phys     time step (should be 2x for leapfrog)   [real]
+
+    Time_prev   time at the previous time level, tau-1
+                for two time level scheme Time_prev=Time  [time_type]
+
+    Time        time at the current time level,  tau    [time_type]
+
+    Time_next   time at the next time level,     tau+1  [time_type]
+
+    Vgrid       vertical grid constants      [vert_grid_type]
+
+    Dynam       current state of the dynamical core  [bgrid_dynam_type]
+
+    frac_land   fraction (0. to 1.) of underlying surface which covered
+                by land   [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    albedo      surface albedo
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    rough_vel   surface roughness for momentum (m)
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    t_surf      surface (skin) temperature (in deg k)
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    u_star      friction velocity
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    b_star      buoyancy scale
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    q_star      moisture scale
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    dtau_du     derivative of surface stress w.r.t. the lowest level zonal wind speed
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    dtau_dv     derivative of surface stress w.r.t. the lowest level meridional wind speed
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+Input/Output
+
+    Hgrid       horizontal grid constants    [horiz_grid_type]
+
+    Var         prognostic variables
+                (Note: only diagnostic tracers are modified on output)   
+                   [prog_var_type]
+
+    Var_dt      prognostic variable tendencies  [prog_var_type]
+
+    tau_x       zonal wind stress (Pa/s)
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    tau_y       meridional wind stress (Pa/s)
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    Surf_diff   surface diffusion terms computed by the vertical diffusion scheme
+                  [type(surf_diff_type)]
+
+
+Output
+
+    flux_sw     net shortwave surface flux (down minus up) (in watts/m**2)
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    flux_lw     downward longwave surface flux (in watts/m**2)
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    coszen      cosine of the zenith angle
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    gust        wind gustiness [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+Note
+
+    Variables passed directly through this interface (not in a
+    data structure) are on the compute domain and do not have halos.
+    These variables have dimensions consistent with the compute 
+    domain: dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:).
+
+---------------------------------------------------------------------
+
+call bgrid_physics_up (window, dt_phys, Time_prev, Time, Time_next,
+                       Hgrid, Vgrid, Dynam, Var, Var_dt, omega,
+                       frac_land, Surf_diff, lprec, fprec, gust )
+
+Input
+
+    window      number of i-rows [window(1)] and the number of
+                j-rows [window(2)] to process on each call 
+                to physics_driver_down, must be &gt; 0
+                   [integer, dimension(2)]
+
+    dt_phys     time step (should be 2x for leapfrog)   [real]
+
+    Time_prev   time at the previous time level, tau-1
+                for two time level scheme Time_prev=Time  [time_type]
+
+    Time        time at the current time level,  tau    [time_type]
+
+    Time_next   time at the next time level,     tau+1  [time_type]
+
+    Vgrid       vertical grid constants      [vert_grid_type]
+
+    Dynam       current state of the dynamical core  [bgrid_dynam_type]
+
+    Var         prognostic variables         [prog_var_type]
+
+    omega       omega diagnostic (Pa/s)
+                  [real, dimension(Hgrid%ilb:,Hgrid%jlb:,nlev) + halos ]
+
+    frac_land   fraction (0. to 1.) of underlying surface which covered
+                by land   [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+Input/Output
+
+    Hgrid       horizontal grid constants    [horiz_grid_type]
+
+    Var_dt      prognostic variable tendencies  [prog_var_type]
+
+    Surf_diff   surface diffusion terms
+                computed by the vertical diffusion scheme and since
+                modified by the flux_exchange module
+                  [type(surf_diff_type)]
+
+    gust        wind gustiness
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+Output
+
+    lprec       liquid precipitation rate (rain) in kg/m2/s
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+    fprec       frozen precipitation rate (snow) in kg/m2/s
+                  [real, dimension(Hgrid%Tmp%is:,Hgrid%Tmp%js:)]
+
+Notes
+
+    1) The omega diagnostic array has halo row/columns.
+    2) Total precipitation rate is lprec + fprec.
+
+</PRE>
+</A><!-- END PUBLIC ROUTINES -->
+<!--------------------------------------------------------------------->
+<A NAME="ERROR MESSAGES">
+<HR>
+<H4>ERROR MESSAGES</H4>
+<!-- BEGIN ERROR MESSAGES -->
+<PRE>
+
+<b>FATAL Error in bgrid_physics_mod</b>
+   specific humidity tracer not found
+      The specific humidity tracer must be defined in the
+      <b>field_table</b> as <b>sphum</b>.
+
+</PRE>
+</A><!-- END ERROR MESSAGES -->
+<!--------------------------------------------------------------------->
+
+<HR>
+</BODY>
+</HTML>

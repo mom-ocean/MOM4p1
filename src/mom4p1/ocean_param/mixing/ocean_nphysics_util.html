@@ -1,0 +1,1074 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<title>Module ocean_nphysics_util_mod</title>
+<link type="text/css" href="http://data1.gfdl.noaa.gov/~fms/style/docbook.css" rel="stylesheet">
+<STYLE TYPE="text/css">
+          .fixed {
+            font-size:medium;
+            font-family:monospace;
+            border-style:none;
+            border-width:0.1em;
+            padding:0.1em;
+            color:#663366;
+          }
+        </STYLE>
+</head>
+<body>
+<a name="TOP"></a><font class="header" size="1"><a href="#PUBLIC INTERFACE">PUBLIC INTERFACE </a>~
+          <a href="#PUBLIC DATA">PUBLIC DATA </a>~
+          <a href="#PUBLIC ROUTINES">PUBLIC ROUTINES </a>~
+          <a href="#NAMELIST">NAMELIST </a>~
+          <a href="#DIAGNOSTIC FIELDS">DIAGNOSTIC FIELDS </a>~
+          <a href="#ERROR MESSAGES">ERROR MESSAGES </a>~
+          <a href="#REFERENCES">REFERENCES </a>~ 
+          <a href="#NOTES">NOTES</a></font>
+<hr>
+<h2>Module ocean_nphysics_util_mod</h2>
+<a name="HEADER"></a>
+<!-- BEGIN HEADER -->
+<div>
+<b>Contact:&nbsp;</b><a href="mailto:stephen.griffies@noaa.gov">   Stephen M. Griffies </a>
+<br>
+<b>Reviewers:&nbsp;</b>
+<br>
+<b>Change History:&nbsp;</b><a href="http://cobweb.gfdl.noaa.gov/fms-cgi-bin/viewcvs/FMS/ocean/mom4p1/ocean_param/mixing">WebCVS Log</a>
+<br>
+<br>
+</div>
+<!-- END HEADER -->
+<a name="OVERVIEW"></a>
+<hr>
+<h4>OVERVIEW</h4>
+<!-- BEGIN OVERVIEW -->
+<p class="text">   Utilities for neutral physics, including the code to compute 
+   space-time dependent diffusivities. </p>
+<!-- END OVERVIEW -->
+<a name="DESCRIPTION"></a>
+<!-- BEGIN DESCRIPTION -->
+<div>   Utilities for neutral physics, including the code to compute 
+   space-time dependent diffusivities. </div>
+<br>
+<!-- END DESCRIPTION -->
+<a name="OTHER MODULES USED"></a>
+<hr>
+<h4>OTHER MODULES USED</h4>
+<!-- BEGIN OTHER MODULES USED -->
+<div>
+<pre>        constants_mod<br>     diag_manager_mod<br>              fms_mod<br>           fms_io_mod<br>              mpp_mod<br>      mpp_domains_mod<br>     time_manager_mod<br>    ocean_domains_mod<br>  ocean_operators_mod<br> ocean_parameters_mod<br>ocean_tracer_diag_mod<br>      ocean_types_mod<br>       ocean_util_mod<br>  ocean_workspace_mod</pre>
+</div>
+<!-- END OTHER MODULES USED -->
+<!-- BEGIN PUBLIC INTERFACE -->
+<a name="PUBLIC INTERFACE"></a>
+<hr>
+<h4>PUBLIC INTERFACE</h4>
+<div>
+<dl>
+<dt>
+<a href="#ocean_nphysics_util_init">ocean_nphysics_util_init</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#ocean_nphysics_coeff_init">ocean_nphysics_coeff_init</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#tracer_derivs">tracer_derivs</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#neutral_slopes">neutral_slopes</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#compute_eady_rate">compute_eady_rate</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#compute_baroclinicity">compute_baroclinicity</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#compute_rossby_radius">compute_rossby_radius</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#compute_bczone_radius">compute_bczone_radius</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#compute_diffusivity">compute_diffusivity</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#transport_on_nrho_gm">transport_on_nrho_gm</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#transport_on_rho_gm">transport_on_rho_gm</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#transport_on_theta_gm">transport_on_theta_gm</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#ocean_nphysics_util_restart">ocean_nphysics_util_restart</a>:</dt>
+<dd></dd>
+<dt>
+<a href="#ocean_nphysics_coeff_end">ocean_nphysics_coeff_end</a>:</dt>
+<dd></dd>
+</dl>
+</div>
+<br>
+<!-- END PUBLIC INTERFACE -->
+<a name="PUBLIC DATA"></a>
+<hr>
+<h4>PUBLIC DATA</h4>
+<!-- BEGIN PUBLIC DATA -->
+<div>None.<br>
+<br>
+</div>
+<!-- END PUBLIC DATA -->
+<a name="PUBLIC ROUTINES"></a>
+<hr>
+<h4>PUBLIC ROUTINES</h4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<ol type="a">
+<li>
+<a name="ocean_nphysics_util_init"></a>
+<h4>ocean_nphysics_util_init</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initialize the utility module for neutral physics. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="ocean_nphysics_coeff_init"></a>
+<h4>ocean_nphysics_coeff_init</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Initialize the diffusivities used in neutral physics.
+   Need to initialize them after the ocean_nphysics_util_init routine,
+   since need to have the domain parameters known for passing the 
+   array size information into the ocean_nphysics_coeff_init routine. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="tracer_derivs"></a>
+<h4>tracer_derivs</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Compute the tracer derivatives.
+   <br>
+<br>
+   Comments about smoothing drhodz:
+   <br>
+<br>
+   1/ Tests in coupled 1-degree model showed extreme sensitivity 
+   of MOC to smoothing.  GFDL users generally do NOT smooth, hence
+   the default drhodz_smooth_vert=drhodz_smooth_horz=.false. 
+   <br>
+<br>
+   2/ Smoothing the vertical derivative of drhodzb and drhodzh helps  
+   is greatly needed for producing a regularized (i.e., well behaved)
+   neutral slope vector.  
+   <br>
+<br>
+   3/ An attempt was made to smooth dTdz and dSdz rather 
+   than drhodz.  The resulting slope was smooth, but not as 
+   smooth as when acting on drhodz itself.
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="neutral_slopes"></a>
+<h4>neutral_slopes</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Subroutine computes the neutral slopes for the triads associated 
+   with the vertical flux component.  
+   <br>
+<br>
+   Array tensor_31 initially holds the x-slope used for flux component fz.
+   Array tensor_32 initially holds the y-slope used for flux component fz.
+   <br>
+<br>
+   In subsequent calculations, these arrays will be multipied by the
+   diffusivities.  
+   <br>
+<br>
+   No slope tapering is applied in this routine. 
+   <br>
+<br>
+   slopes are computed over k=1,nk-1, since the slope at k=nk 
+   should be zero. 
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="compute_eady_rate"></a>
+<h4>compute_eady_rate</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Finish computing eady growth rate. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="compute_baroclinicity"></a>
+<h4>compute_baroclinicity</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Finish computing baroclinicity, which is defined to be the vertically
+   averaged magnitude of the horizontal density gradient. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="compute_rossby_radius"></a>
+<h4>compute_rossby_radius</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Subroutine computes the first baroclinic Rossby radius of deformation. 
+   Employ WKB approach described by Chelton et al.  In particular, 
+   use formulae (2.2), (2.3a) and (2.3b) from their paper. 
+   <br>
+<br>
+   Place a max and min value on the Rossby radius.
+   <br>
+<br>
+   Compute buoyancy frequency in terms of vertical gradient of 
+   locally referenced potential density.  Place the reference point
+   at the interface between the tracer cells, which is also where 
+   the vertical derivative of neutral density is located.  This amounts 
+   to a centered difference computation similar to that used by 
+   Chelton et al. equation (B.4). </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="compute_bczone_radius"></a>
+<h4>compute_bczone_radius</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Subroutine computes the radius of the baroclinic zone in a manner 
+   suggested by the Hadley Centre approach (Malcolm Roberts, personal 
+   communication).  
+   <br>
+<br>
+   Algorithm is used in MOM3 and documented in the MOM3 Manual.
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="compute_diffusivity"></a>
+<h4>compute_diffusivity</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Subroutine computes flow dependent diffusivity.
+   Allow for an added dimensionless tuning factor as well as a 
+   minimum and maximum diffusivity. </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="transport_on_nrho_gm"></a>
+<h4>transport_on_nrho_gm</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Classify horizontal GM mass transport according to neutral density classes. 
+   <br>
+<br>
+   NOTE: This diagnostic works with transport integrated from bottom to 
+   a particular cell depth. To get transport_on_nrho_gm, a remapping is 
+   performed, rather than the binning done for trans_rho.  
+   <br>
+<br>
+   Code history 
+   2008: algorithm based (incorrectly) on transport_on_rho 
+   2009: algorithm corrected to be consistent with remapping 
+   used in tracer_on_rho algorithm </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="transport_on_rho_gm"></a>
+<h4>transport_on_rho_gm</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Classify horizontal GM mass transport according to potential density classes. 
+   <br>
+<br>
+   Algorithm based on linear interpolation of function on s-surfaces to 
+   function on rho-surfaces.  
+   <br>
+<br>
+   Diagnostic makes sense when potrho is monotonically increasing with 
+   depth, although the algorithm does not explicitly make this assumption.  
+   <br>
+<br>
+   NOTE: This diagnostic works with transport integrated from bottom to 
+   a particular cell depth. To get transport_on_rho_gm, a remapping is 
+   performed, rather than the binning done for trans_rho.  
+   <br>
+<br>
+   Code history 
+   <br>
+<br>
+   2008: algorithm based (incorrectly) on transport_on_rho 
+   2009: algorithm corrected to be consistent with remapping 
+   used in tracer_on_rho algorithm
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="transport_on_theta_gm"></a>
+<h4>transport_on_theta_gm</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Classify horizontal GM mass transport according to potential temp classes. 
+   <br>
+<br>
+   Algorithm based on linear interpolation of function on s-surfaces to 
+   function on rho-surfaces.  
+   <br>
+<br>
+   Diagnostic makes sense when potential temp is monotonically increasing 
+   with depth, although the algorithm does not explicitly make this assumption.  
+   <br>
+<br>
+   NOTE: This diagnostic works with transport integrated from bottom to 
+   a particular cell depth. To get transport_on_theta_gm, a remapping is 
+   performed, rather than the binning done for trans_rho.  
+   <br>
+<br>
+   Code history 
+   <br>
+<br>
+   2009: algorithm based on transport_on_rho_gm
+   <br>
+<br> 
+</dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="ocean_nphysics_util_restart"></a>
+<h4>ocean_nphysics_util_restart</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Write out restart files registered through register_restart_file </dd>
+<br>
+<br>
+</dl>
+</li>
+<li>
+<a name="ocean_nphysics_coeff_end"></a>
+<h4>ocean_nphysics_coeff_end</h4>
+<dl>
+<dt>
+<b>DESCRIPTION</b>
+</dt>
+<dd>   Write to restart. </dd>
+<br>
+<br>
+</dl>
+</li>
+</ol>
+<!-- END PUBLIC ROUTINES -->
+<a name="PUBLIC TYPES"></a>
+<!-- BEGIN PUBLIC TYPES -->
+<!-- END PUBLIC TYPES --><a name="NAMELIST"></a>
+<!-- BEGIN NAMELIST -->
+<hr>
+<h4>NAMELIST</h4>
+<div>
+<b>&amp;ocean_nphysics_util_nml</b>
+<br>
+<br>
+<div>
+<dl>
+<dt>
+<tt>debug_this_module</tt>
+</dt>
+<dl>   For printing starting and ending checksums for restarts <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>nphysics_util_zero_init</tt>
+</dt>
+<dl>   For Time%init=.true. and wishing to ensure starting with a clean 
+   suite of nphysics_util fields, even if ocean_neutral.res.nc exists. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>horz_z_derivative</tt>
+</dt>
+<dl>   When computing "horizontal" derivatives of tracers, we have the choice of 
+   doing so on surfaces of constant z or surfaces of constant s.  Choosing to 
+   perform derivatives on constant z-surfaces can lead to spurious extrema in
+   in certain regions, such as next to topography, where z and s surfaces deviate
+   a lot.  This problem has been seen in the horz_lap_diffusion module. 
+   It is for this reason that horz_z_diffusion=.false. is the default. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>horz_s_derivative</tt>
+</dt>
+<dl>   This is the preferred setting for computing horizontal derivatives of tracers.
+   This approach ensures that when neutral physics defaults to "horizontal" physics
+   next to boundaries, it will do so as horizontal, defined along surfaces of constant 
+   s-surfaces, and so will not generate spurious extrema.  
+   <br>
+<br>
+   Additionally, when using generalized vertical coordinates, the neutral diffusion
+   slope should be computed relative to the s-surfaces.  The skew diffusion slope 
+   should ideally be computed with respect to z-surfaces, as z-surfaces define
+   available potential energy. However, when s and z surfaces are reasonably close, 
+   as they are in the interior for zstar and pstar vertical coordinates, then we 
+   choose to to dissipate thickness as defined relative to the zstar or pstar surfaces. 
+   This should not be such a big deal, and it is certainly easier computationally than
+   worrying about computing two separate sets of slopes.  More on this detail is 
+   discussed in "Elements of mom4p1". <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>epsln_drhodz</tt>
+</dt>
+<dl>   For computing drhodz used in slope calculation.
+   We must keep drhodz &lt; 0 in order to maintain integrity of the 
+   quasi-Stokes streamfunction as well as computation of buoyancy frequency.  
+   Default epsln_drhodz=1e-30. <br>
+<span class="type">[real, units: kg/m^3]</span>
+</dl>
+<dt>
+<tt>drhodz_mom4p1</tt>
+</dt>
+<dl>   For computing the vertical neutral density deriviative 
+   as in the preferred mom4p1 algorithm rather than the 
+   mom4p0 approach. Default drhodz_mom4p1=.true. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>drhodz_smooth_horz</tt>
+</dt>
+<dl>   For horizontal laplacian smoothing the vertical derivative 
+   of density prior to its use in computing the neutral slopes. 
+   This smoothing helps to produce regularized slopes.  
+   Note that this option breaks the integrity of the triads
+   and is thus NOT generally recommended.  
+   Default drhodz_smooth_horz=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>drhodz_smooth_vert</tt>
+</dt>
+<dl>   For vertical 1-2-1 smoothing the vertical derivative of 
+   density prior to its use in computing the neutral slopes.
+   This smoothing helps to produce regularized slopes.  
+   Note that this option breaks the integrity of the triads
+   and is thus NOT generally recommended.  
+   Default drhodz_smooth_vert=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>vel_micom_smooth</tt>
+</dt>
+<dl>   Velocity scale that is used for computing the MICOM Laplacian mixing 
+   coefficient used in smoothing of drhodzb. 
+   Default vel_micom_smooth=0.2. <br>
+<span class="type">[real, units: m/sec]</span>
+</dl>
+<dt>
+<tt>num_121_passes</tt>
+</dt>
+<dl>   For number of 1-2-1 passes through to smooth drhodz or 
+   eady_rate in vertical. Default num_121_passes=1. <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>aredi</tt>
+</dt>
+<dl>   Neutral diffusivity used for experiments using a constant diffusivity. <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>agm</tt>
+</dt>
+<dl>   GM-skew diffusivity used for experiments using a constant diffusivity. <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>aredi_equal_agm</tt>
+</dt>
+<dl>   Will set aredi_array=agm_array, over-riding any other specification 
+   of aredi_array. Default aredi_equal_agm=.true. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>smax</tt>
+</dt>
+<dl>   Value of the maximum neutral direction slope above which the neutral fluxes are 
+   either tapered to zero or saturated.  Typical value is smax=0.01 or smaller. <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>swidth</tt>
+</dt>
+<dl>   Width in slope over which use tanh with dm_taper scheme to taper fluxes in 
+   steep sloped regions. Typical value swidth=0.1*smax <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>neutral_horz_mix_bdy</tt>
+</dt>
+<dl>   If .true., then use a horizontal diffusivity in the neutral boundary layer. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>vel_micom_bdy</tt>
+</dt>
+<dl>   Velocity scale that is used for computing the MICOM horizontal diffusivity 
+   within the neutral boundary layer. <br>
+<span class="type">[real, units: m/sec]</span>
+</dl>
+<dt>
+<tt>ah_bdy</tt>
+</dt>
+<dl>   Constant horizontal diffusivity for the boundary layer.  
+   Default ah_bdy=0.0. <br>
+<span class="type">[real, units: m^2/sec]</span>
+</dl>
+<dt>
+<tt>tracer_mix_micom</tt>
+</dt>
+<dl>   If .true., then the GM-skew diffusivity is set according to a velocity scale 
+   times the grid spacing. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>vel_micom</tt>
+</dt>
+<dl>   Velocity scale that is used for computing the MICOM diffusivity. <br>
+<span class="type">[real, units: m/sec]</span>
+</dl>
+<dt>
+<tt>agm_lat_zones</tt>
+</dt>
+<dl>   If true, will set agm_array as constant within two latitudinal zones.  
+   The idea is that one may wish to use a larger agm in the ACC than 
+   elsewhere. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_lat_zones_boundary</tt>
+</dt>
+<dl>   Boundary between agm in the south and north zones. <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>agm_lat_zones_ratio</tt>
+</dt>
+<dl>   Ratio between the large agm used in the southern latitudinal zone
+   to that used in the north.  
+   agm_array(north) = agm
+   agm_array(south) = agm*agm_lat_zones_ratio <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>bryan_lewis_aredi</tt>
+</dt>
+<dl>   Set bryan_lewis_aredi=.true. when want to have aredi a function of depth
+   according to the Bryan and Lewis (1979) profile. Maintained for legacy 
+   purposes, and not recommended for new models. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>ahs</tt>
+</dt>
+<dl>   ahs = adjustable parameter at the surface for bryan_lewis_aredi <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>ahb</tt>
+</dt>
+<dl>   ahb = adjustable parameter at the bottom for bryan_lewis_aredi <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>agm_read_restart</tt>
+</dt>
+<dl>   For those cases with agm_closure=.false. where we wish to read in 
+   the agm_array from restart files and keep the value from the restart.
+   This approach allows us to read in a spatially dependent agm_array 
+   that may have been computed from another integration, but to leave
+   the coefficient static in time.  
+   Default agm_read_restart=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_closure</tt>
+</dt>
+<dl>   If .true. then will compute the GM-skew diffusivity as a function of the flow.
+   The length scale is determined by the Rossby radius and the time scale is 
+   determined by the Eady growth rate.  Diffusivities are depth independent. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_closure_max</tt>
+</dt>
+<dl>   Maximum GM diffusivity allowed when using agm_closure=.true. <br>
+<span class="type">[real, units: m^2/sec]</span>
+</dl>
+<dt>
+<tt>agm_closure_min</tt>
+</dt>
+<dl>   Minimum GM diffusivity allowed when using agm_closure=.true. <br>
+<span class="type">[real, units: m^2/sec]</span>
+</dl>
+<dt>
+<tt>agm_closure_scaling</tt>
+</dt>
+<dl>   Dimensionless tuning parameter for computing flow dependent diffusivities. <br>
+<span class="type">[logical, units: dimensionless]</span>
+</dl>
+<dt>
+<tt>agm_closure_upper_depth</tt>
+</dt>
+<dl>   Upper depth where start the depth integration to compute the Eady 
+   growth rate and/or baroclinicity. <br>
+<span class="type">[real, units: m]</span>
+</dl>
+<dt>
+<tt>agm_closure_lower_depth</tt>
+</dt>
+<dl>   Deeper depth where finish the depth integration to compute the Eady 
+   growth rate and/or baroclinicity. <br>
+<span class="type">[real, units: m]</span>
+</dl>
+<dt>
+<tt>agm_closure_n2_scale</tt>
+</dt>
+<dl>   For computing the agm coefficient using a 3-dimensional 
+   scaling by (N/Nref)^2, with N=buoyancy frequency and 
+   Nref the buoyancy frequency at the base of the neutral 
+   blayer. Default agm_closure_n2_scale=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_closure_n2_scale_coeff</tt>
+</dt>
+<dl>   Coefficient setting the scale for the diffusivity computed from 
+   agm_closure_n2_scale. 
+   Default agm_closure_n2_scale_coeff=1e3. <br>
+<span class="type">[real, units: m^2/s]</span>
+</dl>
+<dt>
+<tt>agm_closure_n2_scale_nref_cst</tt>
+</dt>
+<dl>   For taking the reference buoyancy frequency as agm_closure_buoy_freq
+   for the (N/Nref)^2 scaling.  
+   Default agm_closure_n2_scale_nref_cst=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_closure_baroclinic</tt>
+</dt>
+<dl>   For computing the agm coefficient using only the vertically
+   averaged magnitude of the horizontal density gradient 
+   (i.e., the "baroclinicity"). <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_closure_buoy_freq</tt>
+</dt>
+<dl>   For computing the agm coefficient using only the vertically
+   averaged horizontal density gradient, we need to specify a 
+   buoyancy frequency,  which is taken to be fixed over all space-time. <br>
+<span class="type">[real, units: sec^-1]</span>
+</dl>
+<dt>
+<tt>agm_closure_length_cap</tt>
+</dt>
+<dl>   For setting a maximum length scale for the agm_closure calculation.
+   Default agm_closure_length_cap=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_closure_length_max</tt>
+</dt>
+<dl>   Maximum length scale used for computing agm_closure.  
+   Default agm_closure_length_max=50e3. <br>
+<span class="type">[real, units: metre]</span>
+</dl>
+<dt>
+<tt>agm_closure_length_fixed</tt>
+</dt>
+<dl>   Use fixed length scale for computing agm_closure diffusivity <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_closure_length</tt>
+</dt>
+<dl>   Fixed length scale for use with agm_closure_fixed_length <br>
+<span class="type">[real, units: meter]</span>
+</dl>
+<dt>
+<tt>agm_closure_length_rossby</tt>
+</dt>
+<dl>   For computing the agm_closure length scale according to Rossby radius. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>rossby_radius_max</tt>
+</dt>
+<dl>   Maximum Rossby radius used for agm_closure_length_rossby and 
+   the neutral_sine_taper. Default = 100e3 m. <br>
+<span class="type">[real, units: meter]</span>
+</dl>
+<dt>
+<tt>rossby_radius_min</tt>
+</dt>
+<dl>   Minimum Rossby Radius used for agm_closure_length_rossby and 
+   the neutral_sine_taper. Default = 15e3 m. <br>
+<span class="type">[real, units: meter]</span>
+</dl>
+<dt>
+<tt>agm_closure_length_bczone</tt>
+</dt>
+<dl>   For computing the agm_closure length scale according to radius of baroclinic zone. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>bczone_max_pts</tt>
+</dt>
+<dl>   Max number of horizontal grid points for use in computing the baroclinic zone radius. <br>
+<span class="type">[integer]</span>
+</dl>
+<dt>
+<tt>agm_closure_bczone_crit_rate</tt>
+</dt>
+<dl>   Critical growth rate for determining width of the baroclinic zone. <br>
+<span class="type">[real, units: sec^-1]</span>
+</dl>
+<dt>
+<tt>agm_closure_growth_scale</tt>
+</dt>
+<dl>   Dimensionless scaling used to set a maximum for agm_growth. <br>
+<span class="type">[real, units: dimensionless]</span>
+</dl>
+<dt>
+<tt>agm_closure_eden_greatbatch</tt>
+</dt>
+<dl>   For computing the agm_closure length scale according to minimum 
+   of the Rhines scale and the Rossby radius, and using 3d Eady 
+   growth rate. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_closure_eden_gamma</tt>
+</dt>
+<dl>   For use in regularizing the growth rate used in the eden/greatbatch approach.
+   Default agm_closure_eden_gamma=200. Setting to zero removes the regularization. <br>
+<span class="type">[real, units: dimensionless]</span>
+</dl>
+<dt>
+<tt>agm_closure_eden_length_const</tt>
+</dt>
+<dl>   To set the length scale for agm_closure_eden_greatbatch to constant. 
+   Default agm_closure_eden_length_const=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_closure_eden_length</tt>
+</dt>
+<dl>   Length scale for use with agm_closure_eden_length_const=.true.
+   Default agm_closure_eden_length=10e3. <br>
+<span class="type">[real, units: metre]</span>
+</dl>
+<dt>
+<tt>agm_closure_eady_smooth_vert</tt>
+</dt>
+<dl>   For vertical 1-2-1 smoothing the eady_rate 
+   Default agm_closure_eady_smooth=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_closure_eady_smooth_horz</tt>
+</dt>
+<dl>   For horizontal Laplacian smoothing of eady growth rate. 
+   Default agm_closure_eady_smooth_horz=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_closure_eady_cap</tt>
+</dt>
+<dl>   For capping the eady growth rate to avoid huge values.  
+   Default agm_closure_eady_cap=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_closure_eady_ave_mixed</tt>
+</dt>
+<dl>   To set the Eady growth rate to its average within mixed layer region.  
+   This is used to avoid spuriously large values which often appear just 
+   in the upper regions of the ocean mixed layer.  
+   Default agm_closure_eady_ave_mixed=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_smooth_space</tt>
+</dt>
+<dl>   For smoothing the agm diffusivity in space when nonconstant diffusivity used. 
+   Default is agm_smooth_space=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_smooth_time</tt>
+</dt>
+<dl>   For smoothing the agm diffusivity in time when nonconstant diffusivity used. 
+   Default is agm_smooth_time=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_damping_time</tt>
+</dt>
+<dl>   The damping time used for time smoothing agm_array.
+   Default agm_damping_time=10days. <br>
+<span class="type">[real, units: days]</span>
+</dl>
+<dt>
+<tt>agm_closure_grid_scaling</tt>
+</dt>
+<dl>   For an overall scaling of the agm coefficient, according to
+   the relative resolution of the grid and deformation radius. 
+   Default is agm_closure_grid_scaling=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+<dt>
+<tt>agm_closure_grid_scaling_power</tt>
+</dt>
+<dl>   Power used to scale the agm_closure diffusivity. 
+   Default is agm_closure_grid_scaling_power=2.0 <br>
+<span class="type">[real]</span>
+</dl>
+<dt>
+<tt>aredi_diffusivity_grid_scaling</tt>
+</dt>
+<dl>   For an overall scaling of the aredi coefficient, according to
+   the relative resolution of the grid and deformation radius.
+   This option is used only when aredi_equal_agm=.false. 
+   Default is aredi_diffusivity_grid_scaling=.false. <br>
+<span class="type">[logical]</span>
+</dl>
+</dl>
+</div>
+</div>
+<br>
+<!-- END NAMELIST -->
+<a name="DIAGNOSTIC FIELDS"></a>
+<!-- BEGIN DIAGNOSTIC FIELDS -->
+<!-- END DIAGNOSTIC FIELDS --><a name="DATA SETS"></a>
+<!-- BEGIN DATA SETS -->
+<hr>
+<h4>DATA SETS</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END DATA SETS -->
+<a name="PUBLIC CODE"></a>
+<!-- BEGIN PUBLIC CODE -->
+<!-- END PUBLIC CODE --><a name="ERROR MESSAGES"></a>
+<!-- BEGIN ERROR MESSAGES -->
+<hr>
+<h4>ERROR MESSAGES</h4>
+<div>None.<br>
+<br>
+</div>
+<!-- END ERROR MESSAGES -->
+<a name="REFERENCES"></a>
+<hr>
+<h4>REFERENCES</h4>
+<!-- BEGIN REFERENCES -->
+<div>
+<ol>
+<li>   D.B. Chelton,  R.A. deSzoeke, M.G. Schlax, K.E. Naggar, N. Siwertz
+   Geographical Variability of the First Baroclinic Rossby Radius of Deformation
+   Journal of Physical Oceanography (1998) vol 28 pages 433-460 </li>
+<li>   G. Danabasoglu and J. C. McWilliams
+   Sensitivity of the global ocean circulation to 
+   parameterizations of mesoscale tracer transports
+   Journal of Climate (1995) vol 8 pages 2967--2987 </li>
+<li>   Held and Larichev
+   A scaling theory for horizontally homogeneous baroclinically 
+   unstable flow on a beta plane
+   Journal of Atmospheric Sciences (1996) vol 53 pages 946-952 </li>
+<li>   M. Visbeck, J.C. Marshall, T. Haine and M. Spall
+   Specification of eddy transfer coefficients in coarse resolution ocean
+   circulation models
+   Journal of Physical Oceanography (1997) vol 27 pages 381--402 </li>
+<li>   D. Ferreira, J. Marshall, and P. Heimbach, 
+   Estimating eddy stresses by fitting dynamics to observations 
+   using a residual-mean ocean circulation omdel and its adjoint. 
+   Journal of Physical Oceanography (2005) vol 35 pages 1891-1910. </li>
+<li>   K. Eden, Eddy length scales in the North Atlantic, 2007,
+   Preprint. </li>
+<li>   K. Eden and R. Greatbatch, 2008: Towards a mesoscale eddy closure,
+   Ocean Modelling, vol. 20, pages 223-239 </li>
+</ol>
+</div>
+<br>
+<!-- END REFERENCES -->
+<a name="COMPILER SPECIFICS"></a>
+<hr>
+<h4>COMPILER SPECIFICS</h4>
+<!-- BEGIN COMPILER SPECIFICS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END COMPILER SPECIFICS -->
+<a name="PRECOMPILER OPTIONS"></a>
+<hr>
+<h4>PRECOMPILER OPTIONS</h4>
+<!-- BEGIN PRECOMPILER OPTIONS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END PRECOMPILER OPTIONS -->
+<a name="LOADER OPTIONS"></a>
+<hr>
+<h4>LOADER OPTIONS</h4>
+<!-- BEGIN LOADER -->
+<div>None.<br>
+<br>
+</div>
+<!-- END LOADER OPTIONS -->
+<a name="TEST PROGRAM"></a>
+<hr>
+<h4>TEST PROGRAM</h4>
+<!-- BEGIN TEST PROGRAM -->
+<div>None.<br>
+</div>
+<br>
+<!-- END TEST PROGRAM -->
+<a name="KNOWN BUGS"></a>
+<hr>
+<h4>KNOWN BUGS</h4>
+<!-- BEGIN KNOWN BUGS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END KNOWN BUGS -->
+<a name="NOTES"></a>
+<hr>
+<h4>NOTES</h4>
+<!-- BEGIN NOTES -->
+<div>   Diffusivities can be determined in a number of manners
+   <br>
+<br>
+   TIME INDEPENDENT
+   <br>
+<br>
+   Various methods are available for specifying a time 
+   independent diffusivity, either globally uniform or 
+   with selections of spatial dependence.  
+   <br>
+<br>
+   TIME DEPENDENT (as a function of the flow)
+   <br>
+<br>
+   Various methods are available for determining the 
+   diffusivity that changes in time according to the 
+   properties of the fluid.  There are various means 
+   for specifying the length and time scales needed
+   to set the diffusivity. 
+   <br>
+<br>
+   LENGTH SCALES 
+   <br>
+<br>
+   1. First baroclinic Rossby radius (estimated as per Chelton etal).  
+   Equatorial Rossby radius is used within 5deg of the equator.
+   <br>
+<br>
+   2. Width of the baroclinic zone, as done in the Hadley Centre 
+   model and documented in the MOM3 Manual.
+   <br>
+<br>
+   3. Specified length scale set independent of the flow. 
+   <br>
+<br>
+   TIME SCALE 
+   <br>
+<br>
+   When using either of the above for the length scale, 
+   the time scale is determined by the Eady growth rate.    
+   <br>
+<br>
+   COMBINED LENGTH/TIME SCALE 
+   <br>
+<br>
+   Another option, used in the GFDL CM2.X coupled climate models,
+   is to set the diffusivity proportional to the depth averaged
+   absolute value of the horizontal density gradient. </div>
+<br>
+<!-- END NOTES -->
+<a name="FUTURE PLANS"></a>
+<hr>
+<h4>FUTURE PLANS</h4>
+<!-- BEGIN FUTURE PLANS -->
+<div>
+        None.
+      </div>
+<br>
+<!-- END FUTURE PLANS -->
+<hr>
+<div align="right">
+<font size="-1"><a href="#TOP">top</a></font>
+</div>
+</body>
+</html>

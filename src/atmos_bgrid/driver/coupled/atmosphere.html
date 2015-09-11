@@ -1,0 +1,401 @@
+<HTML>
+<TITLE>module atmosphere_mod</TITLE>
+<BODY BGCOLOR="#AABBCC" TEXT="#332211" >
+
+<DIV ALIGN="CENTER"> <FONT SIZE=1>
+<A HREF="#PUBLIC INTERFACE">PUBLIC INTERFACE</A> / 
+<A HREF="#PUBLIC ROUTINES">ROUTINES</A> / 
+<A HREF="#NAMELIST">NAMELIST</A> / 
+<A HREF="#ERROR MESSAGES">ERRORS</A>
+</FONT>
+<BR><BR></DIV><HR>
+
+<H2>module atmosphere_mod</H2>
+<A NAME="HEADER">
+<PRE>
+<PRE>
+     <B>Contact:</B>   B. Wyman
+     <B>Reviewers:</B>
+     <B>Change history:</B> <A HREF="http://www.gfdl.noaa.gov/fms-cgi-bin/cvsweb.cgi/FMS
+/atmos/bgrid/driver/coupled/atmosphere.f90">WebCVS Log for coupled/atmosphere.f90</A>
+
+</PRE>
+</A><!-- END HEADER -->
+<!-- ------------------------------------------------------------------>
+<A NAME="OVERVIEW">
+<HR>
+<H4>OVERVIEW</H4>
+<!-- BEGIN OVERVIEW -->
+<PRE>
+
+     Atmospheric driver for the B-grid dynamics and modular column physics.
+</PRE>
+</A><!-- END OVERVIEW -->
+<!-- ------------------------------------------------------------------>
+<A NAME="DESCRIPTION">
+<!-- BEGIN DESCRIPTION -->
+<PRE>
+     This module provides an interface to the B-grid dynamical core
+     and a B-grid interface to the modular column physics. 
+     A similar interface for the spectral dynamical core exists
+     that may be easily switched with this interface.
+
+</PRE>
+</A><!-- END DESCRIPTION -->
+<!-- ------------------------------------------------------------------>
+<A NAME="OTHER MODULES USED">
+<HR>
+<H4>OTHER MODULES USED</H4>
+<!-- BEGIN OTHER MODULES USED -->
+<PRE>
+
+   bgrid_core_driver_mod
+   bgrid_prog_var_mod
+   bgrid_horiz_mod
+   bgrid_vert_mod
+   bgrid_change_grid_mod
+   bgrid_physics_mod
+   time_manager_mod
+   fms_mod
+   mpp_domains_mod
+   field_manager_mod
+   tracer_manager_mod
+
+</PRE>
+</A><!-- END OTHER MODULES USED -->
+<!-- ------------------------------------------------------------------>
+<A NAME="PUBLIC INTERFACE">
+<HR>
+<H4>PUBLIC INTERFACE</H4>
+<!-- BEGIN PUBLIC INTERFACE -->
+<PRE>
+
+  <b>use atmosphere_mod</b> [,only: atmosphere_init,       atmosphere_end,
+                             atmosphere_down,       atmosphere_up,
+                             atmosphere_resolution, atmosphere_boundary,
+                             get_bottom_mass,       get_bottom_wind,
+                             get_atmosphere_axes,   atmosphere_domain,
+                             surf_diff_type       ]
+
+  NOTES
+
+     Optional namelist interface <b>&atmosphere_nml</b> may be
+     read from file <b>input.nml</b>.
+                                
+</PRE>
+</A><!-- END PUBLIC INTERFACE -->
+<!-- ------------------------------------------------------------------>
+<A NAME="PUBLIC DATA">
+<HR>
+<H4>PUBLIC DATA</H4>
+<!-- BEGIN PUBLIC DATA -->
+<PRE>
+
+     type(surf_diff_type)
+
+     Data structure containing surface terms computed by the
+     vertical diffusion scheme.  The surface terms are needed
+     for energy conservation when coupling component models.
+     See the documentation of the vert_diff module for details
+     on the contents of this variable.
+
+</PRE>
+</A><!-- END PUBLIC DATA -->
+<!-- ------------------------------------------------------------------>
+<A NAME="PUBLIC ROUTINES">
+<HR>
+<H4>PUBLIC ROUTINES</H4>
+<!-- BEGIN PUBLIC ROUTINES -->
+<PRE>
+
+<b>call atmosphere_init</b> ( Time_init, Time, Time_step, Surf_diff )
+
+DESCRIPTION
+   Initialization routine for atmosphere_mod.
+   This routine must be called before calling subroutine atmosphere.
+
+INPUT
+   Time_init   The base (or initial) time of the experiment.
+                  <FONT SIZE=-1 COLOR="#000099">[time_type]</FONT>
+
+   Time        The current time.  <FONT SIZE=-1 COLOR="#000099">[time_type]</FONT>
+
+   Time_step   The atmospheric model/physics time step.  <FONT SIZE=-1 COLOR="#000099">[time_type]</FONT>
+
+INPUT/OUTPUT
+   Surf_diff   The surface terms for vertical diffusion that are exchanged
+               with other component models. On input fields have not been
+               allocated, on output all arrays are allocated.
+                 <FONT SIZE=-1 COLOR="#000099">[type(surf_diff_type)]</FONT>
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+
+<b>call atmosphere_end</b> ( Time )
+
+DESCRIPTION
+   Termination routine for atmosphere_mod.
+
+INPUT
+   Time    The current time.  <FONT SIZE=-1 COLOR="#000099">[time_type]</FONT>
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+
+<b>call atmosphere_down</b> ( Time, frac_land, t_surf,  albedo,  rough_mom,
+                             u_star,  b_star, q_star,
+                             dtau_du, dtau_dv, tau_x, tau_y,
+                             gust, coszen, flux_sw, flux_sw_dir, flux_sw_dif,
+                             flux_sw_down_vis_dir, flux_sw_down_total_dir,
+                             flux_sw_down_vis_dif, flux_sw_down_total_dif,
+                             flux_sw_vis, flux_sw_vis_dir, flux_sw_vis_dif,
+                             flux_lw, Surf_diff )
+
+DESCRIPTION
+   This routine calls the bgrid dynamical core and the
+   "downward pass" of the atmospheric physics.  
+   It should only be called once per time step and before
+   calling atmosphere_up.
+
+INPUT
+   Time        The current time.  <FONT SIZE=-1 COLOR="#000099">[type(time_type)]</FONT>
+
+   frac_land   The fraction (0. to 1.) of the Earth's surface beneath a
+               grid box that is covered by land. The remaining fraction
+               is assumed to be covered by open ocean or sea ice.
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   t_surf      The mean surface (skin) temperature (in deg k).
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   albedo      The mean surface albedo.
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   rough_mom   surface roughness for momentum (m)
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   u_star      friction velocity
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   b_star      buoyancy scale
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   q_star      moisture scale
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   dtau_du     derivative of surface stress w.r.t. the lowest level zonal wind speed
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   dtau_dv     derivative of surface stress w.r.t. the lowest level meridional wind speed
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+INPUT/OUTPUT
+   tau_x       zonal wind stress
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   tau_y       meridional wind stress
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   Surf_diff   surface diffusion terms computed by the vertical diffusion scheme
+                  <FONT SIZE=-1 COLOR="#000099">[type(surf_diff_type)]</FONT>
+
+OUTPUT
+   gust        wind gustiness
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   coszen      cosine of the zenith angle
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   flux_sw     net shortwave surface flux (down minus up) (in watts/m**2)
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   flux_lw     downward longwave surface flux (in watts/m**2)
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+NOTE
+   All two-dimenional fields must have the same size.
+   They are typically dimensioned for the compute domain (i.e., no halos).
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+
+<b>call atmosphere_up</b> ( Time, frac_land, Surf_diff, lprec, fprec )
+
+DESCRIPTION
+   This routine calls the "upward pass" of the atmospheric physics,
+   B-grid diagnostics, and time differencing.  The prognostic
+   variables are advanced to the next time step.  It should only be
+   called once per time step and after calling atmosphere_down.
+
+INPUT
+   Time        The current time.  <FONT SIZE=-1 COLOR="#000099">[type(time_type)]</FONT>
+
+   frac_land   The fraction (0. to 1.) of the Earth's surface beneath a
+               grid box that is covered by land. The remaining fraction
+               is assumed to be covered by open ocean or sea ice.
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+INPUT/OUTPUT
+   Surf_diff   surface diffusion terms computed by the vertical diffusion scheme
+                  <FONT SIZE=-1 COLOR="#000099">[type(surf_diff_type)]</FONT>
+
+OUTPUT
+   lprec       liquid precipitation rate (rain) in kg/m2/s
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   fprec       frozen precipitation rate (snow) in kg/m2/s
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+   
+NOTE
+   All two-dimenional fields must have the same size.
+   They are typically dimensioned for the compute domain (i.e., no halos).
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+
+<b>call get_bottom_mass</b> ( t_bot, q_bot, p_bot, z_bot, p_surf )
+
+DESCRIPTION
+   Returns quantities at the lowest model level and the surface.
+   The fields are dimensioned for the mass grid's compute domain.
+
+OUTPUT
+   t_bot       temperature at lowest model level (deg k)
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   q_bot       specific humidity at lowest model level (kg/kg)
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   p_bot       pressure at lowest model level (pa)
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   z_bot       height above the surface for the lowest model level (m)
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   p_surf      surface pressure (pa)
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+
+<b>call get_bottom_wind</b> ( u_bot, v_bot )
+
+DESCRIPTION
+   Returns quantities at the lowest model level.
+   The fields are dimensioned for the velocity grid's compute domain.
+
+OUTPUT
+   u_bot       zonal wind component at lowest model level (m/s)
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+   v_bot       meridional wind component at lowest model level (m/s)
+                  <FONT SIZE=-1 COLOR="#000099">[real, dimension(:,:)]</FONT>
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+
+<b>call get_atmosphere_axes</b> ( axes )
+
+OUTPUT
+   axes      The axis identifiers for the atmospheric grids.
+             The size of axes must be least 1 but not greater than 4.
+             The axes are returned in the order (/ x, y, p_full, p_half /).
+                 <FONT SIZE=-1 COLOR="#000099">[integer, dimension(:)]</FONT>
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+
+<b>call atmosphere_resolution</b> ( nlon, nlat <FONT COLOR="#007700">[, global]</FONT> )
+
+DESCRIPTION
+   Returns the resolution of compute domain for either the
+   current processor or the global domain.
+
+OUTPUT
+   nlon   The number of longitude points in the compute domain.
+             <FONT SIZE=-1 COLOR="#000099">[integer]</FONT>
+
+   nlat   The number of latitude points in the compute domain.
+             <FONT SIZE=-1 COLOR="#000099">[integer]</FONT>
+
+OPTIONAL INPUT
+
+   global  Flag that specifies whether the returned compute domain size is
+           for the global grid (TRUE) or for the current processor (FALSE).
+              <FONT SIZE=-1 COLOR="#000099">[logical, default: FALSE]</FONT>
+           
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+
+<b>call atmosphere_boundary</b> ( blon, blat <FONT COLOR="#007700">[, global]</FONT> )
+
+DESCRIPTION
+   Returns the grid box edges of compute domain for either the
+   current processor or the global domain.
+
+OUTPUT
+   blon    The west-to-east longitude edges of grid boxes (in radians).
+              <FONT SIZE=-1 COLOR="#000099">[real, dimension(nlon+1)]</FONT>
+
+   blat    The south-to-north latitude edges of grid boxes (in radians).
+              <FONT SIZE=-1 COLOR="#000099">[real, dimension(nlat+1)]</FONT>
+
+OPTIONAL INPUT
+   global  Flag that specifies whether the returned grid box edges are
+           for the global grid (TRUE) or for the current processor (FALSE).
+              <FONT SIZE=-1 COLOR="#000099">[logical, default: FALSE]</FONT>
+           
+NOTE
+   The size of the output arguments, blon and blat, must be +1 more than the
+   output arguments for call atmosphere_resolution, nlon+1 and nlat+1, respectively.
+
+<!------------------------>
+<HR WIDTH="50%" ALIGN=LEFT>
+
+<b>call atmosphere_domain</b> ( Domain )
+
+OUTPUT
+   Domain   The domain2d variable describing the grid used for coupling.
+            For the B-grid, this corresponds to the temperature grid
+            without halos.
+                <FONT SIZE=-1 COLOR="#000099">[type(domain2d)]</FONT>
+
+</PRE>
+</A><!-- END PUBLIC ROUTINES -->
+<!-- ------------------------------------------------------------------>
+<A NAME="NAMELIST">
+<HR>
+<H4>NAMELIST</H4>
+<!-- BEGIN NAMELIST -->
+<PRE>
+
+<b>&atmosphere_nml</b>
+
+ physics_window  The number of "i" and "j" rows processed each time the
+                 modular physics is called. To process the entire domain
+                 use physics_window = 0,0.
+                    <FONT SIZE=-1 COLOR="#000099">[integer, default: physics_window = 0,1]</FONT>
+
+</PRE>
+</A><!-- END NAMELIST -->
+<!-- ------------------------------------------------------------------>
+<A NAME="ERROR MESSAGES">
+<HR>
+<H4>ERROR MESSAGES</H4>
+<!-- BEGIN ERROR MESSAGES -->
+<PRE>
+
+<b>FATAL errors from get_atmosphere_axes in atmosphere_mod</b>
+
+    <b>size of argument is incorrect</b>
+        The size of the argument to get_atmosphere_axes must be
+        between 1 and 4.
+
+
+</PRE>
+</A><!-- END ERROR MESSAGES -->
+<!-- ------------------------------------------------------------------>
+
+<HR>
+</BODY>
+</HTML>
